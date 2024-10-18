@@ -3,7 +3,7 @@
 Ahoy! Welcome to your new [skiff](https://github.com/allenai/skiff) template
 application that includes:
 
-* A Python, [Flask](http://flask.pocoo.org/) API server.
+* A Python based, [FastAPI](https://fastapi.tiangolo.com/) RESTful API server.
 * A [TypeScript](https://www.typescriptlang.org/), [ReactJS](https://reactjs.org/)
   and [Varnish](http://github.com/allenai/varnish-mui) based user interface.
 * An [NGINX](https://www.nginx.com/) web server for serving static assets and
@@ -36,6 +36,33 @@ Start by opening `skiff.json` and updating the `appName`, `contact` and
 After committing and pushing these changes make sure to submit a
 [request to be onboarded](https://github.com/allenai/skiff/issues/new/choose).
 
+After onboarding, your first deploy will fail because this template anticipates
+a Skiff secret, `nora-aws-keys`, to be configured. You'll need to [create a secret](https://skiff.allenai.org/marina.html#application-secrets)
+named `nora-aws-keys` with Secret Data:
+
+```
+AWS_ACCESS_KEY_ID <secret_value>
+AWS_SECRET_ACCESS_KEY <secret_value>
+```
+
+See the "NORA Skiff AWS Access Keys" note in the NORA 1pass Vault for the values.
+
+These keys will give you access to a set of AWS resources we maintain that are shared
+by NORA apps, including secrets, S3 buckets, and more, as our needs grow.
+
+## Local Development
+
+This application depends on a couple environment variables being set:
+
+`AWS_ACCESS_KEY_ID`
+
+and
+
+`AWS_SECRET_ACCESS_KEY`
+
+These should correspond to an AWS user with the the `nora_skiff` policy attached
+to access the required AWS resources.
+
 To start a version of the application locally for development purposes, run
 this command:
 
@@ -47,6 +74,7 @@ This process launches several processes. When things have finished starting,
 you'll see a message from a program called `sonar` informing you of the URL your
 local environment is accessible at.
 
+Once started, your application will be available at `http://localhost:9090`
 
 It might take a minute or two for your application to start, particularly
 if it's the first time you've executed this command.
@@ -57,6 +85,82 @@ just need to refresh the page in your browser to see your updates.
 
 Sometimes one portion of your application will crash. When this occurs resolve
 the cause and re-run `docker compose up --build` to start things back up.
+
+## Configuring endpoints
+
+This template includes suggested boilerplate for adding an endpoint for a task agent intended to be prototyped within the NORA project.
+
+In `api/tool/models.py` you will need to add inputs and outputs specific to your task. For example:
+
+```
+# TODO: define your request data
+class ToolRequest(BaseModel):
+    task_id: Optional[str] = Field(default=None, description=(
+    "Reference to a long-running task. Provide this argument to receive an update on its"
+    "status and possibly its result."
+    ))
+    # your task-specific fields below
+    # foos: List[int] = Field("a list of important input ints")
+    # bars: List[str] = Field("a list of important input strings")
+    sparkles: List[str] = Field("one or more sparkly things")
+
+
+# TODO: define your result data
+class TaskResult(BaseModel):
+    """The outcome of running a Task to completion"""
+    # foo: int = Field("Some output field")
+    # bar: str = Field("Some other output field")
+    effusion: str = Field("all there is to say about the sparkles")
+```
+
+In `api/tool/app.py` you will need to implement `_do_task`:
+```
+def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
+
+    result: str = "I love "
+    for sparkle in tool_request.sparkles:
+        result += sparkle
+
+    return TaskResult(effusion = result)
+```
+
+Start your application locally by running `docker-compose up --build`. Note that all requests require
+a bearer token, which can be found under the NORA 1pass Vault in the "NORA Skiff Tool Bearer Token" note".
+
+You can then issue a sample request like so:
+
+```
+curl -i \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer <SECRET TOKEN>" \
+    -d '{ "sparkles": [ "butterflies", "lollipops"] }' \
+    http://localhost:9090/use-tool
+```
+
+By default, the use-tool endpoint will block until the task completes and then return the output:
+```
+{"task_id":"db0cfa03-c81b-4381-a453-4c83e76e74b0","task_result":{"effusion":"I love butterflieslollipops"}}
+```
+
+If the task agent process is expected to take longer than 10 seconds to return, the `_needs_to_be_async` function in `app.py` can be set to return True. In this case, the call above will return:
+
+```
+{"task_id":"c33d7bbe-137f-4727-b6a3-3469b0855bb9","estimated_time":"10 minutes","task_status":"STARTED","task_result":null}
+```
+
+A subsequent request with this task id will return the task result. (Async task state implementation in [nora_lib](https://github.com/allenai/nora_lib/blob/main/nora_lib/tasks/state.py)) Note that in the current implementation, a background task will not survive if the Docker container crashes or is restarted.
+
+```
+curl -i \
+    -H "Content-Type: application/json" \
+    -H  "Authorization: Bearer <SECRET_TOKEN>" \
+    -d '{ "task_id": "c33d7bbe-137f-4727-b6a3-3469b0855bb9" }' \
+ http://localhost:9090/use-tool
+```
+
+```
+{"task_id":"c33d7bbe-137f-4727-b6a3-3469b0855bb9","task_result":{"effusion":"I love butterflieslollipops"}}
+```
 
 ## Installing Third Party Packages
 
