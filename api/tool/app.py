@@ -1,0 +1,211 @@
+import json
+import logging
+import multiprocessing
+import os
+from typing import Annotated, Optional, Union
+import uuid
+
+import boto3
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi.responses import RedirectResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from nora_lib.tasks.state import NoSuchTaskException, StateManager
+from nora_lib.tasks.models import TASK_STATUSES
+
+from tool import glog
+from tool.models import AsyncTaskState, AsyncToolResponse, ToolRequest, TaskResult, ToolResponse
+
+
+ASYNC_STATE_DIR = "/async-state"
+task_state_manager = StateManager(AsyncTaskState, ASYNC_STATE_DIR)
+async_context = multiprocessing.get_context("fork")
+
+
+################################################################################
+### THESE THREE FUNCTIONS SHOULD BE IMPLEMENTED BY TASK AGENT / TOOL AUTHORS ###
+################################################################################
+
+def _needs_to_be_async(tool_request: ToolRequest) -> bool:
+    """
+    TODO: BYO logic here.
+
+    Should return a boolean answer as to whether or not
+    the current tool request should be done as a background
+    process (async), or whether it can just be a blocking,
+    synchronous request.
+
+    If you do nothing here, all requests will be blocking.
+    """
+    return False
+
+
+def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
+    """
+    TODO: BYO logic here. Don't forget to define `ToolRequest` and `TaskResult`
+    in `models.py`!
+
+    The meat of whatever it is your tool or task agent actually
+    does should be kicked off in here. This will be run synchonrously
+    unless `_needs_to_be_async()` above returns True, in which case
+    it will be run in a background process.
+
+    If you need to update state for an asynchronously running task, you can
+    use `task_state_manager.read_state(task_id)` to retrieve, and `.write_state()`
+    to write back.
+    """
+
+    return TaskResult()
+
+
+def _estimate_task_length(tool_request: ToolRequest) -> str:
+    """
+    TODO: BYO timing estimation here.
+
+    For telling the user how long to wait before asking for a status
+    update on async tasks. This can just be a static guess, but you
+    have access to the request if you want to do something fancier.
+    """
+
+    return "10 minutes"
+
+
+###########################################################################
+### BELOW THIS LINE IS ALL TEMPLATE CODE THAT SHOULD NOT NEED TO CHANGE ###
+###########################################################################
+
+def create_app() -> FastAPI:
+    # If LOG_FORMAT is "google:json" emit log message as JSON in a format Google Cloud can parse.
+    fmt = os.getenv("LOG_FORMAT")
+    handlers = [glog.Handler()] if fmt == "google:json" else []
+    level = os.environ.get("LOG_LEVEL", default=logging.INFO)
+    logging.basicConfig(level=level, handlers=handlers)
+
+    secrets_manager = boto3.client("secretsmanager", region_name="us-west-2")
+    api_keys = set(json.loads(secrets_manager.get_secret_value(
+        SecretId="nora/agent-api-tokens"
+    )["SecretString"]).values())
+    api_key_scheme = HTTPBearer()
+
+    app = FastAPI()
+
+    @app.get("/")
+    def root():
+        return RedirectResponse("/docs")
+
+    # This tells the machinery that powers Skiff (Kubernetes) that your application
+    # is ready to receive traffic. Returning a non 200 response code will prevent the
+    # application from receiving live requests.
+    @app.get("/health", status_code=204)
+    def health():
+        return
+
+    @app.post("/use-tool")
+    def use_tool(
+        tool_request: ToolRequest,
+        credentials: Annotated[HTTPAuthorizationCredentials, Depends(api_key_scheme)]
+    ) -> Union[AsyncToolResponse, ToolResponse]:
+        if credentials.credentials not in api_keys:
+            raise HTTPException(
+                status_code=401,
+                detail="Could not validate credentials",
+            )
+
+        # Caller is asking for a status update of long-running request
+        if tool_request.task_id:
+            return _handle_async_task_check_in(tool_request.task_id)
+
+        # New task
+        task_id = str(uuid.uuid4())
+
+        # if we think the work is gonna take a long time, kick it off in another
+        # process and record state
+        if _needs_to_be_async(tool_request):
+            estimated_time = _start_async_task(task_id, tool_request)
+
+            return AsyncToolResponse(
+                task_id=task_id,
+                estimated_time=estimated_time,
+                task_status=TASK_STATUSES["STARTED"],
+                task_result=None
+            )
+
+        # otherwise block on completion and respond with result
+        task_result = _do_task(tool_request, task_id)
+
+        return ToolResponse(
+            task_id=task_id,
+            task_result=task_result
+        )
+
+    return app
+
+
+def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:
+    estimated_time = _estimate_task_length(tool_request)
+
+    task_state = AsyncTaskState(
+        task_id=task_id,
+        estimated_time=estimated_time,
+        task_status=TASK_STATUSES["STARTED"],
+        task_result=None,
+        extra_state={}
+    )
+    task_state_manager.write_state(task_state)
+
+    def _do_task_and_write_result():
+        try:
+            task_result = _do_task(tool_request, task_id)
+            task_status = TASK_STATUSES["COMPLETED"]
+        except:
+            task_result = None
+            task_status = TASK_STATUSES["FAILED"]
+
+        state = task_state_manager.read_state(task_id)
+        state.task_result = task_result
+        state.task_status = task_status
+        task_state_manager.write_state(state)
+
+    async_context.Process(
+        target=_do_task_and_write_result,
+        name=f"Async Task {task_id}",
+        args=(),
+    ).start()
+
+    return estimated_time
+
+
+def _handle_async_task_check_in(task_id: str) -> ToolResponse:
+    """
+    For tasks that will take a while to complete, we issue a task id
+    that can be used to request status updates and eventually, results.
+
+    This helper function is responsible for checking the state store
+    and returning either the current state of the given task id, or its
+    final result.
+    """
+
+    try:
+        task_state = task_state_manager.read_state(task_id)
+    except NoSuchTaskException:
+        raise HTTPException(status_code=404, detail=f"Referenced task {task_id} does not exist.")
+
+    # Retrieve data, which is just on local disk for now
+    if task_state.task_status == TASK_STATUSES["FAILED"]:
+        raise HTTPException(status_code=500, detail=f"Referenced task {task_id} failed.")
+
+    if task_state.task_status == TASK_STATUSES["COMPLETED"]:
+        if not task_state.task_result:
+            raise HTTPException(status_code=500, detail=f"Task {task_id} marked completed but has no result.")
+
+        return ToolResponse(
+            task_id=task_state.task_id,
+            task_result=task_state.task_result
+        )
+
+    return AsyncToolResponse(
+        task_id=task_state.task_id,
+        estimated_time=task_state.estimated_time,
+        task_status=task_state.task_status,
+        task_result=None
+    )
+

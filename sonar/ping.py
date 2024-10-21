@@ -31,7 +31,7 @@ def scan():
     print("")
     print(
         "Your application is starting and will be available at " +
-        "http://localhost:8080 when it's ready."
+        "http://localhost:9090 when it's ready."
     )
     print("")
 
@@ -63,7 +63,7 @@ def scan():
         print("")
         print("✨ Your local environment is ready:")
         print("")
-        print("     http://localhost:8080")
+        print("     http://localhost:9090")
         print("")
         print("⛵️ Smooth sailing!")
         print("")

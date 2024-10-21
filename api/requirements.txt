@@ -1,3 +1,8 @@
-Flask==2.3.2
+boto3
+fastapi
 gunicorn==21.2.0
+httpx
+pydantic==2.*
 python-json-logger==2.0.2
+uvicorn[standard]
+nora_lib

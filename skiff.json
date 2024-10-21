@@ -1,6 +1,6 @@
 {
-    "appName": "skiff-template",
-    "contact": "reviz",
-    "team": "reviz",
+    "appName": "open-scholar-demo",
+    "contact": "amanpreets",
+    "team": "semantic scholar",
     "replicas": { "prod": 2 }
 }
