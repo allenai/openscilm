@@ -13,33 +13,25 @@ from nora_lib.tasks.state import NoSuchTaskException, StateManager
 from nora_lib.tasks.models import TASK_STATUSES
 
 from tool import glog
-from tool.models import AsyncTaskState, AsyncToolResponse, ToolRequest, TaskResult, ToolResponse
-
+from tool.models import AsyncTaskState, AsyncToolResponse, ToolRequest, TaskResult, ToolResponse, GeneratedIteration, \
+    Citation
+from tool.open_scholar import OpenScholar
 
 ASYNC_STATE_DIR = "/async-state"
 task_state_manager = StateManager(AsyncTaskState, ASYNC_STATE_DIR)
 async_context = multiprocessing.get_context("fork")
-
-
-################################################################################
-### THESE THREE FUNCTIONS SHOULD BE IMPLEMENTED BY TASK AGENT / TOOL AUTHORS ###
-################################################################################
-
-def _needs_to_be_async(tool_request: ToolRequest) -> bool:
-    """
-    TODO: BYO logic here.
-
-    Should return a boolean answer as to whether or not
-    the current tool request should be done as a background
-    process (async), or whether it can just be a blocking,
-    synchronous request.
-
-    If you do nothing here, all requests will be blocking.
-    """
-    return False
+open_scholar = OpenScholar()
 
 
 def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
+    def update_task_state(status: str, estimated_time: str = None):
+        if task_id:
+            task_state = task_state_manager.read_state(task_id)
+            task_state.task_status = status
+            if estimated_time:
+                task_state.estimated_time = estimated_time
+                task_state_manager.write_state(task_state)
+            task_state_manager.write_state(task_state)
     """
     TODO: BYO logic here. Don't forget to define `ToolRequest` and `TaskResult`
     in `models.py`!
@@ -53,13 +45,14 @@ def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
     use `task_state_manager.read_state(task_id)` to retrieve, and `.write_state()`
     to write back.
     """
-
-    return TaskResult()
+    answer_map = open_scholar.answer_query(tool_request.query)
+    iterations = [GeneratedIteration(text=iteration["text"], feedback=iteration["feedback"],
+                                     citations=Citation(**iteration["citation"])) for iteration in answer_map]
+    return TaskResult(iterations=iterations)
 
 
 def _estimate_task_length(tool_request: ToolRequest) -> str:
     """
-    TODO: BYO timing estimation here.
 
     For telling the user how long to wait before asking for a status
     update on async tasks. This can just be a static guess, but you
@@ -80,11 +73,13 @@ def create_app() -> FastAPI:
     level = os.environ.get("LOG_LEVEL", default=logging.INFO)
     logging.basicConfig(level=level, handlers=handlers)
 
-    secrets_manager = boto3.client("secretsmanager", region_name="us-west-2")
-    api_keys = set(json.loads(secrets_manager.get_secret_value(
-        SecretId="nora/agent-api-tokens"
-    )["SecretString"]).values())
-    api_key_scheme = HTTPBearer()
+    # TODO: Uncomment the following lines if you need to authenticate incoming requests
+    # If you need to authenticate incoming requests, you can use the following
+    # secrets_manager = boto3.client("secretsmanager", region_name="us-west-2")
+    # api_keys = set(json.loads(secrets_manager.get_secret_value(
+    #     SecretId="nora/agent-api-tokens"
+    # )["SecretString"]).values())
+    # api_key_scheme = HTTPBearer()
 
     app = FastAPI()
 
@@ -97,18 +92,19 @@ def create_app() -> FastAPI:
     # application from receiving live requests.
     @app.get("/health", status_code=204)
     def health():
-        return
+        return "OK"
 
-    @app.post("/use-tool")
+    @app.post("/query_open_scholar")
     def use_tool(
-        tool_request: ToolRequest,
-        credentials: Annotated[HTTPAuthorizationCredentials, Depends(api_key_scheme)]
+            tool_request: ToolRequest,
+            # credentials: Annotated[HTTPAuthorizationCredentials, Depends(api_key_scheme)]
     ) -> Union[AsyncToolResponse, ToolResponse]:
-        if credentials.credentials not in api_keys:
-            raise HTTPException(
-                status_code=401,
-                detail="Could not validate credentials",
-            )
+        # TODO: Uncomment the following lines if you need to authenticate incoming requests
+        # if credentials.credentials not in api_keys:
+        #     raise HTTPException(
+        #         status_code=401,
+        #         detail="Could not validate credentials",
+        #     )
 
         # Caller is asking for a status update of long-running request
         if tool_request.task_id:
@@ -117,24 +113,13 @@ def create_app() -> FastAPI:
         # New task
         task_id = str(uuid.uuid4())
 
-        # if we think the work is gonna take a long time, kick it off in another
-        # process and record state
-        if _needs_to_be_async(tool_request):
-            estimated_time = _start_async_task(task_id, tool_request)
+        estimated_time = _start_async_task(task_id, tool_request)
 
-            return AsyncToolResponse(
-                task_id=task_id,
-                estimated_time=estimated_time,
-                task_status=TASK_STATUSES["STARTED"],
-                task_result=None
-            )
-
-        # otherwise block on completion and respond with result
-        task_result = _do_task(tool_request, task_id)
-
-        return ToolResponse(
+        return AsyncToolResponse(
             task_id=task_id,
-            task_result=task_result
+            estimated_time=estimated_time,
+            task_status=TASK_STATUSES["STARTED"],
+            task_result=None
         )
 
     return app
@@ -174,7 +159,7 @@ def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:
     return estimated_time
 
 
-def _handle_async_task_check_in(task_id: str) -> ToolResponse:
+def _handle_async_task_check_in(task_id: str) -> Union[ToolResponse | AsyncToolResponse]:
     """
     For tasks that will take a while to complete, we issue a task id
     that can be used to request status updates and eventually, results.
@@ -208,4 +193,3 @@ def _handle_async_task_check_in(task_id: str) -> ToolResponse:
         task_status=task_state.task_status,
         task_result=None
     )
-
