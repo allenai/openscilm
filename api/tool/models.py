@@ -14,6 +14,8 @@ class ToolRequest(BaseModel):
     query: str = Field(default=None, description=(
         "A scientific query posed to nora by a user"
     ))
+    feedback_toggle: Optional[bool] = Field(default=False, description=("Flag to indicate whether to run feedback aware"
+                                                                        " iterations on the generated output"))
 
 
 class Citation(BaseModel):

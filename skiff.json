@@ -1,6 +1,6 @@
 {
-    "appName": "open-scholar-demo",
+    "appName": "open-scholar",
     "contact": "amanpreets",
     "team": "semantic scholar",
-    "replicas": { "prod": 2 }
+    "replicas": { "prod": 1}
 }
