@@ -1,5 +1,5 @@
 from typing import Dict, Any, List
-from modal_engine import ModalEngine
+from tool.modal_engine import ModalEngine
 from nora_lib.tasks.state import StateManager
 import requests
 

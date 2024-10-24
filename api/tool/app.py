@@ -20,18 +20,10 @@ from tool.open_scholar import OpenScholar
 ASYNC_STATE_DIR = "/async-state"
 task_state_manager = StateManager(AsyncTaskState, ASYNC_STATE_DIR)
 async_context = multiprocessing.get_context("fork")
-open_scholar = OpenScholar()
+open_scholar = OpenScholar(task_state_manager)
 
 
 def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
-    def update_task_state(status: str, estimated_time: str = None):
-        if task_id:
-            task_state = task_state_manager.read_state(task_id)
-            task_state.task_status = status
-            if estimated_time:
-                task_state.estimated_time = estimated_time
-                task_state_manager.write_state(task_state)
-            task_state_manager.write_state(task_state)
     """
     TODO: BYO logic here. Don't forget to define `ToolRequest` and `TaskResult`
     in `models.py`!
@@ -45,7 +37,7 @@ def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
     use `task_state_manager.read_state(task_id)` to retrieve, and `.write_state()`
     to write back.
     """
-    answer_map = open_scholar.answer_query(tool_request.query)
+    answer_map = open_scholar.answer_query(tool_request.query, tool_request.feedback_toggle, task_id)
     iterations = [GeneratedIteration(text=iteration["text"], feedback=iteration["feedback"],
                                      citations=Citation(**iteration["citation"])) for iteration in answer_map]
     return TaskResult(iterations=iterations)
@@ -59,7 +51,7 @@ def _estimate_task_length(tool_request: ToolRequest) -> str:
     have access to the request if you want to do something fancier.
     """
 
-    return "10 minutes"
+    return "1 minute" if not tool_request.feedback_toggle else f"{open_scholar.n_feedback} minutes"
 
 
 ###########################################################################
@@ -138,16 +130,19 @@ def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:
     task_state_manager.write_state(task_state)
 
     def _do_task_and_write_result():
+        extra_state = {}
         try:
             task_result = _do_task(tool_request, task_id)
             task_status = TASK_STATUSES["COMPLETED"]
-        except:
+        except Exception as e:
             task_result = None
             task_status = TASK_STATUSES["FAILED"]
+            extra_state["error"] = str(e)
 
         state = task_state_manager.read_state(task_id)
         state.task_result = task_result
         state.task_status = task_status
+        state.extra_state = extra_state
         task_state_manager.write_state(state)
 
     async_context.Process(
