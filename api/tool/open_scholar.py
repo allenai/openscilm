@@ -15,11 +15,11 @@ RETRIEVAL_API = "http://tricycle.cs.washington.edu:5000/search"
 
 class OpenScholar:
     def __init__(
-        self,
-        task_mgr: StateManager,
-        n_retrieval: int = 100,
-        n_rerank: int = 20,
-        n_feedback: int = 5,
+            self,
+            task_mgr: StateManager,
+            n_retrieval: int = 100,
+            n_rerank: int = 20,
+            n_feedback: int = 5,
     ):
         # TODO: Initialize retriever and re-ranker clients here
         self.n_retrieval = n_retrieval
@@ -32,7 +32,7 @@ class OpenScholar:
         # OpenScholar Cofigurations
         # FIXME: temporarily use OAI for debugging; will replace with modal engine
         self.model = None
-        self.client = OpenAI(api_key="YOUR_API_KEY")
+        self.client = OpenAI(api_key="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")
         self.model_name = "gpt-4o"
 
         self.top_n = n_rerank
@@ -45,10 +45,10 @@ class OpenScholar:
 
     ############################ OpenScholar Functions
     def generate_response(
-        self,
-        query,
-        retrieved_ctxs,
-        max_tokens=3000,
+            self,
+            query: str,
+            retrieved_ctxs: List[Dict[str, Any]],
+            max_tokens: int = 3000,
     ):
         ctxs = ""
         for doc_idx, doc in enumerate(retrieved_ctxs[: self.top_n]):
@@ -119,6 +119,7 @@ class OpenScholar:
             results = res_contents["results"]
             status_str = f'{len(results["passages"])} snippets retrieved successfully'
             self.update_task_state(task_id, status_str)
+            print(status_str)
             # paper_titles = []
             # for pes2o_id in results["pes2o IDs"]:
             #     paper_data = get_paper_data(pes2o_id)
@@ -129,9 +130,8 @@ class OpenScholar:
             snippets_list = [
                 {
                     "corpus_id": cid,
-                    "snippet": snippet,
-                    "score": score,
                     "text": snippet,
+                    "score": score,
                 }
                 for cid, snippet, score in zip(
                     results["pes2o IDs"],
@@ -145,7 +145,7 @@ class OpenScholar:
         # return you_result
 
     def answer_query(
-        self, query: str, feedback_toggle: bool, task_id: str
+            self, query: str, feedback_toggle: bool, task_id: str
     ) -> List[Dict[str, Any]]:
         """
         This function takes a query and returns a response.

@@ -27,9 +27,10 @@ class Citation(BaseModel):
     n_citations: Optional[int] = Field(default=0, description=(
         "The number of times the source paper has been cited"
     ))
-    snippets: Optional[List[str]] = Field(default=[], description=(
-        "A list of all the relevant snippets from the cited paper"
+    snippet: str = Field(description=(
+        "A relevant snippet from the cited paper"
     ))
+    score: float = Field(description=("Relevance score of the snippet for the query"))
 
 
 class GeneratedIteration(BaseModel):

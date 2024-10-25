@@ -44,7 +44,6 @@ def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
     use `task_state_manager.read_state(task_id)` to retrieve, and `.write_state()`
     to write back.
     """
-    print("function called")
     answer_map = open_scholar.answer_query(
         tool_request.query, tool_request.feedback_toggle, task_id
     )
@@ -52,7 +51,8 @@ def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
         GeneratedIteration(
             text=iteration["text"],
             feedback=iteration["feedback"],
-            citations=Citation(**iteration["citation"]),
+            citations=[Citation(id=f"[{idx}]", corpus_id=cite["corpus_id"], snippet=cite["text"], score=cite["score"]) for
+                       idx, cite in enumerate(iteration["citations"])],
         )
         for iteration in answer_map
     ]
@@ -109,8 +109,8 @@ def create_app() -> FastAPI:
 
     @app.post("/query_open_scholar")
     def use_tool(
-        tool_request: ToolRequest,
-        # credentials: Annotated[HTTPAuthorizationCredentials, Depends(api_key_scheme)]
+            tool_request: ToolRequest,
+            # credentials: Annotated[HTTPAuthorizationCredentials, Depends(api_key_scheme)]
     ) -> Union[AsyncToolResponse, ToolResponse]:
         # TODO: Uncomment the following lines if you need to authenticate incoming requests
         # if credentials.credentials not in api_keys:
@@ -177,7 +177,7 @@ def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:
 
 
 def _handle_async_task_check_in(
-    task_id: str,
+        task_id: str,
 ) -> Union[ToolResponse | AsyncToolResponse]:
     """
     For tasks that will take a while to complete, we issue a task id
