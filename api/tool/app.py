@@ -2,19 +2,26 @@ import json
 import logging
 import multiprocessing
 import os
-from typing import Annotated, Optional, Union
 import uuid
+from typing import Annotated, Optional, Union
 
 import boto3
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from nora_lib.tasks.state import NoSuchTaskException, StateManager
 from nora_lib.tasks.models import TASK_STATUSES
+from nora_lib.tasks.state import NoSuchTaskException, StateManager
 
 from tool import glog
-from tool.models import AsyncTaskState, AsyncToolResponse, ToolRequest, TaskResult, ToolResponse, GeneratedIteration, \
-    Citation
+from tool.models import (
+    AsyncTaskState,
+    AsyncToolResponse,
+    Citation,
+    GeneratedIteration,
+    TaskResult,
+    ToolRequest,
+    ToolResponse,
+)
 from tool.open_scholar import OpenScholar
 
 ASYNC_STATE_DIR = "/async-state"
@@ -37,9 +44,18 @@ def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
     use `task_state_manager.read_state(task_id)` to retrieve, and `.write_state()`
     to write back.
     """
-    answer_map = open_scholar.answer_query(tool_request.query, tool_request.feedback_toggle, task_id)
-    iterations = [GeneratedIteration(text=iteration["text"], feedback=iteration["feedback"],
-                                     citations=Citation(**iteration["citation"])) for iteration in answer_map]
+    print("function called")
+    answer_map = open_scholar.answer_query(
+        tool_request.query, tool_request.feedback_toggle, task_id
+    )
+    iterations = [
+        GeneratedIteration(
+            text=iteration["text"],
+            feedback=iteration["feedback"],
+            citations=Citation(**iteration["citation"]),
+        )
+        for iteration in answer_map
+    ]
     return TaskResult(iterations=iterations)
 
 
@@ -51,12 +67,17 @@ def _estimate_task_length(tool_request: ToolRequest) -> str:
     have access to the request if you want to do something fancier.
     """
 
-    return "1 minute" if not tool_request.feedback_toggle else f"{open_scholar.n_feedback} minutes"
+    return (
+        "1 minute"
+        if not tool_request.feedback_toggle
+        else f"{open_scholar.n_feedback} minutes"
+    )
 
 
 ###########################################################################
 ### BELOW THIS LINE IS ALL TEMPLATE CODE THAT SHOULD NOT NEED TO CHANGE ###
 ###########################################################################
+
 
 def create_app() -> FastAPI:
     # If LOG_FORMAT is "google:json" emit log message as JSON in a format Google Cloud can parse.
@@ -88,8 +109,8 @@ def create_app() -> FastAPI:
 
     @app.post("/query_open_scholar")
     def use_tool(
-            tool_request: ToolRequest,
-            # credentials: Annotated[HTTPAuthorizationCredentials, Depends(api_key_scheme)]
+        tool_request: ToolRequest,
+        # credentials: Annotated[HTTPAuthorizationCredentials, Depends(api_key_scheme)]
     ) -> Union[AsyncToolResponse, ToolResponse]:
         # TODO: Uncomment the following lines if you need to authenticate incoming requests
         # if credentials.credentials not in api_keys:
@@ -111,7 +132,7 @@ def create_app() -> FastAPI:
             task_id=task_id,
             estimated_time=estimated_time,
             task_status=TASK_STATUSES["STARTED"],
-            task_result=None
+            task_result=None,
         )
 
     return app
@@ -125,7 +146,7 @@ def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:
         estimated_time=estimated_time,
         task_status=TASK_STATUSES["STARTED"],
         task_result=None,
-        extra_state={}
+        extra_state={},
     )
     task_state_manager.write_state(task_state)
 
@@ -136,6 +157,7 @@ def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:
             task_status = TASK_STATUSES["COMPLETED"]
         except Exception as e:
             task_result = None
+
             task_status = TASK_STATUSES["FAILED"]
             extra_state["error"] = str(e)
 
@@ -154,7 +176,9 @@ def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:
     return estimated_time
 
 
-def _handle_async_task_check_in(task_id: str) -> Union[ToolResponse | AsyncToolResponse]:
+def _handle_async_task_check_in(
+    task_id: str,
+) -> Union[ToolResponse | AsyncToolResponse]:
     """
     For tasks that will take a while to complete, we issue a task id
     that can be used to request status updates and eventually, results.
@@ -167,24 +191,33 @@ def _handle_async_task_check_in(task_id: str) -> Union[ToolResponse | AsyncToolR
     try:
         task_state = task_state_manager.read_state(task_id)
     except NoSuchTaskException:
-        raise HTTPException(status_code=404, detail=f"Referenced task {task_id} does not exist.")
+        raise HTTPException(
+            status_code=404, detail=f"Referenced task {task_id} does not exist."
+        )
 
     # Retrieve data, which is just on local disk for now
     if task_state.task_status == TASK_STATUSES["FAILED"]:
-        raise HTTPException(status_code=500, detail=f"Referenced task {task_id} failed.")
+        msg = f"Referenced task {task_id} failed."
+        if task_state.extra_state:
+            msg += f" Error: {task_state.extra_state['error']}"
+        raise HTTPException(
+            status_code=500, detail=f"Referenced task {task_id} failed. Details {msg}."
+        )
 
     if task_state.task_status == TASK_STATUSES["COMPLETED"]:
         if not task_state.task_result:
-            raise HTTPException(status_code=500, detail=f"Task {task_id} marked completed but has no result.")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Task {task_id} marked completed but has no result.",
+            )
 
         return ToolResponse(
-            task_id=task_state.task_id,
-            task_result=task_state.task_result
+            task_id=task_state.task_id, task_result=task_state.task_result
         )
 
     return AsyncToolResponse(
         task_id=task_state.task_id,
         estimated_time=task_state.estimated_time,
         task_status=task_state.task_status,
-        task_result=None
+        task_result=None,
     )

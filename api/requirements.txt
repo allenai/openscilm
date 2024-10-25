@@ -7,3 +7,16 @@ python-json-logger==2.0.2
 uvicorn[standard]
 nora_lib==0.3.9
 modal
+pandas
+jsonlines
+googlesearch-python
+backoff
+nltk
+numpy
+pandas
+requests
+bs4
+fuzzy-match
+googlesearch-python
+openai
+tqdm
