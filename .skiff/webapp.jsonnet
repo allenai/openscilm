@@ -425,7 +425,25 @@ function(
                                 {
                                     name: 'LOG_FORMAT',
                                     value: 'google:json'
-                                }
+                                },
+                                {
+                                    name: "MODAL_TOKEN",
+                                    valueFrom: {
+                                        secretKeyRef: {
+                                            name: "modal-keys",
+                                            key: "MODAL_TOKEN"
+                                        }
+                                    }
+                                },
+                                {
+                                    name: "MODAL_TOKEN_SECRET",
+                                    valueFrom: {
+                                        secretKeyRef: {
+                                            name: "modal-keys",
+                                            key: "MODAL_TOKEN_SECRET"
+                                        }
+                                    }
+                                },
                             ]
                         },
                         {
