@@ -1,25 +1,29 @@
+import re
 from typing import Any, Dict, List
 
 import requests
-
 import tool.instructions
 
 from httpx import get
 from nora_lib.tasks.state import StateManager
 from openai import OpenAI
 from tool.modal_engine import ModalEngine
-from tool.use_search_apis import get_paper_data, search_youcom_non_restricted
+from tool.use_search_apis import (
+    get_paper_data,
+    search_paper_via_query,
+    search_youcom_non_restricted,
+)
 
 RETRIEVAL_API = "http://tricycle.cs.washington.edu:5000/search"
 
 
 class OpenScholar:
     def __init__(
-            self,
-            task_mgr: StateManager,
-            n_retrieval: int = 100,
-            n_rerank: int = 20,
-            n_feedback: int = 5,
+        self,
+        task_mgr: StateManager,
+        n_retrieval: int = 100,
+        n_rerank: int = 20,
+        n_feedback: int = 5,
     ):
         # TODO: Initialize retriever and re-ranker clients here
         self.n_retrieval = n_retrieval
@@ -32,7 +36,9 @@ class OpenScholar:
         # OpenScholar Cofigurations
         # FIXME: temporarily use OAI for debugging; will replace with modal engine
         self.model = None
-        self.client = OpenAI(api_key="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")
+        self.client = OpenAI(
+            api_key="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"
+        )
         self.model_name = "gpt-4o"
 
         self.top_n = n_rerank
@@ -44,12 +50,7 @@ class OpenScholar:
         self.use_contexts = True
 
     ############################ OpenScholar Functions
-    def generate_response(
-            self,
-            query: str,
-            retrieved_ctxs: List[Dict[str, Any]],
-            max_tokens: int = 3000,
-    ):
+    def process_passage(self, retrieved_ctxs: List[Dict[str, Any]]):
         ctxs = ""
         for doc_idx, doc in enumerate(retrieved_ctxs[: self.top_n]):
             if "title" in doc and len(doc["title"]) > 0:
@@ -59,9 +60,19 @@ class OpenScholar:
             else:
                 ctxs += "[{0}] {1}\n".format(doc_idx, doc["text"])
 
+        return ctxs
+
+    def generate_response(
+        self,
+        query: str,
+        retrieved_ctxs: List[Dict[str, Any]],
+        max_tokens: int = 3000,
+    ):
+        ctxs_text = self.process_passage(retrieved_ctxs)
+
         input_query = (
             tool.instructions.generation_instance_prompts_w_references.format_map(
-                {"context": ctxs, "input": query}
+                {"context": ctxs_text, "input": query}
             )
         )
 
@@ -96,6 +107,183 @@ class OpenScholar:
             raw_output = raw_output.split("References:")[0]
         return raw_output
 
+    # Feedback: send feedback on model' predictions.
+    def process_feedack(self, response):
+        feedbacks_and_questions = re.findall(
+            r"Feedback: (.*?)(?:Question: (.*?))?\n", response
+        )
+        ratings = [
+            (feedback.strip(), question.strip() if question else "")
+            for feedback, question in feedbacks_and_questions
+        ]
+        return ratings
+
+    def check_paper_duplication(self, retrieved_papers: List[Dict[str, Any]]):
+        papers_dicts = {
+            paper["text"][:100] + paper["title"]: paper
+            for paper in retrieved_papers
+            if paper is not None
+            and type(paper["text"]) is str
+            and "title" in paper["title"]
+        }
+        dedup_papers = list(papers_dicts.values())
+
+        return dedup_papers
+
+    def get_feedback(
+        self,
+        query: str,
+        ctxs: List[Dict[str, Any]],
+        initial_response: str,
+    ):
+        ctxs_text = self.process_passage(ctxs)
+        input_query = tool.instructions.feedback_example_instance_prompt.format_map(
+            {
+                "question": query,
+                "passages": ctxs_text,
+                "answer": initial_response,
+            }
+        )
+
+        result = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=[
+                {"role": "user", "content": input_query},
+            ],
+            temperature=0.9,
+            max_tokens=2500,
+        )
+        outputs = result.choices[0].message.content
+
+        raw_output = (
+            [
+                t.split("[Response_End]")[0]
+                for t in outputs.split("[Response_Start]")
+                if "[Response_End]" in t
+            ][0]
+            if "[Response_End]" in outputs
+            else outputs
+        )
+        feedbacks = self.process_feedack(raw_output)
+        return feedbacks
+
+    def edit_with_feedback(
+        self,
+        query: str,
+        ctxs: List[Dict[str, Any]],
+        previous_response: str,
+        feedback: str,
+        max_tokens: int = 3000,
+    ):
+        input_query = tool.instructions.editing_instance_prompt.format_map(
+            {
+                "question": query,
+                "passages": self.process_passage(ctxs),
+                "answer": previous_response,
+                "feedback": feedback,
+            }
+        )
+
+        result = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=[
+                {"role": "user", "content": input_query},
+            ],
+            temperature=0.9,
+            max_tokens=max_tokens,
+        )
+        raw_output = result.choices[0].message.content
+        outputs = raw_output
+
+        raw_output = (
+            [
+                t.split("[Response_End]")[0]
+                for t in outputs.split("[Response_Start]")
+                if "[Response_End]" in t
+            ][0]
+            if "[Response_End]" in outputs
+            else outputs
+        )
+        return raw_output
+
+    def edit_with_feedback_retrieval(
+        self,
+        query: str,
+        ctxs: List[Dict[str, Any]],
+        previous_response: str,
+        feedback: str,
+        passage_start_index,
+        max_tokens=3000,
+    ):
+        processed_passages = ""
+        for doc_idx, doc in enumerate(ctxs[: self.top_n]):
+            if "title" in doc and len(doc["title"]) > 0:
+                processed_passages += "[{0}] Title: {1} Text: {2}\n".format(
+                    passage_start_index + doc_idx, doc["title"], doc["text"]
+                )
+            else:
+                processed_passages += "[{0}] {1}\n".format(
+                    passage_start_index + doc_idx + len(ctxs), doc["text"]
+                )
+
+        input_query = (
+            tool.instructions.editing_with_retrieval_instance_prompt.format_map(
+                {
+                    "question": query,
+                    "retrieved_passages": processed_passages,
+                    "answer": previous_response,
+                    "feedback": feedback,
+                }
+            )
+        )
+
+        result = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=[
+                {"role": "user", "content": input_query},
+            ],
+            temperature=0.9,
+            max_tokens=max_tokens,
+        )
+        raw_output = result.choices[0].message.content
+        outputs = raw_output
+        raw_output = (
+            [
+                t.split("[Response_End]")[0]
+                for t in outputs.split("[Response_Start]")
+                if "[Response_End]" in t
+            ][0]
+            if "[Response_End]" in outputs
+            else outputs
+        )
+        return raw_output
+
+    def retrieve_keywords(self, input_query: str):
+        prompt = [
+            tool.instructions.keyword_extraction_prompt.format_map(
+                {"question": input_query}
+            )
+        ]
+
+        result = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=[
+                {"role": "user", "content": prompt[0]},
+            ],
+            temperature=0.9,
+            max_tokens=1000,
+        )
+        raw_output = result.choices[0].message.content
+        outputs = raw_output
+
+        search_queries = raw_output.split(", ")[:3]
+        search_queries = [
+            query.replace("Search queries: ", "")
+            for query in search_queries
+            if len(query) > 0
+        ]
+        return search_queries
+
     ############################ Code for API
     def update_task_state(self, task_id: str, status: str, estimated_time: str = None):
         if task_id:
@@ -120,6 +308,7 @@ class OpenScholar:
             status_str = f'{len(results["passages"])} snippets retrieved successfully'
             self.update_task_state(task_id, status_str)
             print(status_str)
+            # TODO: add paper meta data info here.
             # paper_titles = []
             # for pes2o_id in results["pes2o IDs"]:
             #     paper_data = get_paper_data(pes2o_id)
@@ -140,12 +329,9 @@ class OpenScholar:
                 )
             ]
             return snippets_list
-        # you_result = search_youcom_non_restricted(query)
-        # print(you_result)
-        # return you_result
 
     def answer_query(
-            self, query: str, feedback_toggle: bool, task_id: str
+        self, query: str, feedback_toggle: bool, task_id: str
     ) -> List[Dict[str, Any]]:
         """
         This function takes a query and returns a response.
@@ -166,11 +352,100 @@ class OpenScholar:
 
         # generate response
         self.update_task_state(task_id, "Generating the intial draft")
-        response = self.generate_response(query, retrieved_candidates)
-        print(response)
+        initial_response = self.generate_response(query, retrieved_candidates)
+        print(initial_response)
         responses.append(
-            {"text": response, "feedback": None, "citations": retrieved_candidates}
+            {
+                "text": initial_response,
+                "feedback": None,
+                "citations": retrieved_candidates,
+            }
         )
+
+        # iteratiive feedback loop
+
+        self.update_task_state(task_id, "Generating feedback on the initial draft.")
+        feedbacks = self.get_feedback(
+            query=query, ctxs=retrieved_candidates, initial_response=initial_response
+        )[: self.n_feedback]
+
+        print(feedbacks)
+        previous_response = initial_response
+        for feedback_idx, feedback in enumerate(feedbacks):
+            self.update_task_state(
+                task_id, "Incorporating feedback {}.".format(feedback_idx)
+            )
+            if len(feedback[1]) == 0:
+                edited_answer = self.edit_with_feedback(
+                    query, retrieved_candidates, previous_response, feedback[0]
+                )
+                if "Here is the revised answer:\n\n" in edited_answer:
+                    edited_answer = edited_answer.split(
+                        "Here is the revised answer:\n\n"
+                    )[1]
+                if (
+                    len(edited_answer) > 0
+                    and len(edited_answer) / len(previous_response) > 0.9
+                ):
+                    previous_response = edited_answer
+                    responses.append(
+                        {
+                            "text": edited_answer,
+                            "feedback": feedback[0],
+                            "citations": retrieved_candidates,
+                        }
+                    )
+                    print(edited_answer)
+                else:
+                    print("skipping as edited answers got too short")
+            else:
+                new_papers = []
+                # FIXME: Fix API endpoint
+                new_papers = self.retrieve(feedback[1], task_id)
+                print("additional retrieval results: {}".format(len(new_papers)))
+                print("Pes2O searched papers: {}".format(len(new_papers)))
+                if self.ss_retriever is True:
+                    new_keywords = self.retrieve_keywords(feedback[1])
+                    paper_list = {}
+                    if len(new_keywords) > 0:
+                        for keyword in new_keywords:
+                            top_papers = search_paper_via_query(keyword)
+                            if top_papers is None:
+                                print(keyword)
+                            else:
+                                for paper in top_papers:
+                                    if paper["paperId"] not in paper_list:
+                                        paper["text"] = paper["abstract"]
+                                        paper["citation_counts"] = paper[
+                                            "citationCount"
+                                        ]
+                                        paper_list[paper["paperId"]] = paper
+                        new_papers += list(paper_list.values())
+                if len(new_papers) > 0:
+                    # TODO: add dedup check
+                    # new_papers = self.check_paper_duplication(new_papers)
+                    passages_start_index = len(retrieved_candidates)
+
+                    edited_answer = self.edit_with_feedback_retrieval(
+                        query=query,
+                        ctxs=new_papers,
+                        previous_response=previous_response,
+                        feedback=feedback[0],
+                        passage_start_index=passages_start_index,
+                    )
+
+                    if (len(edited_answer) / len(previous_response)) > 0.9:
+                        retrieved_candidates += new_papers[: self.top_n]
+                        previous_response = edited_answer
+                        responses.append(
+                            {
+                                "text": edited_answer,
+                                "feedback": feedback[0],
+                                "citations": retrieved_candidates,
+                            }
+                        )
+                    else:
+                        print("skipping as edited answers got too short")
 
         # n_feedback = self.n_feedback if feedback_toggle else 1
         # for feedback_round in range(n_feedback):
