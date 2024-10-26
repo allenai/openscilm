@@ -1,4 +1,5 @@
 import modal
+import os
 
 
 def create_prompt_with_llama3_format(prompt,
@@ -18,30 +19,24 @@ class ModalEngine:
 
     def __init__(self) -> None:
         # Skiff secrets
-        # self.modal_client = modal.Client.from_credentials(config.cfg.modal.token, config.cfg.modal.token_secret)
-        pass
+        modal_token = os.getenv("MODAL_TOKEN")
+        modal_token_secret = os.getenv("MODAL_TOKEN_SECRET")
+        self.modal_client = modal.Client.from_credentials(modal_token, modal_token_secret)
 
-    def create_streamed_message(
+    def generate(
             self,
             model: str,
-            messages,
-            inference_options,
+            query: str,
+            **opts,
     ):
+        msgs = {"messages": [{"role": "user", "content": create_prompt_with_llama3_format(query)}]}
         f = modal.Function.lookup(model, "vllm_api", client=self.client)
-        # msgs = [asdict(msg) for msg in messages]
-        # opts = asdict(inference_options)
-        #
-        # for chunk in f.remote_gen(msgs, opts):
-        #     content = (
-        #         chunk["result"]["output"]["text"]
-        #         if "result" in chunk and "output" in chunk["result"] and "text" in chunk["result"]["output"]
-        #         else ""
-        #     )
+        content = ""
+        for chunk in f.remote_gen(msgs, opts):
+            content += (
+                chunk["result"]["output"]["text"]
+                if "result" in chunk and "output" in chunk["result"] and "text" in chunk["result"]["output"]
+                else ""
+            )
 
-        # logprobs = []
-
-        # yield InferenceEngineChunk(
-        #     content=content,
-        #     model=model,
-        #     logprobs=logprobs,
-        # )
+        return content
