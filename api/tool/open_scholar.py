@@ -37,7 +37,7 @@ class OpenScholar:
         # FIXME: temporarily use OAI for debugging; will replace with modal engine
         self.model = None
         self.client = OpenAI(
-            api_key="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"
+            api_key="YOUR_API_KEY",
         )
         self.model_name = "gpt-4o"
 
