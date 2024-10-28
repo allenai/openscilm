@@ -12,3 +12,6 @@ ui/build/
 # UI package manager debug output
 ui/*.log
 .skiff/webapp.yaml
+
+# Skiff env file
+.env

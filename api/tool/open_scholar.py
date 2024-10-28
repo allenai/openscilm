@@ -1,4 +1,5 @@
 import re
+import os
 from typing import Any, Dict, List
 
 import requests
@@ -16,6 +17,7 @@ from tool.use_search_apis import (
 
 RETRIEVAL_API = "http://tricycle.cs.washington.edu:5000/search"
 
+OPENAI_API_KEY=os.getenv("OPENAI_API_KEY")
 
 class OpenScholar:
     def __init__(
@@ -37,7 +39,7 @@ class OpenScholar:
         # FIXME: temporarily use OAI for debugging; will replace with modal engine
         self.model = None
         self.client = OpenAI(
-            api_key="YOUR_API_KEY",
+            api_key=OPENAI_API_KEY,
         )
         self.model_name = "gpt-4o"
 

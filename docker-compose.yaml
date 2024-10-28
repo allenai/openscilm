@@ -19,6 +19,8 @@ services:
       - MODAL_TOKEN_SECRET=${MODAL_TOKEN_SECRET}
     ports:
       - 9000:8000
+    env_file:
+      - .env
   ui:
     build: ./ui
     # We can't mount the entire UI directory, since JavaScript dependencies
