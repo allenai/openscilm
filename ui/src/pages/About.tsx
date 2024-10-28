@@ -1,3 +1,4 @@
+import React from 'react';
 import { MaxWidthText } from '@allenai/varnish2';
 
 export const About = () => {

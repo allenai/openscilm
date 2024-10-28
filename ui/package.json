@@ -14,7 +14,7 @@
     "@types/react": "^18.2.0"
   },
   "dependencies": {
-    "@allenai/varnish2": "^1.2.1",
+    "@allenai/varnish2": "^2.0.1-beta.0",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.15.11",
@@ -22,8 +22,10 @@
     "@mui/material": "^5.15.6",
     "@mui/system": "^5.15.11",
     "@mui/x-date-pickers": "^6.19.5",
+    "classnames": "^2.5.1",
     "dayjs": "^1.8.30",
     "file-loader": "^6.2.0",
+    "markdown-to-jsx": "^7.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.50.1",
@@ -31,7 +33,10 @@
     "react-is": "^18.2.0",
     "react-router-dom": "^6.20.0",
     "react-router-hash-link": "^2.4.3",
-    "use-http": "^1.0.27"
+    "react-to-text": "^2.0.1",
+    "styled-components": "^6.1.13",
+    "use-http": "^1.0.27",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@allenai/eslint-config-varnish": "^2.0.0",
@@ -40,6 +45,7 @@
     "@types/react-dom": "^18.2.17",
     "@types/react-router-dom": "^5.3.3",
     "@types/react-router-hash-link": "^2",
+    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^7.4.0",
     "@typescript-eslint/parser": "^7.4.0",
     "copy-webpack-plugin": "^10.2.1",

@@ -4,6 +4,7 @@
  *
  * @see https://github.com/allenai/varnish-mui
  */
+import React from 'react';
 import { getTheme, getRouterOverriddenTheme, VarnishApp } from '@allenai/varnish2';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';

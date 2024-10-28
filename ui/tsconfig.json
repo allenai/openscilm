@@ -7,8 +7,8 @@
     "esModuleInterop": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "jsx": "react-jsx",
-    "sourceMap": true
-  },
-  "include": ["src", ".eslintrc.js", "webpack.config.js"]
+    "jsx": "react",
+    "sourceMap": true,
+    "baseUrl": "."
+  }
 }

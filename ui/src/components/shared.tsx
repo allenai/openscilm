@@ -6,6 +6,7 @@
  * should probably be put in their own file. This file is meant for the
  * re-usable, simple things used in a lot of different spots in your UI.
  */
+import React from 'react';
 import { useEffect } from 'react';
 import { styled } from '@mui/material';
 import WarningOutlined from '@mui/icons-material/WarningOutlined';
