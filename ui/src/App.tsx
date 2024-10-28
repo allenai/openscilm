@@ -22,6 +22,11 @@ const ROUTES: AppRoute[] = [
         Component: Home,
     },
     {
+        path: '/query/:taskId',
+        label: 'Home',
+        Component: Home,
+    },
+    {
         path: '/about',
         label: 'About',
         Component: About,
