@@ -94,11 +94,11 @@ def create_app() -> FastAPI:
     # )["SecretString"]).values())
     # api_key_scheme = HTTPBearer()
 
-    app = FastAPI()
+    app = FastAPI(root_path="/api")
 
     @app.get("/")
     def root():
-        return RedirectResponse("/docs")
+        return RedirectResponse("/api/docs")
 
     # This tells the machinery that powers Skiff (Kubernetes) that your application
     # is ready to receive traffic. Returning a non 200 response code will prevent the
