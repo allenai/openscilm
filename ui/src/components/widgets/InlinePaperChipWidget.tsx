@@ -2,11 +2,9 @@ import ArticleIcon from '@mui/icons-material/Article';
 
 import { Divider, Menu, MenuItem, styled } from '@mui/material';
 
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 
-import React, { useCallback, useEffect } from 'react';
+import React from 'react';
 
-import { isCorpusIdShowable } from './utils';
 import {
   InlineChipWidget,
   TYPE,
@@ -24,7 +22,6 @@ export interface InlinePaperChipWidgetProps {
   // Based on the grammar, gpt sometimes use a short name to refer to a paper instead of the full title (eg PaperWeaver), in this case we want to show the paper chip inline
   isShortName?: boolean;
   isDarkMode?: boolean;
-  hideAddPaperToTable?: boolean;
   children?: React.ReactNode;
 }
 
@@ -37,10 +34,8 @@ export const InlinePaperChipWidget: React.FC<InlinePaperChipWidgetProps> = (
     isMultiLine,
     isShortName,
     isFullWidth = false,
-    hideAddPaperToTable = false,
     isDarkMode,
   } = props;
-  const [isShowable, setIsShowable] = React.useState<boolean>(false);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -49,12 +44,6 @@ export const InlinePaperChipWidget: React.FC<InlinePaperChipWidgetProps> = (
   const handleClose = () => {
     setAnchorEl(null);
   };
-
-  useEffect(() => {
-    isCorpusIdShowable(corpusId).then((isShowable) => {
-      setIsShowable(isShowable);
-    });
-  }, [corpusId]);
 
   return (
     <TitleChipContainer
@@ -66,7 +55,7 @@ export const InlinePaperChipWidget: React.FC<InlinePaperChipWidgetProps> = (
         <InlineChipWidget
           label={paperTitle}
           type={TYPE.default}
-          icon={isShowable ? <PictureAsPdfIcon /> : <ArticleIcon />}
+          icon={<ArticleIcon />}
           size={SIZE.medium}
           isMultiLine={isMultiLine}
           isDarkMode={isDarkMode}
