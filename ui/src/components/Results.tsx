@@ -3,7 +3,7 @@ import { LinearProgress } from '@mui/material';
 import { StatusType, updateStatus } from '../api/utils';
 
 
-const DEFAULT_INTERVAL = 2000;
+const DEFAULT_INTERVAL = 3000;
 
 interface PropType {
   taskId: string;
