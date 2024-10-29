@@ -34,7 +34,7 @@ interface TaskResultType {
 export const convertIterationToSection = (iteration: IterationType): ReportSection => {
   let text = iteration.text;
   iteration.citations.forEach(citation => {
-    text = text.replace(citation.id, `<Paper corpusId="${citation.corpus_id}" paperTitle="${citation.id}" isShortName></Paper>`);
+    text = text.replaceAll(citation.id, `<Paper corpusId="${citation.corpus_id}" paperTitle="${citation.id}" isShortName></Paper>`);
   });
   console.log(text);
   return {
