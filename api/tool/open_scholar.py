@@ -366,79 +366,30 @@ class OpenScholar:
         )
 
         # iteratiive feedback loop
+        if feedback_toggle:
+            self.update_task_state(task_id, "Generating feedback on the initial draft.")
+            feedbacks = self.get_feedback(
+                query=query, ctxs=retrieved_candidates, initial_response=initial_response
+            )[: self.n_feedback]
 
-        self.update_task_state(task_id, "Generating feedback on the initial draft.")
-        feedbacks = self.get_feedback(
-            query=query, ctxs=retrieved_candidates, initial_response=initial_response
-        )[: self.n_feedback]
-
-        print(feedbacks)
-        previous_response = initial_response
-        for feedback_idx, feedback in enumerate(feedbacks):
-            self.update_task_state(
-                task_id, "Incorporating feedback {}.".format(feedback_idx)
-            )
-            if len(feedback[1]) == 0:
-                edited_answer = self.edit_with_feedback(
-                    query, retrieved_candidates, previous_response, feedback[0]
+            print(feedbacks)
+            previous_response = initial_response
+            for feedback_idx, feedback in enumerate(feedbacks):
+                self.update_task_state(
+                    task_id, "Incorporating feedback {}.".format(feedback_idx)
                 )
-                if "Here is the revised answer:\n\n" in edited_answer:
-                    edited_answer = edited_answer.split(
-                        "Here is the revised answer:\n\n"
-                    )[1]
-                if (
-                    len(edited_answer) > 0
-                    and len(edited_answer) / len(previous_response) > 0.9
-                ):
-                    previous_response = edited_answer
-                    responses.append(
-                        {
-                            "text": edited_answer,
-                            "feedback": feedback[0],
-                            "citations": retrieved_candidates,
-                        }
+                if len(feedback[1]) == 0:
+                    edited_answer = self.edit_with_feedback(
+                        query, retrieved_candidates, previous_response, feedback[0]
                     )
-                    print(edited_answer)
-                else:
-                    print("skipping as edited answers got too short")
-            else:
-                new_papers = []
-                # FIXME: Fix API endpoint
-                new_papers = self.retrieve(feedback[1], task_id)
-                print("additional retrieval results: {}".format(len(new_papers)))
-                print("Pes2O searched papers: {}".format(len(new_papers)))
-                if self.ss_retriever is True:
-                    new_keywords = self.retrieve_keywords(feedback[1])
-                    paper_list = {}
-                    if len(new_keywords) > 0:
-                        for keyword in new_keywords:
-                            top_papers = search_paper_via_query(keyword)
-                            if top_papers is None:
-                                print(keyword)
-                            else:
-                                for paper in top_papers:
-                                    if paper["paperId"] not in paper_list:
-                                        paper["text"] = paper["abstract"]
-                                        paper["citation_counts"] = paper[
-                                            "citationCount"
-                                        ]
-                                        paper_list[paper["paperId"]] = paper
-                        new_papers += list(paper_list.values())
-                if len(new_papers) > 0:
-                    # TODO: add dedup check
-                    # new_papers = self.check_paper_duplication(new_papers)
-                    passages_start_index = len(retrieved_candidates)
-
-                    edited_answer = self.edit_with_feedback_retrieval(
-                        query=query,
-                        ctxs=new_papers,
-                        previous_response=previous_response,
-                        feedback=feedback[0],
-                        passage_start_index=passages_start_index,
-                    )
-
-                    if (len(edited_answer) / len(previous_response)) > 0.9:
-                        retrieved_candidates += new_papers[: self.top_n]
+                    if "Here is the revised answer:\n\n" in edited_answer:
+                        edited_answer = edited_answer.split(
+                            "Here is the revised answer:\n\n"
+                        )[1]
+                    if (
+                        len(edited_answer) > 0
+                        and len(edited_answer) / len(previous_response) > 0.9
+                    ):
                         previous_response = edited_answer
                         responses.append(
                             {
@@ -447,23 +398,72 @@ class OpenScholar:
                                 "citations": retrieved_candidates,
                             }
                         )
+                        print(edited_answer)
                     else:
                         print("skipping as edited answers got too short")
+                else:
+                    new_papers = []
+                    # FIXME: Fix API endpoint
+                    new_papers = self.retrieve(feedback[1], task_id)
+                    print("additional retrieval results: {}".format(len(new_papers)))
+                    print("Pes2O searched papers: {}".format(len(new_papers)))
+                    if self.ss_retriever is True:
+                        new_keywords = self.retrieve_keywords(feedback[1])
+                        paper_list = {}
+                        if len(new_keywords) > 0:
+                            for keyword in new_keywords:
+                                top_papers = search_paper_via_query(keyword)
+                                if top_papers is None:
+                                    print(keyword)
+                                else:
+                                    for paper in top_papers:
+                                        if paper["paperId"] not in paper_list:
+                                            paper["text"] = paper["abstract"]
+                                            paper["citation_counts"] = paper[
+                                                "citationCount"
+                                            ]
+                                            paper_list[paper["paperId"]] = paper
+                            new_papers += list(paper_list.values())
+                    if len(new_papers) > 0:
+                        # TODO: add dedup check
+                        # new_papers = self.check_paper_duplication(new_papers)
+                        passages_start_index = len(retrieved_candidates)
 
-        # n_feedback = self.n_feedback if feedback_toggle else 1
-        # for feedback_round in range(n_feedback):
-        #     curr_response = dict()
-        #     self.update_task_state(
-        #         task_id, "retrieving relevant snippets from 40M papers"
-        #     )
-        #     # TODO: Incorporate feedback into query
-        #     retrieved_candidates = self.retrieve(query, task_id)
-        #     # TODO: re-ranker if using Semantic Scholar vespa api for retrieval
+                        edited_answer = self.edit_with_feedback_retrieval(
+                            query=query,
+                            ctxs=new_papers,
+                            previous_response=previous_response,
+                            feedback=feedback[0],
+                            passage_start_index=passages_start_index,
+                        )
 
-        #     # response, gen_feedback = self.modal_engine
-        #     # curr_response["text"] = response
-        #     # curr_response["feedback"] = curr_feedback
-        #     # curr_feedback = gen_feedback
-        #     responses.append(curr_response)
-        # TODO: Format references in the response
+                        if (len(edited_answer) / len(previous_response)) > 0.9:
+                            retrieved_candidates += new_papers[: self.top_n]
+                            previous_response = edited_answer
+                            responses.append(
+                                {
+                                    "text": edited_answer,
+                                    "feedback": feedback[0],
+                                    "citations": retrieved_candidates,
+                                }
+                            )
+                        else:
+                            print("skipping as edited answers got too short")
+
+            # n_feedback = self.n_feedback if feedback_toggle else 1
+            # for feedback_round in range(n_feedback):
+            #     curr_response = dict()
+            #     self.update_task_state(
+            #         task_id, "retrieving relevant snippets from 40M papers"
+            #     )
+            #     # TODO: Incorporate feedback into query
+            #     retrieved_candidates = self.retrieve(query, task_id)
+            #     # TODO: re-ranker if using Semantic Scholar vespa api for retrieval
+
+            #     # response, gen_feedback = self.modal_engine
+            #     # curr_response["text"] = response
+            #     # curr_response["feedback"] = curr_feedback
+            #     # curr_feedback = gen_feedback
+            #     responses.append(curr_response)
+            # TODO: Format references in the response
         return responses
