@@ -26,7 +26,7 @@ export const Home = () => {
 
 
   return (
-    <div>
+    <div style={{ paddingLeft: '25px' }}>
       <div style={{ padding: '24px 10px' }}>
         <MessageBar onSend={handleSubmit} />
       </div>

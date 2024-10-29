@@ -3,6 +3,7 @@ import {
     styled,
     List,
     ListItemButton,
+    Box,
 } from '@mui/material';
 import { Route, Routes } from 'react-router-dom';
 import { Header, Content, Footer } from '@allenai/varnish2';
@@ -10,6 +11,7 @@ import { Header, Content, Footer } from '@allenai/varnish2';
 import { About } from './pages/About';
 import { Home } from './pages/Home';
 import { AppRoute } from './AppRoute';
+import Sidebar from './components/Sidebar';
 
 /**
  * An array capturing the available routes in your application. You can
@@ -43,20 +45,22 @@ export const App = () => {
 
     return (
         <DarkBackground>
-            <Header>
+            <Header style={{ zIndex: 9999 }}>
                 <Header.Columns columns="auto 1fr auto">
                     <Header.Logo label={<Header.AppName>OpenScholar</Header.AppName>}>
                     </Header.Logo>
                 </Header.Columns>
             </Header>
-
-            <Content main>
-                <Routes>
-                    {ROUTES.map(({ path, Component }) => (
-                        <Route key={path} path={path} element={<Component />} />
-                    ))}
-                </Routes>
-            </Content>
+            <Box sx={{ display: 'flex' }}>
+                <Sidebar />
+                <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+                    <Routes>
+                        {ROUTES.map(({ path, Component }) => (
+                            <Route key={path} path={path} element={<Component />} />
+                        ))}
+                    </Routes>
+                </Box>
+            </Box>
             <Footer />
         </DarkBackground>
     );

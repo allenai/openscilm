@@ -37,7 +37,7 @@ export const Results: React.FC<PropType> = (props) => {
   return (
     <div>
       {isLoading && <LinearProgress />}
-      <pre>{JSON.stringify(status ?? { status: 'idle' }, undefined, 2)}</pre>
+      <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(status ?? { status: 'idle' }, undefined, 2)}</pre>
     </div>
   );
 };
