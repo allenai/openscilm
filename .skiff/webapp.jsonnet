@@ -427,19 +427,10 @@ function(
                                     value: 'google:json'
                                 },
                                 {
-                                    name: "OPENAI_API_KEY",
-                                    valueFrom: {
-                                        secretKeyRef: {
-                                            name: "openai-api-key",
-                                            key: "OPENAI_API_KEY"
-                                        }
-                                    }
-                                },
-                                {
                                     name: "MODAL_TOKEN",
                                     valueFrom: {
                                         secretKeyRef: {
-                                            name: "modal-keys",
+                                            name: "modal-tokens",
                                             key: "MODAL_TOKEN"
                                         }
                                     }
@@ -448,7 +439,7 @@ function(
                                     name: "MODAL_TOKEN_SECRET",
                                     valueFrom: {
                                         secretKeyRef: {
-                                            name: "modal-keys",
+                                            name: "modal-tokens",
                                             key: "MODAL_TOKEN_SECRET"
                                         }
                                     }
