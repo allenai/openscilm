@@ -1,7 +1,7 @@
 import re
 import os
 from typing import Any, Dict, List
-
+from time import time
 import requests
 import tool.instructions
 
@@ -288,6 +288,7 @@ class OpenScholar:
 
     ############################ Code for API
     def update_task_state(self, task_id: str, status: str, estimated_time: str = None):
+        status = f"{time()}:{status}"
         if task_id:
             task_state = self.task_mgr.read_state(task_id)
             task_state.task_status = status

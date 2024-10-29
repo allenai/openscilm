@@ -4,7 +4,7 @@ import multiprocessing
 import os
 import uuid
 from typing import Annotated, Optional, Union
-
+from time import time
 import boto3
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
@@ -67,7 +67,7 @@ def _estimate_task_length(tool_request: ToolRequest) -> str:
     have access to the request if you want to do something fancier.
     """
 
-    return (
+    return str(time()) + ":" +(
         "1 minute"
         if not tool_request.feedback_toggle
         else f"{open_scholar.n_feedback} minutes"
@@ -130,6 +130,7 @@ def create_app() -> FastAPI:
 
         return AsyncToolResponse(
             task_id=task_id,
+            query=tool_request.query,
             estimated_time=estimated_time,
             task_status=TASK_STATUSES["STARTED"],
             task_result=None,
@@ -143,6 +144,7 @@ def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:
 
     task_state = AsyncTaskState(
         task_id=task_id,
+        query=tool_request.query,
         estimated_time=estimated_time,
         task_status=TASK_STATUSES["STARTED"],
         task_result=None,
@@ -212,11 +214,12 @@ def _handle_async_task_check_in(
             )
 
         return ToolResponse(
-            task_id=task_state.task_id, task_result=task_state.task_result
+            task_id=task_state.task_id, query=task_state.query, task_result=task_state.task_result
         )
 
     return AsyncToolResponse(
         task_id=task_state.task_id,
+        query=task_state.query,
         estimated_time=task_state.estimated_time,
         task_status=task_state.task_status,
         task_result=None,
