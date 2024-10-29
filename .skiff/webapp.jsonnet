@@ -427,6 +427,15 @@ function(
                                     value: 'google:json'
                                 },
                                 {
+                                    name: "S2_PARTNER_KEY",
+                                    valueFrom: {
+                                        secretKeyRef: {
+                                            name: "s2-keys",
+                                            key: "S2_PARTNER_KEY"
+                                        }
+                                    }
+                                },
+                                {
                                     name: "MODAL_TOKEN",
                                     valueFrom: {
                                         secretKeyRef: {

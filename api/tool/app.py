@@ -1,4 +1,5 @@
 import json
+import requests
 import logging
 import multiprocessing
 import os
@@ -21,6 +22,7 @@ from tool.models import (
     TaskResult,
     ToolRequest,
     ToolResponse,
+    Papers
 )
 from tool.open_scholar import OpenScholar
 
@@ -136,7 +138,25 @@ def create_app() -> FastAPI:
             task_result=None,
         )
 
+    S2_APIKEY = os.getenv('S2_PARTNER_API_KEY') or ''
+    S2_HEADERS = {'x-api-key': S2_APIKEY}
+    S2_API_URL = 'https://api.semanticscholar.org/graph/v1/paper/batch'
+    @app.post("/paper_details/")
+    def paper_details(papers: Papers): # pyright: ignore reportUnusedFunction
+        fieldstring = 'authors,title,year'
+        if (papers.fields):
+            fieldstring = ','.join(papers.fields)
+        response = requests.post(
+            S2_API_URL,
+            headers=S2_HEADERS,
+            params={'fields': fieldstring},
+            json={"ids": [f'CorpusId:{corpus_id}' for corpus_id in papers.corpus_ids]},
+        )
+        data = response.json()
+        return data
+
     return app
+
 
 
 def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:

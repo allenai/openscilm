@@ -5,6 +5,10 @@ from nora_lib.tasks.models import AsyncTaskState as BaseAsyncTaskState
 from pydantic import BaseModel, Field
 
 
+class Papers(BaseModel):
+    corpus_ids: List[int] = Field(description="List of corpus ids of the papers")
+    fields: Optional[List[str]] = Field(description="List of fields to be fetched from the papers")
+
 # TODO: define your request data
 class ToolRequest(BaseModel):
     task_id: Optional[str] = Field(default=None, description=(
