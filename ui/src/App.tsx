@@ -39,6 +39,9 @@ const ROUTES: AppRoute[] = [
 const DarkBackground= styled('div')`
     color: ${({ theme }) => theme.palette.text.reversed};
     background-color: ${({ theme }) => theme.palette.background.reversed};
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 `;
 
 export const App = () => {
@@ -51,7 +54,7 @@ export const App = () => {
                     </Header.Logo>
                 </Header.Columns>
             </Header>
-            <Box sx={{ display: 'flex' }}>
+            <Box sx={{ display: 'flex', flexGrow: 1 }}>
                 <Sidebar />
                 <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                     <Routes>
