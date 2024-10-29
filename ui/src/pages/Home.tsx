@@ -5,6 +5,7 @@ import { CircularProgress } from '@mui/material';
 import { Results } from '../components/Results';
 import { createTask } from '../api/utils';
 import { useCookies } from 'react-cookie';
+import { useQueryHistory } from '../components/shared';
 
 
 export const Home = () => {
@@ -12,10 +13,7 @@ export const Home = () => {
   const navigate = useNavigate();
   const { taskId } = useParams();
 
-  const [cookies, setCookie] = useCookies(['history']);
-  if (!cookies.history) {
-    setCookie('history', {}, { path: '/' });
-  }
+  const {history, setHistory} = useQueryHistory();
 
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
@@ -28,10 +26,13 @@ export const Home = () => {
     console.log(newStatus, newStatus.task_id);
     if (newStatus.task_id) {
       navigate(`/query/${newStatus.task_id}`, { replace: true });
-      if (!cookies.history[newStatus.task_id]) {
-        setCookie('history', { ...cookies.history, [newStatus.task_id]: {
-          query, taskId: newStatus.task_id, timestamp: Date.now()
-        }}, { path: '/' });
+      if (!history[newStatus.task_id]) {
+        setHistory({
+          ...history,
+          [newStatus.task_id]: {
+            query: newStatus.query, taskId: newStatus.task_id, timestamp: Date.now()
+          }
+        });
       }
     }
   }, []);
