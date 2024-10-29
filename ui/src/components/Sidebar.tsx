@@ -10,10 +10,18 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
 import MailIcon from '@mui/icons-material/Mail';
+import { useCookies } from 'react-cookie';
 
 const drawerWidth = 240;
 
 export default function Sidebar() {
+  const [cookies, setCookie] = useCookies(['history']);
+  if (!cookies.history) {
+    setCookie('history', {}, { path: '/' });
+  }
+
+  const sortedHistory = Object.values(cookies.history).sort((a, b) => b.timestamp - a.timestamp)
+
   return (
     <Drawer
       variant="permanent"
@@ -25,31 +33,19 @@ export default function Sidebar() {
     >
       <Toolbar />
       <Box sx={{ overflow: 'auto', paddingTop: '35px' }}>
-        <List>
-          {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
-            <ListItem key={text} disablePadding>
-              <ListItemButton>
-                <ListItemIcon>
-                  {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-                </ListItemIcon>
-                <ListItemText primary={text} />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
         <Divider />
         <List>
-          {['All mail', 'Trash', 'Spam'].map((text, index) => (
-            <ListItem key={text} disablePadding>
-              <ListItemButton>
-                <ListItemIcon>
-                  {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-                </ListItemIcon>
-                <ListItemText primary={text} />
-              </ListItemButton>
-            </ListItem>
-          ))}
+          {sortedHistory.map((item) => {
+            return (
+              <ListItem key={item.taskId} disablePadding>
+                <ListItemButton>
+                  <ListItemText primary={item.query} />
+                </ListItemButton>
+              </ListItem>
+            )
+          })}
         </List>
+        <Divider />
       </Box>
     </Drawer>
   );
