@@ -10,6 +10,7 @@ export const BACKEND_DEFAULT_INIT = {
 
 export interface StatusType {
   task_id: string;
+  query: string;
   task_result: null | object;
 }
 

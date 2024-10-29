@@ -6,21 +6,19 @@ import List from '@mui/material/List';
 import Divider from '@mui/material/Divider';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
-import MailIcon from '@mui/icons-material/Mail';
-import { useCookies } from 'react-cookie';
+import { useQueryHistory } from './shared';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { ListSubheader } from '@mui/material';
 
 const drawerWidth = 240;
 
 export default function Sidebar() {
-  const [cookies, setCookie] = useCookies(['history']);
-  if (!cookies.history) {
-    setCookie('history', {}, { path: '/' });
-  }
+  const { history } = useQueryHistory();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const sortedHistory = Object.values(cookies.history).sort((a, b) => b.timestamp - a.timestamp)
+  const sortedHistory = Object.values(history).sort((a, b) => b.timestamp - a.timestamp)
 
   return (
     <Drawer
@@ -34,11 +32,21 @@ export default function Sidebar() {
       <Toolbar />
       <Box sx={{ overflow: 'auto', paddingTop: '35px' }}>
         <Divider />
-        <List>
+        <List
+          subheader={
+            <ListSubheader component="div" id="nested-list-subheader">
+              Recent Queries
+            </ListSubheader>
+          }>
           {sortedHistory.map((item) => {
             return (
               <ListItem key={item.taskId} disablePadding>
-                <ListItemButton>
+                <ListItemButton
+                  selected={location.pathname.includes(item.taskId)}
+                  onClick={() => {
+                    navigate(`/query/${item.taskId}`, { replace: true });
+                  }}
+                >
                   <ListItemText primary={item.query} />
                 </ListItemButton>
               </ListItem>
@@ -46,6 +54,16 @@ export default function Sidebar() {
           })}
         </List>
         <Divider />
+        <ListItem disablePadding>
+          <ListItemButton
+            selected={location.pathname.includes('/about')}
+            onClick={() => {
+              navigate(`/about`, { replace: true });
+            }}
+          >
+            <ListItemText primary={'About OpenScholar'} />
+          </ListItemButton>
+        </ListItem>
       </Box>
     </Drawer>
   );
