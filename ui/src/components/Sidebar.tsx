@@ -30,7 +30,19 @@ export default function Sidebar() {
       }}
     >
       <Toolbar />
-      <Box sx={{ overflow: 'auto', paddingTop: '35px' }}>
+      <Box sx={{ overflow: 'auto', paddingTop: '45px' }}>
+        <List>
+              <ListItem disablePadding>
+                <ListItemButton
+                  selected={location.pathname === '/'}
+                  onClick={() => {
+                    navigate(`/`, { replace: true });
+                  }}
+                >
+                  <ListItemText primary={'Ask a new Question'} />
+                </ListItemButton>
+              </ListItem>
+        </List>
         <Divider />
         <List
           subheader={

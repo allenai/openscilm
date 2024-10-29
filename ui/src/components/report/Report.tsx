@@ -100,11 +100,10 @@ export const Report: React.FC<{ section: ReportSection }> = (props) => {
 };
 
 const DocumentContainer = styled('div')`
-  padding: 0 12px;
 `;
 
 const SectionContainer = styled('div')`
-  padding: 12px;
-  background: white;
+  padding: 20px 14px;
+  background: #eaeaea;
   border-radius: 6px;
 `;

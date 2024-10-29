@@ -1,17 +1,14 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import MessageBar from '../components/widgets/MessageBar';
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { CircularProgress } from '@mui/material';
-import { Results } from '../components/Results';
 import { createTask } from '../api/utils';
-import { useCookies } from 'react-cookie';
 import { useQueryHistory } from '../components/shared';
 
 
 export const Home = () => {
 
   const navigate = useNavigate();
-  const { taskId } = useParams();
 
   const {history, setHistory} = useQueryHistory();
 
@@ -38,12 +35,11 @@ export const Home = () => {
   }, []);
 
   return (
-    <div style={{ paddingLeft: '25px' }}>
+    <div style={{ width: '100%', maxWidth: '860px' }}>
       <div style={{ padding: '24px 10px' }}>
         <MessageBar onSend={handleSubmit} />
       </div>
       {isLoading && <CircularProgress />}
-      {taskId && <Results taskId={taskId} key={taskId} />}
     </div>
   );
 };

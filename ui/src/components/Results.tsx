@@ -39,7 +39,8 @@ export const Results: React.FC<PropType> = (props) => {
 
   return (
     <div>
-      {isLoading && <LinearProgress />}
+      {isLoading && <LinearProgress style={{ marginBottom: '-4px' }} />}
+      <h2>{status?.query}</h2>
       {status?.task_result && (
         <Report section={section}/>
       )}

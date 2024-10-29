@@ -4,13 +4,15 @@ import {
     Box,
 } from '@mui/material';
 import { Route, Routes } from 'react-router-dom';
-import { Header, Content, Footer } from '@allenai/varnish2';
+import { Header } from '@allenai/varnish2';
+// import { Footer } from '@allenai/varnish2';
 
 import { About } from './pages/About';
 import { Home } from './pages/Home';
 import { AppRoute } from './AppRoute';
 import Sidebar from './components/Sidebar';
 import { CookiesProvider } from 'react-cookie';
+import { Section } from './pages/Section';
 
 
 /**
@@ -25,8 +27,8 @@ const ROUTES: AppRoute[] = [
     },
     {
         path: '/query/:taskId',
-        label: 'Home',
-        Component: Home,
+        label: 'Results',
+        Component: Section,
     },
     {
         path: '/about',
@@ -56,9 +58,11 @@ export const App = () => {
                         </Header.Logo>
                     </Header.Columns>
                 </Header>
-                <Box sx={{ display: 'flex', flexGrow: 1 }}>
+                <Box sx={{ display: 'flex', flexGrow: 1, height: '100%' }}>
                     <Sidebar />
-                    <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+                    <Box component="main" sx={{
+                        flexGrow: 1, p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center'
+                    }}>
                         <Routes>
                             {ROUTES.map(({ path, Component }) => (
                                 <Route key={path} path={path} element={<Component />} />
@@ -66,7 +70,7 @@ export const App = () => {
                         </Routes>
                     </Box>
                 </Box>
-                <Footer />
+                {/* <Footer /> */}
             </DarkBackground>
         </CookiesProvider>
     );
