@@ -4,6 +4,7 @@ from typing import Any, Dict, List
 from time import time
 import requests
 import tool.instructions
+import threading
 
 from httpx import get
 from nora_lib.tasks.state import StateManager
@@ -17,22 +18,23 @@ from tool.use_search_apis import (
 
 RETRIEVAL_API = "http://tricycle.cs.washington.edu:5000/search"
 
-OPENAI_API_KEY=os.getenv("OPENAI_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
 
 class OpenScholar:
     def __init__(
-        self,
-        task_mgr: StateManager,
-        n_retrieval: int = 100,
-        n_rerank: int = 20,
-        n_feedback: int = 5,
+            self,
+            task_mgr: StateManager,
+            n_retrieval: int = 100,
+            n_rerank: int = 20,
+            n_feedback: int = 5,
     ):
         # TODO: Initialize retriever and re-ranker clients here
         self.n_retrieval = n_retrieval
         self.n_rerank = n_rerank
         self.n_feedback = n_feedback
         # FIXME: temporarily use OAI for debugging; will replace with modal engine
-        # self.modal_engine = ModalEngine()
+        self.modal_engine = ModalEngine()
         self.task_mgr = task_mgr
 
         # OpenScholar Cofigurations
@@ -52,6 +54,22 @@ class OpenScholar:
         self.use_contexts = True
 
     ############################ OpenScholar Functions
+
+    def llm_inference(self, input_query: str, **opt_kwargs):
+        outputs = []
+        for chunk in self.modal_engine.generate(input_query, **opt_kwargs):
+            outputs.append(chunk)
+        # result = self.client.chat.completions.create(
+        #     model=self.model_name,
+        #     messages=[
+        #         {"role": "user", "content": input_query},
+        #     ],
+        #     **opt_kwargs,
+        # )
+        # raw_output = result.choices[0].message.content
+        # outputs = raw_output
+        return "".join(outputs)
+
     def process_passage(self, retrieved_ctxs: List[Dict[str, Any]]):
         ctxs = ""
         for doc_idx, doc in enumerate(retrieved_ctxs[: self.top_n]):
@@ -65,10 +83,10 @@ class OpenScholar:
         return ctxs
 
     def generate_response(
-        self,
-        query: str,
-        retrieved_ctxs: List[Dict[str, Any]],
-        max_tokens: int = 3000,
+            self,
+            query: str,
+            retrieved_ctxs: List[Dict[str, Any]],
+            max_tokens: int = 3000,
     ):
         ctxs_text = self.process_passage(retrieved_ctxs)
 
@@ -78,16 +96,7 @@ class OpenScholar:
             )
         )
 
-        result = self.client.chat.completions.create(
-            model=self.model_name,
-            messages=[
-                {"role": "user", "content": input_query},
-            ],
-            temperature=0.9,
-            max_tokens=max_tokens,
-        )
-        raw_output = result.choices[0].message.content
-        outputs = raw_output
+        outputs = self.llm_inference(input_query, temperature=0.9, max_tokens=max_tokens)
         # else:
         #     sampling_params = vllm.SamplingParams(
         #         temperature=0.9,  # greedy decoding
@@ -125,18 +134,18 @@ class OpenScholar:
             paper["text"][:100] + paper["title"]: paper
             for paper in retrieved_papers
             if paper is not None
-            and type(paper["text"]) is str
-            and "title" in paper["title"]
+               and type(paper["text"]) is str
+               and "title" in paper["title"]
         }
         dedup_papers = list(papers_dicts.values())
 
         return dedup_papers
 
     def get_feedback(
-        self,
-        query: str,
-        ctxs: List[Dict[str, Any]],
-        initial_response: str,
+            self,
+            query: str,
+            ctxs: List[Dict[str, Any]],
+            initial_response: str,
     ):
         ctxs_text = self.process_passage(ctxs)
         input_query = tool.instructions.feedback_example_instance_prompt.format_map(
@@ -147,15 +156,7 @@ class OpenScholar:
             }
         )
 
-        result = self.client.chat.completions.create(
-            model=self.model_name,
-            messages=[
-                {"role": "user", "content": input_query},
-            ],
-            temperature=0.9,
-            max_tokens=2500,
-        )
-        outputs = result.choices[0].message.content
+        outputs = self.llm_inference(input_query, temperature=0.9, max_tokens=2500)
 
         raw_output = (
             [
@@ -170,12 +171,12 @@ class OpenScholar:
         return feedbacks
 
     def edit_with_feedback(
-        self,
-        query: str,
-        ctxs: List[Dict[str, Any]],
-        previous_response: str,
-        feedback: str,
-        max_tokens: int = 3000,
+            self,
+            query: str,
+            ctxs: List[Dict[str, Any]],
+            previous_response: str,
+            feedback: str,
+            max_tokens: int = 3000,
     ):
         input_query = tool.instructions.editing_instance_prompt.format_map(
             {
@@ -186,16 +187,7 @@ class OpenScholar:
             }
         )
 
-        result = self.client.chat.completions.create(
-            model=self.model_name,
-            messages=[
-                {"role": "user", "content": input_query},
-            ],
-            temperature=0.9,
-            max_tokens=max_tokens,
-        )
-        raw_output = result.choices[0].message.content
-        outputs = raw_output
+        outputs = self.llm_inference(input_query, temperature=0.9, max_tokens=max_tokens)
 
         raw_output = (
             [
@@ -209,13 +201,13 @@ class OpenScholar:
         return raw_output
 
     def edit_with_feedback_retrieval(
-        self,
-        query: str,
-        ctxs: List[Dict[str, Any]],
-        previous_response: str,
-        feedback: str,
-        passage_start_index,
-        max_tokens=3000,
+            self,
+            query: str,
+            ctxs: List[Dict[str, Any]],
+            previous_response: str,
+            feedback: str,
+            passage_start_index,
+            max_tokens=3000,
     ):
         processed_passages = ""
         for doc_idx, doc in enumerate(ctxs[: self.top_n]):
@@ -239,16 +231,7 @@ class OpenScholar:
             )
         )
 
-        result = self.client.chat.completions.create(
-            model=self.model_name,
-            messages=[
-                {"role": "user", "content": input_query},
-            ],
-            temperature=0.9,
-            max_tokens=max_tokens,
-        )
-        raw_output = result.choices[0].message.content
-        outputs = raw_output
+        outputs = self.llm_inference(input_query, temperature=0.9, max_tokens=max_tokens)
         raw_output = (
             [
                 t.split("[Response_End]")[0]
@@ -267,18 +250,9 @@ class OpenScholar:
             )
         ]
 
-        result = self.client.chat.completions.create(
-            model=self.model_name,
-            messages=[
-                {"role": "user", "content": prompt[0]},
-            ],
-            temperature=0.9,
-            max_tokens=1000,
-        )
-        raw_output = result.choices[0].message.content
-        outputs = raw_output
+        outputs = self.llm_inference(prompt[0], temperature=0.9, max_tokens=1000)
 
-        search_queries = raw_output.split(", ")[:3]
+        search_queries = outputs.split(", ")[:3]
         search_queries = [
             query.replace("Search queries: ", "")
             for query in search_queries
@@ -334,7 +308,7 @@ class OpenScholar:
             return snippets_list
 
     def answer_query(
-        self, query: str, feedback_toggle: bool, task_id: str
+            self, query: str, feedback_toggle: bool, task_id: str
     ) -> List[Dict[str, Any]]:
         """
         This function takes a query and returns a response.
@@ -349,14 +323,17 @@ class OpenScholar:
         """
         done, curr_feedback = False, None
         responses = []
-
+        t = threading.Thread(target=self.llm_inference, args=("Just waking you up",))
+        t.start()
         self.update_task_state(task_id, "retrieving relevant snippets from 40M papers")
         retrieved_candidates = self.retrieve(query, task_id)
 
+        self.update_task_state(task_id, "Waiting for modal cold start...")
+        t.join()
         # generate response
         self.update_task_state(task_id, "Generating the intial draft")
         initial_response = self.generate_response(query, retrieved_candidates)
-        print(initial_response)
+        print("initial response", initial_response)
         responses.append(
             {
                 "text": initial_response,
@@ -376,7 +353,8 @@ class OpenScholar:
             previous_response = initial_response
             for feedback_idx, feedback in enumerate(feedbacks):
                 self.update_task_state(
-                    task_id, "Incorporating feedback {}.".format(feedback_idx)
+                    task_id, "Incorporating feedback {}.".format(feedback_idx),
+                    f"{(self.n_feedback - feedback_idx + 1)} minutes"
                 )
                 if len(feedback[1]) == 0:
                     edited_answer = self.edit_with_feedback(
@@ -387,8 +365,8 @@ class OpenScholar:
                             "Here is the revised answer:\n\n"
                         )[1]
                     if (
-                        len(edited_answer) > 0
-                        and len(edited_answer) / len(previous_response) > 0.9
+                            len(edited_answer) > 0
+                            and len(edited_answer) / len(previous_response) > 0.9
                     ):
                         previous_response = edited_answer
                         responses.append(
@@ -449,21 +427,4 @@ class OpenScholar:
                             )
                         else:
                             print("skipping as edited answers got too short")
-
-            # n_feedback = self.n_feedback if feedback_toggle else 1
-            # for feedback_round in range(n_feedback):
-            #     curr_response = dict()
-            #     self.update_task_state(
-            #         task_id, "retrieving relevant snippets from 40M papers"
-            #     )
-            #     # TODO: Incorporate feedback into query
-            #     retrieved_candidates = self.retrieve(query, task_id)
-            #     # TODO: re-ranker if using Semantic Scholar vespa api for retrieval
-
-            #     # response, gen_feedback = self.modal_engine
-            #     # curr_response["text"] = response
-            #     # curr_response["feedback"] = curr_feedback
-            #     # curr_feedback = gen_feedback
-            #     responses.append(curr_response)
-            # TODO: Format references in the response
         return responses
