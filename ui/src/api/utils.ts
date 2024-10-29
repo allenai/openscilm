@@ -29,6 +29,7 @@ interface IterationType {
 
 interface TaskResultType {
   iterations: IterationType[];
+  sections: ReportSection[];
 }
 
 export const convertIterationToSection = (iteration: IterationType): ReportSection => {
@@ -58,7 +59,11 @@ export const updateStatus = async (taskId: string) => {
       feedback_toggle: true
     })
   });
-  return await response.json() as unknown as StatusType;
+  const output = await response.json() as unknown as StatusType;
+  if (output.task_result?.iterations) {
+    output.task_result.sections = output.task_result.iterations.map(convertIterationToSection);
+  }
+  return output
 }
 
 export const createTask = async (query: string) => {

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { LinearProgress } from '@mui/material';
-import { convertIterationToSection, StatusType, updateStatus } from '../api/utils';
+import { StatusType, updateStatus } from '../api/utils';
 import { Report } from './report/Report';
 
 
@@ -35,16 +35,16 @@ export const Results: React.FC<PropType> = (props) => {
     }
   }, [taskId, interval, setIsLoading]);
 
-  const section = convertIterationToSection(status?.task_result?.iterations.at(-1) ?? { text: '', citations: [] });
+  const section = status?.task_result?.sections.at(-1);
 
   return (
     <div>
       {isLoading && <LinearProgress style={{ marginBottom: '-4px' }} />}
       <h2>{status?.query}</h2>
-      {status?.task_result && (
+      {section && (
         <Report section={section}/>
       )}
-      {!status?.task_result && (
+      {!section && (
         <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(status ?? { status: 'idle' }, undefined, 2)}</pre>
       )}
     </div>
