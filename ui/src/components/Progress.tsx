@@ -19,9 +19,7 @@ export interface ProgressPropType {
 export const Progress: React.FC<ProgressPropType> = (props) => {
   const { estimatedTime, startTime, status } = props;
 
-  const result = useTimeAgo({ date: startTime * 1000, locale: 'en-US', updateInterval: 1, timeStyle: 'twitter' });
-
-  console.log('RESULT', result);
+  const timeAgo = useTimeAgo({ date: startTime * 1000, locale: 'en-US', updateInterval: 1, timeStyle: 'twitter' });
 
   return (
     <Card sx={{ width: 500, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -30,7 +28,7 @@ export const Progress: React.FC<ProgressPropType> = (props) => {
           {status}
         </Typography>
         <Typography sx={{ color: 'text.secondary', mb: 0 }}>
-          {startTime > 1 ? `started ${result.formattedDate} ago / estimated: ${estimatedTime}` : 'Loading...'}
+          {startTime > 1 ? `started ${timeAgo.formattedDate} ago / estimated: ${estimatedTime}` : 'Loading...'}
         </Typography>
       </CardContent>
       <CardMedia
