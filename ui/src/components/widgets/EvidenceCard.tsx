@@ -15,6 +15,7 @@ export interface EvidenceCardProps{
   corpusId: number;
   children?: React.ReactNode;
   fullTitle: string;
+  id: string;
 }
 
 // This component can either look up evidence if an id is provided

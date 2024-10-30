@@ -12,9 +12,9 @@ import { ReportSection } from '../../models/Report';
 export const Report: React.FC<{ section: ReportSection }> = (props) => {
   const { section } = props;
 
-  const corpusId2Snippets: { [corpusId: number]: string[] } = {};
+  const id2Snippets: { [id: string]: string[] } = {};
   section.citations?.forEach((citation) => {
-    corpusId2Snippets[citation.corpusId] = citation.snippets;
+    id2Snippets[citation.id] = citation.snippets;
   });
 
   const markdownOptions: MarkdownToJSX.Options = {
@@ -25,13 +25,13 @@ export const Report: React.FC<{ section: ReportSection }> = (props) => {
       },
       Paper: {
         component: (props: Partial<InlinePaperChipWidgetProps>) => {
-          const { corpusId, paperTitle, children, fullTitle, ...rest } = props;
+          const { corpusId, paperTitle, children, fullTitle, id, ...rest } = props;
           let paperTitleStr = paperTitle;
           if (!paperTitleStr && children) {
             paperTitleStr = reactToText(children);
           }
 
-          if (corpusId && paperTitleStr) {
+          if (corpusId && paperTitleStr && id) {
             return (
               <InlinePaperChipWidgetWithEvidence
                 {...rest}
@@ -39,8 +39,9 @@ export const Report: React.FC<{ section: ReportSection }> = (props) => {
                 paperTitle={paperTitleStr}
                 corpusId={corpusId}
                 fullTitle={fullTitle ?? 'Error: Paper Title Unkonwn'}
+                id={id}
                 evidences={
-                  corpusId2Snippets?.[corpusId]?.map((snippet) => ({
+                  id2Snippets?.[id]?.map((snippet) => ({
                     text: snippet,
                   })) ?? []
                 }

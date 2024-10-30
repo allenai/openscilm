@@ -20,6 +20,7 @@ export interface InlinePaperChipWidgetProps {
   isShortName?: boolean;
   isDarkMode?: boolean;
   fullTitle: string;
+  id: string;
   children?: React.ReactNode;
 }
 

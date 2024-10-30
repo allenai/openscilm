@@ -69,15 +69,16 @@ export const convertIterationToSection = async (iteration: IterationType): Promi
   let text = iteration.text;
   const corpusIds = [...new Set(iteration.citations.map(citation => citation.corpus_id))];
   const details = await fetchPapersDetails(corpusIds);
-  const corpusId2RefText: { [corpusId: number]: string } = {}
-  const corpusId2Title: { [corpusId: number]: string } = {}
+  const id2RefText: { [id: string]: string } = {}
   const counter: { [text: string]: number } = {}
-  const firstKeyByValue: { [value: string]: number } = {}
+  const firstKeyByValue: { [value: string]: string} = {}
   console.log('DETAILS', details)
+  const corpusId2Details: { [corpusId: number]: PaperDetailsType } = {}
   details.forEach(detail => {
-    corpusId2Title[detail.corpusId] = detail.title ?? 'unknown'
+    corpusId2Details[detail.corpusId] = detail
   })
-  details.forEach(detail => {
+  iteration.citations.forEach(citation=> {
+    const detail = corpusId2Details[citation.corpus_id]
     try {
       let authorText = `${detail.authors[0].name.split(' ').at(-1)}`
       if (detail.authors.length > 1) {
@@ -87,22 +88,23 @@ export const convertIterationToSection = async (iteration: IterationType): Promi
       }
       counter[authorText] = (counter[authorText] ?? 0) + 1
       if (counter[authorText] > 1) {
+        if (counter[authorText] == 2) {
+          id2RefText[firstKeyByValue[authorText]] += 'a'
+        }
         authorText += String.fromCharCode('a'.charCodeAt(0) + counter[authorText] - 1)
-        // if (counter[authorText] == 2) {
-        //   corpusId2RefText[firstKeyByValue[authorText]] += 'a'
-        // }
       } else {
-        firstKeyByValue[authorText] = detail.corpusId
+        firstKeyByValue[authorText] = citation.id
       }
-      corpusId2RefText[detail.corpusId] = `${authorText}`
+      id2RefText[citation.id] = `${authorText}`
     } catch (e) {
       console.error('parsing paper details error', e)
     }
   })
-  console.log(details)
+  console.log('iteraction pre', iteration)
   iteration.citations.forEach(citation => {
-    text = text.replaceAll(citation.id, `<Paper corpusId="${citation.corpus_id}" paperTitle="(${corpusId2RefText[citation.corpus_id] ?? citation.id})" fullTitle="${corpusId2Title[citation.corpus_id]}" isShortName></Paper>`);
+    text = text.replaceAll(citation.id, `<Paper corpusId="${citation.corpus_id}" id="${citation.id}" paperTitle="(${id2RefText[citation.id] ?? citation.id})" fullTitle="${corpusId2Details[citation.corpus_id].title}" isShortName></Paper>`);
   });
+  console.log('iteraction post', iteration)
   console.log(text);
   return {
     id: 'id',
@@ -111,7 +113,7 @@ export const convertIterationToSection = async (iteration: IterationType): Promi
     citations: iteration.citations.map(citation => ({
       id: citation.id,
       corpusId: citation.corpus_id,
-      title: corpusId2Title[citation.corpus_id],
+      title: corpusId2Details[citation.corpus_id].title,
       snippets: [citation.snippet]
     }))
   }
