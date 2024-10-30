@@ -8,7 +8,7 @@ export const Section = () => {
   const { taskId } = useParams();
 
   return (
-    <div style={{ paddingLeft: '25px' }}>
+    <div style={{ maxWidth: '1200px' }}>
       {taskId && <Results taskId={taskId} key={taskId} />}
     </div>
   );
