@@ -55,16 +55,16 @@ export const Results: React.FC<PropType> = (props) => {
 
   const section = status?.task_result?.sections.at(-1);
     let progressProps: ProgressPropType = {
-      estimatedTime: 'unknown',
+      estimatedTime: 'Loading...',
       startTime: -1,
-      status: 'unknown'
+      status: 'Loading...'
     }
   if (!status?.task_result) {
     try {
       const startTime = parseFloat(status?.task_status.split(':').at(0) ?? '0')
-      const statusText = status?.task_status.split(':').at(-1) ?? 'unknown'
+      const statusText = status?.task_status.split(':').at(-1) ?? 'Loading...'
       progressProps = {
-        estimatedTime: status?.estimated_time?.split(':')?.at(-1) ?? 'unknown',
+        estimatedTime: status?.estimated_time?.split(':')?.at(-1) ?? 'Loading...',
         startTime,
         status: statusText
       }

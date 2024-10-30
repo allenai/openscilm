@@ -24,7 +24,7 @@ export const Progress: React.FC<ProgressPropType> = (props) => {
           {status}
         </Typography>
         <Typography sx={{ color: 'text.secondary', mb: 0 }}>
-          Running for: {`${min} mins ${sec} seconds`} /
+          Running for: {startTime > 0 ? `${min} mins ${sec} seconds` : 'loading...'} /
           Estimated: {estimatedTime}
         </Typography>
       </CardContent>
