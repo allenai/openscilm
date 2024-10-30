@@ -427,6 +427,15 @@ function(
                                     value: 'google:json'
                                 },
                                 {
+                                    name: "OPENAI_API_KEY",
+                                    valueFrom: {
+                                        secretKeyRef: {
+                                            name: "openai-keys",
+                                            key: "OPENAI_API_KEY"
+                                        }
+                                    }
+                                },
+                                {
                                     name: "S2_PARTNER_KEY",
                                     valueFrom: {
                                         secretKeyRef: {
