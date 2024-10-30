@@ -102,7 +102,7 @@ export const convertIterationToSection = async (iteration: IterationType): Promi
   })
   console.log('iteraction pre', iteration)
   iteration.citations.forEach(citation => {
-    text = text.replaceAll(citation.id, `<Paper corpusId="${citation.corpus_id}" id="${citation.id}" paperTitle="(${id2RefText[citation.id] ?? citation.id})" fullTitle="${corpusId2Details[citation.corpus_id].title}" isShortName></Paper>`);
+    text = text.replaceAll(citation.id, `<Paper corpusId="${citation.corpus_id}" id="${citation.id}" paperTitle="${id2RefText[citation.id] ?? citation.id}" fullTitle="${corpusId2Details[citation.corpus_id].title}" isShortName></Paper>`);
   });
   console.log('iteraction post', iteration)
   console.log(text);

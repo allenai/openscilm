@@ -43,6 +43,7 @@ export const EvidenceCard = (props: EvidenceCardProps): React.ReactNode => {
       <Link
         href="#"
         variant="body2"
+        color={'unset'}
         onClick={handleClick}
         aria-describedby={id}
       >
