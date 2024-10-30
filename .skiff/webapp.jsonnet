@@ -462,6 +462,15 @@ function(
                                         }
                                     }
                                 },
+                                {
+                                    name: "YOUR_API_KEY",
+                                    valueFrom: {
+                                        secretKeyRef: {
+                                            name: "your-api-key",
+                                            key: "YOUR_API_KEY"
+                                        }
+                                    }
+                                }
                             ]
                         },
                         {

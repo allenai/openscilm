@@ -41,9 +41,9 @@ class OpenScholar:
         # OpenScholar Cofigurations
         # FIXME: temporarily use OAI for debugging; will replace with modal engine
         self.model = None
-        self.client = OpenAI(
-            api_key=OPENAI_API_KEY,
-        )
+        # self.client = OpenAI(
+        #     api_key=OPENAI_API_KEY,
+        # )
         self.model_name = "gpt-4o"
 
         self.top_n = n_rerank

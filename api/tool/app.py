@@ -25,6 +25,7 @@ from tool.models import (
     Papers
 )
 from tool.open_scholar import OpenScholar
+from tool.utils import query_s2_api
 
 ASYNC_STATE_DIR = "/async-state"
 task_state_manager = StateManager(AsyncTaskState, ASYNC_STATE_DIR)
@@ -53,7 +54,8 @@ def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
         GeneratedIteration(
             text=iteration["text"],
             feedback=iteration["feedback"],
-            citations=[Citation(id=f"[{idx}]", corpus_id=cite["corpus_id"], snippet=cite["text"], score=cite["score"]) for
+            citations=[Citation(id=f"[{idx}]", corpus_id=cite["corpus_id"], snippet=cite["text"], score=cite["score"])
+                       for
                        idx, cite in enumerate(iteration["citations"])],
         )
         for iteration in answer_map
@@ -69,7 +71,7 @@ def _estimate_task_length(tool_request: ToolRequest) -> str:
     have access to the request if you want to do something fancier.
     """
 
-    return str(time()) + ":" +(
+    return str(time()) + ":" + (
         "1 minute"
         if not tool_request.feedback_toggle
         else f"{open_scholar.n_feedback} minutes"
@@ -138,25 +140,16 @@ def create_app() -> FastAPI:
             task_result=None,
         )
 
-    S2_APIKEY = os.getenv('S2_PARTNER_API_KEY') or ''
-    S2_HEADERS = {'x-api-key': S2_APIKEY}
-    S2_API_URL = 'https://api.semanticscholar.org/graph/v1/paper/batch'
     @app.post("/paper_details/")
-    def paper_details(papers: Papers): # pyright: ignore reportUnusedFunction
+    def paper_details(papers: Papers):  # pyright: ignore reportUnusedFunction
         fieldstring = 'authors,title,year'
         if (papers.fields):
             fieldstring = ','.join(papers.fields)
-        response = requests.post(
-            S2_API_URL,
-            headers=S2_HEADERS,
-            params={'fields': fieldstring},
-            json={"ids": [f'CorpusId:{corpus_id}' for corpus_id in papers.corpus_ids]},
-        )
-        data = response.json()
+        data = query_s2_api(end_pt="paper/batch", method="post", params={'fields': fieldstring},
+                            payload={"ids": [f"CorpusId:{cid}" for cid in papers.corpus_ids]})
         return data
 
     return app
-
 
 
 def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:
