@@ -4,6 +4,7 @@ import { StatusType, updateStatus } from '../api/utils';
 import { Report } from './report/Report';
 import { useQueryHistory } from './shared';
 import { useNavigate } from 'react-router-dom';
+import { Progress, ProgressPropType } from './Progress';
 
 
 const DEFAULT_INTERVAL = 3000;
@@ -53,10 +54,28 @@ export const Results: React.FC<PropType> = (props) => {
   }, [taskId, interval, setIsLoading]);
 
   const section = status?.task_result?.sections.at(-1);
+    let progressProps: ProgressPropType = {
+      estimatedTime: 'unknown',
+      startTime: -1,
+      status: 'unknown'
+    }
+  if (!status?.task_result) {
+    try {
+      const startTime = parseFloat(status?.task_status.split(':').at(0) ?? '0')
+      const statusText = status?.task_status.split(':').at(-1) ?? 'unknown'
+      progressProps = {
+        estimatedTime: status?.estimated_time?.split(':')?.at(-1) ?? 'unknown',
+        startTime,
+        status: statusText
+      }
+    } catch (e) {
+      console.error('error parsing status', e);
+    }
+  }
 
   return (
     <div>
-      {isLoading && <LinearProgress style={{ marginBottom: '-4px' }} />}
+      {/* {isLoading && <LinearProgress style={{ marginBottom: '-4px' }} />} */}
       <h2>{status?.query}</h2>
       {section && (
         <>
@@ -85,7 +104,7 @@ export const Results: React.FC<PropType> = (props) => {
       {!section && (
         <>
             <Button key="three" onClick={handleDeleteTask}>Delete This Task</Button>
-            <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(status ?? { status: 'idle' }, undefined, 2)}</pre>
+            <Progress {...progressProps} />
         </>
       )}
     </div>

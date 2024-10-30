@@ -36,6 +36,7 @@
     "react-router-hash-link": "^2.4.3",
     "react-to-text": "^2.0.1",
     "styled-components": "^6.1.13",
+    "use-elapsed-time": "^3.0.4",
     "use-http": "^1.0.27",
     "uuid": "^10.0.0"
   },

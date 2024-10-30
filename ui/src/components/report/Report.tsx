@@ -1,15 +1,11 @@
 import reactToText from 'react-to-text';
 
-import Person2Icon from '@mui/icons-material/Person2';
-
 import React from 'react';
 import { Typography } from '@mui/material';
 import styled from 'styled-components';
 import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
 import { InlinePaperChipWidgetWithEvidence } from '../widgets/InlinePaperChipWidgetWithEvidence';
 import { InlinePaperChipWidgetProps } from '../widgets/InlinePaperChipWidget';
-import LinkWidget from '../widgets/LinkWidget';
-import { InlineChipWidget } from '../widgets/InlineChipWidget';
 import { ReportSection } from '../../models/Report';
 
 

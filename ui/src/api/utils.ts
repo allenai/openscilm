@@ -9,11 +9,20 @@ export const BACKEND_DEFAULT_INIT = {
   method: 'POST'
 }
 
+export type StatusType = StatusTypeDone | StatusTypeInProgress
 
-export interface StatusType {
+export interface StatusTypeDone {
   task_id: string;
   query: string;
-  task_result: null | TaskResultType;
+  task_result: TaskResultType;
+}
+
+export interface StatusTypeInProgress {
+  task_id: string;
+  query: string;
+  task_result: null 
+  estimated_time: string;
+  task_status: string;
 }
 
 interface CitationType {
