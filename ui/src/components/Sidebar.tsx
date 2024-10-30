@@ -10,15 +10,27 @@ import ListItemText from '@mui/material/ListItemText';
 import { useQueryHistory } from './shared';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ListSubheader } from '@mui/material';
+import { useCallback } from 'react';
 
 const drawerWidth = 240;
 
 export default function Sidebar() {
-  const { history } = useQueryHistory();
+  const { history, setHistory } = useQueryHistory();
   const location = useLocation();
   const navigate = useNavigate();
 
   const sortedHistory = Object.values(history).sort((a, b) => b.timestamp - a.timestamp)
+
+  const handleDeleteAllTasks = useCallback(() => {
+    if (confirm('Are you sure you want to delete ALL answers? This cannot be undone.')) {
+      try {
+        setHistory({});
+        navigate('/');
+      } catch (e) {
+        console.error('delete all tasks had failed', e);
+      }
+    }
+  }, [setHistory]);
 
   return (
     <Drawer
@@ -30,24 +42,50 @@ export default function Sidebar() {
       }}
     >
       <Toolbar />
-      <Box sx={{ overflow: 'auto', paddingTop: '45px' }}>
-        <List>
-              <ListItem disablePadding>
-                <ListItemButton
-                  selected={location.pathname === '/'}
-                  onClick={() => {
-                    navigate(`/`, { replace: true });
-                  }}
-                >
-                  <ListItemText primary={'Ask a new Question'} />
-                </ListItemButton>
-              </ListItem>
+      <Box sx={{ overflow: 'auto', paddingTop: '40px' }}>
+        <List
+          subheader={
+            <ListSubheader component="div" id="nested-list-subheader">
+              OpenScholar
+            </ListSubheader>
+          }>
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={location.pathname === '/'}
+              onClick={() => {
+                navigate(`/`, { replace: true });
+              }}
+            >
+              <ListItemText primary={'Ask a New Question'} />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={location.pathname.includes('/about')}
+              onClick={() => {
+                navigate(`/about`, { replace: true });
+              }}
+            >
+              <ListItemText primary={'About OpenScholar'} />
+            </ListItemButton>
+          </ListItem>
+          {Object.keys(history).length > 3 && (<>
+            <ListItem disablePadding>
+              <ListItemButton
+                selected={location.pathname.includes('/about')}
+                onClick={handleDeleteAllTasks}
+              >
+                <ListItemText style={{color: 'hotpink'}} primary={'Delete All Recent Questions'} />
+              </ListItemButton>
+            </ListItem>
+          </>)
+          }
         </List>
         <Divider />
         <List
           subheader={
             <ListSubheader component="div" id="nested-list-subheader">
-              Recent Queries
+              Recent Questions
             </ListSubheader>
           }>
           {sortedHistory.map((item) => {
@@ -65,17 +103,6 @@ export default function Sidebar() {
             )
           })}
         </List>
-        <Divider />
-        <ListItem disablePadding>
-          <ListItemButton
-            selected={location.pathname.includes('/about')}
-            onClick={() => {
-              navigate(`/about`, { replace: true });
-            }}
-          >
-            <ListItemText primary={'About OpenScholar'} />
-          </ListItemButton>
-        </ListItem>
       </Box>
     </Drawer>
   );

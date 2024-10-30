@@ -23,7 +23,7 @@ export const Results: React.FC<PropType> = (props) => {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
   const handleDeleteTask = useCallback(() => {
-    if (confirm('Are you sure you want to delete this answer?')) {
+    if (confirm('Are you sure you want to delete this? This cannot be undone.')) {
       const newHistory = { ...history };
       try {
       delete newHistory[taskId];
@@ -103,7 +103,7 @@ export const Results: React.FC<PropType> = (props) => {
       )}
       {!section && (
         <>
-            <Button key="three" onClick={handleDeleteTask}>Delete This Task</Button>
+            <Button key="three" onClick={handleDeleteTask}>Abort This Task</Button>
             <Progress {...progressProps} />
         </>
       )}
