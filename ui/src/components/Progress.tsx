@@ -1,6 +1,13 @@
 import React from 'react';
 import { Card, CardContent, CardMedia, CircularProgress, Typography } from '@mui/material';
-import { useElapsedTime } from 'use-elapsed-time';
+
+import TimeAgo from 'javascript-time-ago'
+
+import en from 'javascript-time-ago/locale/en'
+TimeAgo.addDefaultLocale(en)
+
+import { useTimeAgo } from 'react-time-ago'
+
 
 
 export interface ProgressPropType {
@@ -12,10 +19,9 @@ export interface ProgressPropType {
 export const Progress: React.FC<ProgressPropType> = (props) => {
   const { estimatedTime, startTime, status } = props;
 
-  const { elapsedTime } = useElapsedTime({ isPlaying: true, startAt: startTime * 1000 })
+  const result = useTimeAgo({ date: startTime * 1000, locale: 'en-US', updateInterval: 1, timeStyle: 'twitter' });
 
-  const min = Math.floor(elapsedTime / 60);
-  const sec = Math.round(elapsedTime - (min * 60));
+  console.log('RESULT', result);
 
   return (
     <Card sx={{ width: 500, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -24,8 +30,7 @@ export const Progress: React.FC<ProgressPropType> = (props) => {
           {status}
         </Typography>
         <Typography sx={{ color: 'text.secondary', mb: 0 }}>
-          Running for: {startTime > 0 ? `${min} mins ${sec} seconds` : 'loading...'} /
-          Estimated: {estimatedTime}
+          {startTime > 1 ? `started ${result.formattedDate} ago / estimated: ${estimatedTime}` : 'Loading...'}
         </Typography>
       </CardContent>
       <CardMedia
