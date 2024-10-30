@@ -27,21 +27,14 @@ export const EvidenceCardContent = (
     <>
       {evidences.map((evidence, index) => (
         <EvidenceContainer key={index}>
-          <Divider />
-          <Typography sx={{ mb: 1.5 }} variant="body2">
-            {`“${evidence.text}”`}
+          <Typography sx={{ mt: 1.5, mb: 1.5 }} variant="body2">
+            {`"${evidence.text}"`}
           </Typography>
         </EvidenceContainer>
       ))}
     </>
   );
 };
-
-const ButtonContainer = styled.div`
-  width: 100%;
-  margin-bottom: 10px;
-  text-align: right;
-`;
 
 const EvidenceContainer = styled.div`
   margin-top: 8px;

@@ -10,6 +10,7 @@ import { Evidence } from './utils';
 interface InlinePaperChipWidgetWithEvidenceProps
   extends InlinePaperChipWidgetProps {
   evidences: Evidence[];
+  fullTitle: string;
 }
 
 export const InlinePaperChipWidgetWithEvidence: React.FC<
@@ -17,13 +18,11 @@ export const InlinePaperChipWidgetWithEvidence: React.FC<
 > = (props) => {
   const { evidences, ...rest } = props;
 
-  if (evidences.length === 0) {
-    return <InlinePaperChipWidget {...rest} />;
-  }
   return (
     <>
-      <InlinePaperChipWidget {...rest} />
-      <EvidenceCard evidences={evidences} />
+      <EvidenceCard evidences={evidences} corpusId={props.corpusId} fullTitle={rest.fullTitle}>
+        <InlinePaperChipWidget {...rest} />
+      </EvidenceCard>
     </>
   );
 };

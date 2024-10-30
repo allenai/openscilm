@@ -4,7 +4,7 @@
 import React from 'react';
 import { v4 as uuidV4 } from 'uuid';
 import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
-import { Link, Popover, Typography } from '@mui/material';
+import { Divider, Link, Popover, Typography } from '@mui/material';
 import styled from 'styled-components';
 
 import { EvidenceCardContent } from './EvidenceCardContent';
@@ -12,12 +12,16 @@ import { Evidence } from './utils';
 
 export interface EvidenceCardProps{
   evidences: Evidence[];
+  corpusId: number;
+  children?: React.ReactNode;
+  fullTitle: string;
 }
 
 // This component can either look up evidence if an id is provided
 // or use existing evidence provided to it
 
 export const EvidenceCard = (props: EvidenceCardProps): React.ReactNode => {
+  const { children, ...rest } = props;
   const [anchorEl, setAnchorEl] = React.useState<HTMLAnchorElement | null>(
     null,
   );
@@ -41,12 +45,13 @@ export const EvidenceCard = (props: EvidenceCardProps): React.ReactNode => {
         onClick={handleClick}
         aria-describedby={id}
       >
-        <StyledFormatQuoteIcon />
+        {children ?? <StyledFormatQuoteIcon />}
       </Link>
       <Popover
         id={id}
         open={open}
         anchorEl={anchorEl}
+        style={{ width: '500px' }}
         onClose={handleClose}
         anchorOrigin={{
           vertical: 'bottom',
@@ -54,10 +59,13 @@ export const EvidenceCard = (props: EvidenceCardProps): React.ReactNode => {
         }}
       >
         <CardContainer>
-          <Typography sx={{ mb: 2.5, mt: 0.5 }} variant="h6">
-            Evidence from Paper
+          <Typography sx={{ mb: 1.5, mt: 0.5 }} variant="h6">
+            <Link href={`https://semanticscholar.org/p/${props.corpusId}`} target='_blank' rel="noreferrer">
+              {rest.fullTitle}
+            </Link>
           </Typography>
-          {open && <EvidenceCardContent {...props} />}
+          <Divider />
+          {open && <EvidenceCardContent {...rest} />}
         </CardContainer>
       </Popover>
     </Container>

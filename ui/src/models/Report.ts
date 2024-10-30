@@ -61,6 +61,7 @@ export const reportCitationFactory = (
 ): ReportCitation => {
   return {
     id: apiCitation.id,
+    title: 'Unknown',
     corpusId: apiCitation.corpus_id ?? apiCitation.corpusId ?? -1,
     snippets: apiCitation.snippets,
   };

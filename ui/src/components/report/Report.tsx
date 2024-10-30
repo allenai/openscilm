@@ -1,12 +1,8 @@
 import reactToText from 'react-to-text';
 
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Person2Icon from '@mui/icons-material/Person2';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Typography } from '@mui/material';
 import styled from 'styled-components';
 import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
@@ -14,8 +10,7 @@ import { InlinePaperChipWidgetWithEvidence } from '../widgets/InlinePaperChipWid
 import { InlinePaperChipWidgetProps } from '../widgets/InlinePaperChipWidget';
 import LinkWidget from '../widgets/LinkWidget';
 import { InlineChipWidget } from '../widgets/InlineChipWidget';
-import { MockData } from './MockData';
-import { ReportSection, reportWidgetFactory } from '../../models/Report';
+import { ReportSection } from '../../models/Report';
 
 
 export const Report: React.FC<{ section: ReportSection }> = (props) => {
@@ -32,33 +27,9 @@ export const Report: React.FC<{ section: ReportSection }> = (props) => {
         component: (props) => <Typography {...props} />,
         props: { paragraph: true, variant: 'body1' },
       },
-      Author: {
-        component: (props) => {
-          const { authorId, children } = props;
-          const authorName = reactToText(children);
-          if (authorId) {
-            return (
-              <LinkWidget
-                url={`https://semanticscholar.org/author/${authorId}`}
-              >
-                <InlineChipWidget
-                  label={authorName}
-                  icon={<Person2Icon />}
-                />
-              </LinkWidget>
-            );
-          }
-          return (
-            <InlineChipWidget
-              label={authorName}
-              icon={<Person2Icon />}
-            />
-          );
-        },
-      },
       Paper: {
         component: (props: Partial<InlinePaperChipWidgetProps>) => {
-          const { corpusId, paperTitle, children, ...rest } = props;
+          const { corpusId, paperTitle, children, fullTitle, ...rest } = props;
           let paperTitleStr = paperTitle;
           if (!paperTitleStr && children) {
             paperTitleStr = reactToText(children);
@@ -71,6 +42,7 @@ export const Report: React.FC<{ section: ReportSection }> = (props) => {
                 isShortName={true}
                 paperTitle={paperTitleStr}
                 corpusId={corpusId}
+                fullTitle={fullTitle ?? 'Error: Paper Title Unkonwn'}
                 evidences={
                   corpusId2Snippets?.[corpusId]?.map((snippet) => ({
                     text: snippet,
