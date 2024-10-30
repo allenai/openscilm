@@ -17,6 +17,7 @@ export type ReportCitationFromApi = {
 
 export type ReportCitation = {
   id: string;
+  title: string;
   corpusId: number;
   snippets: string[];
 };
