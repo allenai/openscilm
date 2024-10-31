@@ -41,8 +41,9 @@ export const Results: React.FC<PropType> = (props) => {
       setIsLoading(true);
       const newStatus = await updateStatus(taskId);
       setIsLoading(false);
+      console.log('setStatus', newStatus)
       setStatus(newStatus);
-      if (!newStatus.task_result) {
+      if (!newStatus.task_result && newStatus.httpStatus !== 404) {
         const timeoutId = window.setTimeout(inner, interval);
         timeoutIds.push(timeoutId);
       }
@@ -57,19 +58,31 @@ export const Results: React.FC<PropType> = (props) => {
     let progressProps: ProgressPropType = {
       estimatedTime: 'Loading...',
       startTime: -1,
-      status: 'Loading...'
+      status: 'Loading...',
+      httpStatus: 200
     }
   if (!status?.task_result) {
-    try {
-      const startTime = parseFloat(status?.task_status.split(':').at(0) ?? '0')
-      const statusText = status?.task_status.split(':').at(-1) ?? 'Loading...'
-      progressProps = {
-        estimatedTime: status?.estimated_time?.split(':')?.at(-1) ?? 'Loading...',
-        startTime,
-        status: statusText
+    if (status?.httpStatus === 404) {
+        progressProps = {
+          estimatedTime: '---',
+          startTime: -1,
+          status: 'Answer not found - please try asking again',
+          httpStatus: status.httpStatus
+        }
+    } else {
+      try {
+        const startTime = parseFloat(status?.task_status.split(':').at(0) ?? '0')
+        const statusText = status?.task_status.split(':').at(-1) ?? 'Loading...'
+        progressProps = {
+          estimatedTime: status?.estimated_time?.split(':')?.at(-1) ?? 'Loading...',
+          startTime,
+          status: statusText,
+          httpStatus: status?.httpStatus ?? 200
+        }
+      } catch (e) {
+        console.error('error parsing status', e);
       }
-    } catch (e) {
-      console.error('error parsing status', e);
+
     }
   }
 

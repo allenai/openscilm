@@ -15,6 +15,7 @@ export interface StatusTypeDone {
   task_id: string;
   query: string;
   task_result: TaskResultType;
+  httpStatus: number;
 }
 
 export interface StatusTypeInProgress {
@@ -23,6 +24,7 @@ export interface StatusTypeInProgress {
   task_result: null 
   estimated_time: string;
   task_status: string;
+  httpStatus: number;
 }
 
 interface CitationType {
@@ -134,7 +136,7 @@ export const updateStatus = async (taskId: string) => {
     // output.task_result.sections = await Promise.all(output.task_result.iterations.map(convertIterationToSection));
     output.task_result.sections = [await convertIterationToSection(lastIteration)]
   }
-  return output
+  return {...output, httpStatus: response.status};
 }
 
 export const createTask = async (query: string) => {

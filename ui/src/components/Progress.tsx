@@ -14,10 +14,11 @@ export interface ProgressPropType {
   estimatedTime: string;
   startTime: number;
   status: string;
+  httpStatus: number;
 }
 
 export const Progress: React.FC<ProgressPropType> = (props) => {
-  const { estimatedTime, startTime, status } = props;
+  const { estimatedTime, startTime, status, httpStatus } = props;
 
   const timeAgo = useTimeAgo({ date: startTime * 1000, locale: 'en-US', updateInterval: 1, timeStyle: 'twitter' });
 
@@ -28,14 +29,16 @@ export const Progress: React.FC<ProgressPropType> = (props) => {
           {status}
         </Typography>
         <Typography sx={{ color: 'text.secondary', mb: 0 }}>
-          {startTime > 1 ? `started ${timeAgo.formattedDate} ago / estimated: ${estimatedTime}` : 'Loading...'}
+          {startTime > 1 ? `started ${timeAgo.formattedDate} ago / estimated: ${estimatedTime}` : '---'}
         </Typography>
       </CardContent>
       <CardMedia
         component='div'
         sx={{ width: 50 }}
       >
-        <CircularProgress />
+        {httpStatus !== 404 && (
+          <CircularProgress />
+        )}
       </CardMedia>
     </Card>
   );
