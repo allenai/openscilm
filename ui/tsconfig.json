@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
     "target": "es6",
-    "lib": ["dom", "dom.iterable", "es2019"],
+    "lib": ["dom", "dom.iterable", "es2021"],
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "jsx": "react-jsx",
-    "sourceMap": true
-  },
-  "include": ["src", ".eslintrc.js", "webpack.config.js"]
+    "jsx": "react",
+    "sourceMap": true,
+    "baseUrl": "."
+  }
 }

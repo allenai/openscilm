@@ -9,8 +9,11 @@ FROM python:3.11.3
 
 WORKDIR /api
 
+RUN mkdir /async-state
+
 # Install Python dependencies
 COPY requirements.txt .
+RUN pip install -U pip
 RUN pip install -r requirements.txt
 
 # Copy over the source code

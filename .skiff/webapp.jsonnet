@@ -425,6 +425,60 @@ function(
                                 {
                                     name: 'LOG_FORMAT',
                                     value: 'google:json'
+                                },
+                                {
+                                    name: "OPENAI_API_KEY",
+                                    valueFrom: {
+                                        secretKeyRef: {
+                                            name: "openai-keys",
+                                            key: "OPENAI_API_KEY"
+                                        }
+                                    }
+                                },
+                                {
+                                    name: "S2_PARTNER_API_KEY",
+                                    valueFrom: {
+                                        secretKeyRef: {
+                                            name: "s2-keys",
+                                            key: "S2_PARTNER_API_KEY"
+                                        }
+                                    }
+                                },
+                                {
+                                    name: "S2_PARTNER_KEY",
+                                    valueFrom: {
+                                        secretKeyRef: {
+                                            name: "s2-keys",
+                                            key: "S2_PARTNER_KEY"
+                                        }
+                                    }
+                                },
+                                {
+                                    name: "MODAL_TOKEN",
+                                    valueFrom: {
+                                        secretKeyRef: {
+                                            name: "modal-tokens",
+                                            key: "MODAL_TOKEN"
+                                        }
+                                    }
+                                },
+                                {
+                                    name: "MODAL_TOKEN_SECRET",
+                                    valueFrom: {
+                                        secretKeyRef: {
+                                            name: "modal-tokens",
+                                            key: "MODAL_TOKEN_SECRET"
+                                        }
+                                    }
+                                },
+                                {
+                                    name: "YOUR_API_KEY",
+                                    valueFrom: {
+                                        secretKeyRef: {
+                                            name: "your-api-key",
+                                            key: "YOUR_API_KEY"
+                                        }
+                                    }
                                 }
                             ]
                         },
