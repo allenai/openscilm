@@ -127,7 +127,7 @@ function(
          { };
 
     // The port the NGINX proxy is bound to.
-    local proxyPort = 9090;
+    local proxyPort = 8080;
 
     // The port the API (Python Flask application) is bound to.
     local apiPort = 8000;
