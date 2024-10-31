@@ -24,11 +24,11 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 class OpenScholar:
     def __init__(
-        self,
-        task_mgr: StateManager,
-        n_retrieval: int = 100,
-        n_rerank: int = 10,
-        n_feedback: int = 3,
+            self,
+            task_mgr: StateManager,
+            n_retrieval: int = 100,
+            n_rerank: int = 10,
+            n_feedback: int = 3,
     ):
         # TODO: Initialize retriever and re-ranker clients here
         self.n_retrieval = n_retrieval
@@ -84,10 +84,10 @@ class OpenScholar:
         return ctxs
 
     def generate_response(
-        self,
-        query: str,
-        retrieved_ctxs: List[Dict[str, Any]],
-        max_tokens: int = 3000,
+            self,
+            query: str,
+            retrieved_ctxs: List[Dict[str, Any]],
+            max_tokens: int = 3000,
     ):
         ctxs_text = self.process_passage(retrieved_ctxs)
 
@@ -137,18 +137,18 @@ class OpenScholar:
             paper["text"][:100] + paper["title"]: paper
             for paper in retrieved_papers
             if paper is not None
-            and type(paper["text"]) is str
-            and "title" in paper["title"]
+               and type(paper["text"]) is str
+               and "title" in paper["title"]
         }
         dedup_papers = list(papers_dicts.values())
 
         return dedup_papers
 
     def get_feedback(
-        self,
-        query: str,
-        ctxs: List[Dict[str, Any]],
-        initial_response: str,
+            self,
+            query: str,
+            ctxs: List[Dict[str, Any]],
+            initial_response: str,
     ):
         ctxs_text = self.process_passage(ctxs)
         input_query = tool.instructions.feedback_example_instance_prompt.format_map(
@@ -174,12 +174,12 @@ class OpenScholar:
         return feedbacks
 
     def edit_with_feedback(
-        self,
-        query: str,
-        ctxs: List[Dict[str, Any]],
-        previous_response: str,
-        feedback: str,
-        max_tokens: int = 3000,
+            self,
+            query: str,
+            ctxs: List[Dict[str, Any]],
+            previous_response: str,
+            feedback: str,
+            max_tokens: int = 3000,
     ):
         input_query = tool.instructions.editing_instance_prompt.format_map(
             {
@@ -206,13 +206,13 @@ class OpenScholar:
         return raw_output
 
     def edit_with_feedback_retrieval(
-        self,
-        query: str,
-        ctxs: List[Dict[str, Any]],
-        previous_response: str,
-        feedback: str,
-        passage_start_index,
-        max_tokens=3000,
+            self,
+            query: str,
+            ctxs: List[Dict[str, Any]],
+            previous_response: str,
+            feedback: str,
+            passage_start_index,
+            max_tokens=3000,
     ):
         processed_passages = ""
         for doc_idx, doc in enumerate(ctxs[: self.top_n]):
@@ -315,7 +315,7 @@ class OpenScholar:
             return snippets_list
 
     def answer_query(
-        self, query: str, feedback_toggle: bool, task_id: str
+            self, query: str, feedback_toggle: bool, task_id: str
     ) -> List[Dict[str, Any]]:
         """
         This function takes a query and returns a response.
@@ -375,8 +375,8 @@ class OpenScholar:
                             "Here is the revised answer:\n\n"
                         )[1]
                     if (
-                        len(edited_answer) > 0
-                        and len(edited_answer) / len(previous_response) > 0.9
+                            len(edited_answer) > 0
+                            and len(edited_answer) / len(previous_response) > 0.9
                     ):
                         previous_response = edited_answer
                         responses.append(

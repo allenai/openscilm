@@ -365,6 +365,14 @@ function(
                         },
                     },
                     nodeSelector: nodeSelector,
+                    volumes: [
+                    {
+                        name: "event-tracer-gcs-key",
+                        secret: {
+                            secretName: "event-tracer-gcs-key"
+                        }
+                    }
+                ],
                     containers: [
                         {
                             name: fullyQualifiedName + '-api',
@@ -427,6 +435,14 @@ function(
                                     value: 'google:json'
                                 },
                                 {
+                                    name: 'SNIPPET_LENGTH',
+                                    value: 300
+                                },
+                                {
+                                    name: 'GOOGLE_APPLICATION_CREDENTIALS',
+                                    value: '/secret/GCS_SVC_ACCOUNT_KEY'
+                                },
+                                {
                                     name: "OPENAI_API_KEY",
                                     valueFrom: {
                                         secretKeyRef: {
@@ -482,6 +498,22 @@ function(
                                 }
                             ]
                         },
+                        volumeMounts: [
+                            {
+                                /* This must match the volume name above. */
+                                name: "event-tracer-gcs-key",
+                                /**
+                                 * You can change this to to whatever path you'd like.
+                                 * It should point to a directory, as a file for each secret
+                                 * key will be created.
+                                 *
+                                 * For instance, as configured it'd produce the following files:
+                                 *   /secret/GCS_SVC_ACCOUNT_KEY
+                                 **/
+                                mountPath: "/secret",
+                                readOnly: true
+                            },
+                        ],
                         {
                             name: fullyQualifiedName + '-proxy',
                             image: proxyImage,

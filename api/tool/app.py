@@ -31,6 +31,7 @@ ASYNC_STATE_DIR = "/async-state"
 task_state_manager = StateManager(AsyncTaskState, ASYNC_STATE_DIR)
 async_context = multiprocessing.get_context("fork")
 open_scholar = OpenScholar(task_state_manager)
+SNIPPET_LENGTH = os.getenv("SNIPPET_LENGTH", 300)
 
 
 def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
@@ -47,6 +48,10 @@ def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
     use `task_state_manager.read_state(task_id)` to retrieve, and `.write_state()`
     to write back.
     """
+
+    def truncate_snippet(snippet: str) -> str:
+        return snippet[:SNIPPET_LENGTH] + "..." if len(snippet) > SNIPPET_LENGTH else snippet
+
     answer_map = open_scholar.answer_query(
         tool_request.query, tool_request.feedback_toggle, task_id
     )
@@ -54,7 +59,8 @@ def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
         GeneratedIteration(
             text=iteration["text"],
             feedback=iteration["feedback"],
-            citations=[Citation(id=f"[{idx}]", corpus_id=cite["corpus_id"], snippet=cite["text"], score=cite["score"])
+            citations=[Citation(id=f"[{idx}]", corpus_id=cite["corpus_id"], snippet=truncate_snippet(cite["text"]),
+                                score=cite["score"])
                        for
                        idx, cite in enumerate(iteration["citations"])],
         )
