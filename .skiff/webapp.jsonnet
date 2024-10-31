@@ -436,6 +436,15 @@ function(
                                     }
                                 },
                                 {
+                                    name: "S2_PARTNER_API_KEY",
+                                    valueFrom: {
+                                        secretKeyRef: {
+                                            name: "s2-keys",
+                                            key: "S2_PARTNER_API_KEY"
+                                        }
+                                    }
+                                },
+                                {
                                     name: "S2_PARTNER_KEY",
                                     valueFrom: {
                                         secretKeyRef: {
