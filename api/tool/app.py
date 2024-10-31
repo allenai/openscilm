@@ -102,7 +102,7 @@ def create_app() -> FastAPI:
 
     @app.get("/")
     def root():
-        return RedirectResponse("/api/docs")
+        return 'nothing to see here :)'
 
     # This tells the machinery that powers Skiff (Kubernetes) that your application
     # is ready to receive traffic. Returning a non 200 response code will prevent the
