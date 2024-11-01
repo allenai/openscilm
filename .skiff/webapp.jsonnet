@@ -511,7 +511,7 @@ function(
                                     **/
                                     mountPath: "/secret",
                                     readOnly: true
-                                },
+                                }
                             ],
                         },
                         {
