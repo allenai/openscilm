@@ -146,7 +146,7 @@ def create_app() -> FastAPI:
             task_result=None,
         )
 
-    @app.post("/paper_details/")
+    @app.post("/paper_details")
     def paper_details(papers: Papers):  # pyright: ignore reportUnusedFunction
         fieldstring = 'authors,title,year'
         if (papers.fields):
