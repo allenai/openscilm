@@ -366,13 +366,13 @@ function(
                     },
                     nodeSelector: nodeSelector,
                     volumes: [
-                    {
-                        name: "event-tracer-gcs-key",
-                        secret: {
-                            secretName: "event-tracer-gcs-key"
+                        {
+                            name: "event-tracer-gcs-key",
+                            secret: {
+                                secretName: "event-tracer-gcs-key"
+                            }
                         }
-                    }
-                ],
+                    ],
                     containers: [
                         {
                             name: fullyQualifiedName + '-api',
@@ -496,24 +496,24 @@ function(
                                         }
                                     }
                                 }
-                            ]
+                            ],
+                            volumeMounts: [
+                                {
+                                    /* This must match the volume name above. */
+                                    name: "event-tracer-gcs-key",
+                                    /**
+                                    * You can change this to to whatever path you'd like.
+                                    * It should point to a directory, as a file for each secret
+                                    * key will be created.
+                                    *
+                                    * For instance, as configured it'd produce the following files:
+                                    *   /secret/GCS_SVC_ACCOUNT_KEY
+                                    **/
+                                    mountPath: "/secret",
+                                    readOnly: true
+                                },
+                            ],
                         },
-                        volumeMounts: [
-                            {
-                                /* This must match the volume name above. */
-                                name: "event-tracer-gcs-key",
-                                /**
-                                 * You can change this to to whatever path you'd like.
-                                 * It should point to a directory, as a file for each secret
-                                 * key will be created.
-                                 *
-                                 * For instance, as configured it'd produce the following files:
-                                 *   /secret/GCS_SVC_ACCOUNT_KEY
-                                 **/
-                                mountPath: "/secret",
-                                readOnly: true
-                            },
-                        ],
                         {
                             name: fullyQualifiedName + '-proxy',
                             image: proxyImage,
