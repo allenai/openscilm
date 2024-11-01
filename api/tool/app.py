@@ -31,7 +31,7 @@ ASYNC_STATE_DIR = "/async-state"
 task_state_manager = StateManager(AsyncTaskState, ASYNC_STATE_DIR)
 async_context = multiprocessing.get_context("fork")
 open_scholar = OpenScholar(task_state_manager)
-SNIPPET_LENGTH = os.getenv("SNIPPET_LENGTH", 300)
+SNIPPET_LENGTH = int(os.getenv("SNIPPET_LENGTH", 300))
 
 
 def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:

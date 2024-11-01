@@ -436,7 +436,7 @@ function(
                                 },
                                 {
                                     name: 'SNIPPET_LENGTH',
-                                    value: 300
+                                    value: '300'
                                 },
                                 {
                                     name: 'GOOGLE_APPLICATION_CREDENTIALS',
