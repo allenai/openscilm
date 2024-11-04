@@ -452,6 +452,24 @@ function(
                                     }
                                 },
                                 {
+                                    name: "RUNPOD_API_KEY",
+                                    valueFrom: {
+                                        secretKeyRef: {
+                                            name: "runpod-keys",
+                                            key: "RUNPOD_API_KEY"
+                                        }
+                                    }
+                                },
+                                {
+                                    name: "RUNPOD_ID",
+                                    valueFrom: {
+                                        secretKeyRef: {
+                                            name: "runpod-keys",
+                                            key: "RUNPOD_ID"
+                                        }
+                                    }
+                                },
+                                {
                                     name: "S2_PARTNER_API_KEY",
                                     valueFrom: {
                                         secretKeyRef: {

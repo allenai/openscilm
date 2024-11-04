@@ -19,7 +19,7 @@ def create_prompt_with_llama3_format(prompt,
 class ModalEngine:
     modal_client: modal.Client
 
-    def __init__(self, model_id: str = "akariasai-os-8b") -> None:
+    def __init__(self, model_id: str = "akariasai-os-8b-tgi") -> None:
         # Skiff secrets
         modal_token = os.getenv("MODAL_TOKEN")
         modal_token_secret = os.getenv("MODAL_TOKEN_SECRET")
@@ -33,17 +33,8 @@ class ModalEngine:
             **opt_kwargs
     ):
         # msgs = [{"role": "user", "content": create_prompt_with_llama3_format(ip_msgs)}]
-        msgs = create_prompt_with_llama3_format(ip_msgs)
+        # msgs = create_prompt_with_llama3_format(ip_msgs)
         opts = {**self.gen_options, **opt_kwargs}
-        f = modal.Function.lookup(self.model_id, "vllm_api", client=self.modal_client)
+        f = modal.Function.lookup(self.model_id, "tgi_api", client=self.modal_client)
 
-        try:
-            for chunk in f.remote_gen(msgs, opts):
-                yield(
-                    chunk["result"]["output"]["text"]
-                    if "result" in chunk and "output" in chunk["result"] and "text" in chunk["result"]["output"]
-                    else ""
-                )
-
-        except Exception as e:
-            print(e)
+        return f.remote_gen(ip_msgs, opts)

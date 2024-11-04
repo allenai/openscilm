@@ -63,11 +63,10 @@ def is_integer_string(s):
 
 def get_paper_data(paper_id):
     if is_integer_string(paper_id) is False:
-        url = "https://api.semanticscholar.org/graph/v1/paper/" + paper_id
+        url = "paper/" + paper_id
     else:
-        url = "https://api.semanticscholar.org/graph/v1/paper/CorpusID:" + paper_id
+        url = "paper/CorpusId:" + paper_id
     # Define which details about the paper you would like to receive in the response
-    print(url)
     paper_data_query_params = {
         "fields": "title,year,abstract,url,authors.name,citationCount,year,openAccessPdf"
     }
@@ -76,16 +75,16 @@ def get_paper_data(paper_id):
         response = query_s2_api(end_pt=url, params=paper_data_query_params)
         # time.sleep(0.1)
         return response.json()
-    except:
-        print("failed semantic scholar meta data retrieval")
+    except Exception as e:
+        print(f"failed semantic scholar meta data retrieval for paperid: {paper_id}", e)
         return None
 
 
 def call_api(
-    input_query,
-    client,
-    model_name="meta-llama/Llama-3-70b-chat-hf",
-    max_tokens=1500,
+        input_query,
+        client,
+        model_name="meta-llama/Llama-3-70b-chat-hf",
+        max_tokens=1500,
 ):
     chat_completion = client.chat.completions.create(
         model=model_name,
@@ -152,8 +151,8 @@ def retrieve_keywords(question, client, model_name):
         model_name=model_name,
     )
     if (
-        "Search queries:" in keywords
-        and len(keywords.split("\n\nSearch queries: ")) > 1
+            "Search queries:" in keywords
+            and len(keywords.split("\n\nSearch queries: ")) > 1
     ):
         keywords = keywords.split("\n\nSearch queries: ")[1]
     queries = keywords.split(", ")[:5]
@@ -192,8 +191,8 @@ def search_semantic_scholar(question, client, model_name):
             }
         )
         if (
-            paper_list[paper_id]["externalIds"] is not None
-            and "ArXiv" in paper_list[paper_id]["externalIds"]
+                paper_list[paper_id]["externalIds"] is not None
+                and "ArXiv" in paper_list[paper_id]["externalIds"]
         ):
             passages = retrieve_passages_single_paper(
                 paper_list[paper_id]["externalIds"]["ArXiv"]
@@ -246,7 +245,7 @@ def batch_paper_data_SS_ID(paper_ids):
     response_data = query_s2_api(
         end_pt="paper/batch",
         params={
-            "fields": "referenceCount,citationCount,title,url,publicationDate,abstract,year,authors.name"
+            "fields": "referenceCount,citationCount,title,url,publicationDate,abstract,year,authors.name,corpusId"
         },
         payload={"ids": ["CorpusId:{0}".format(id) for id in paper_ids]},
         method="post",
@@ -327,8 +326,8 @@ def search_google(query):
         for arxiv_id in arxiv_ids:
             paper_parsed = passages[arxiv_id]
             if (
-                arxiv_id in paper_meta_data_results
-                and type(paper_meta_data_results[arxiv_id]) is dict
+                    arxiv_id in paper_meta_data_results
+                    and type(paper_meta_data_results[arxiv_id]) is dict
             ):
                 paper_meta_data = paper_meta_data_results[arxiv_id]
                 for p in paper_parsed:
@@ -428,8 +427,8 @@ def search_google_non_restricted(query):
     for arxiv_id in arxiv_ids:
         paper_parsed = passages[arxiv_id]
         if (
-            arxiv_id in paper_meta_data_results
-            and type(paper_meta_data_results[arxiv_id]) is dict
+                arxiv_id in paper_meta_data_results
+                and type(paper_meta_data_results[arxiv_id]) is dict
         ):
             paper_meta_data = paper_meta_data_results[arxiv_id]
             for p in paper_parsed:
@@ -514,8 +513,8 @@ def search_youcom_non_restricted(query):
     for arxiv_id in arxiv_ids:
         paper_parsed = passages[arxiv_id]
         if (
-            arxiv_id in paper_meta_data_results
-            and type(paper_meta_data_results[arxiv_id]) is dict
+                arxiv_id in paper_meta_data_results
+                and type(paper_meta_data_results[arxiv_id]) is dict
         ):
             paper_meta_data = paper_meta_data_results[arxiv_id]
             for p in paper_parsed:
@@ -577,7 +576,7 @@ def retrieve_pes2o_passaages(query, n_docs, domains):
     end = time.perf_counter()
     print("loaded paper data")
     for doc, s_id in zip(
-        search_results["results"]["passages"], search_results["results"]["pes2o IDs"]
+            search_results["results"]["passages"], search_results["results"]["pes2o IDs"]
     ):
         if s_id not in paper_data:
             continue
@@ -686,10 +685,10 @@ def main():
                 if paper_data_ctxs is None:
                     continue
                 if (
-                    "pes2o_paper_id" not in ctx
-                    or type(ctx["pes2o_paper_id"]) is not str
-                    or ctx["pes2o_paper_id"] not in paper_data_ctxs
-                    or type(paper_data_ctxs[ctx["pes2o_paper_id"]]) is not dict
+                        "pes2o_paper_id" not in ctx
+                        or type(ctx["pes2o_paper_id"]) is not str
+                        or ctx["pes2o_paper_id"] not in paper_data_ctxs
+                        or type(paper_data_ctxs[ctx["pes2o_paper_id"]]) is not dict
                 ):
                     continue
                 ctx["abstract"] = paper_data_ctxs[ctx["pes2o_paper_id"]]["abstract"]
