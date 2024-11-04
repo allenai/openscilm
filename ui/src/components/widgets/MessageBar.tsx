@@ -8,6 +8,7 @@ import {
 import React, { useCallback, useContext, useEffect, useRef } from 'react';
 import PendingIcon from '@mui/icons-material/Pending';
 import SendIcon from '@mui/icons-material/Send';
+import { OptOut } from './OptOut';
 
 type MessageBarProps = {
   onSend: (text: string) => Promise<any> | void;
@@ -25,6 +26,7 @@ const MessageBar = ({
   const formRef = useRef<HTMLFormElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const [text, setText] = React.useState('');
+  const [optOut, setOptOut] = React.useState(false);
 
   const isEmpty = (text ?? '').trim().length === 0;
 
@@ -60,30 +62,33 @@ const MessageBar = ({
   );
 
   return (
-    <StyledBox>
-      <Form onSubmit={handleOnSend} ref={formRef}>
-        <FormControl sx={{ width: '100%' }}>
-          <Textarea
-            ref={textAreaRef}
-            placeholder={placeholder}
-            data-testid="message-bar-input"
-            onKeyDown={handleEnterKeyPress}
-            onChange={handleChange}
-            value={text}
-          />
-        </FormControl>
+    <div>
+      <StyledBox>
+        <Form onSubmit={handleOnSend} ref={formRef}>
+          <FormControl sx={{ width: '100%' }}>
+            <Textarea
+              ref={textAreaRef}
+              placeholder={placeholder}
+              data-testid="message-bar-input"
+              onKeyDown={handleEnterKeyPress}
+              onChange={handleChange}
+              value={text}
+            />
+          </FormControl>
 
-        <FormControl sx={{ alignSelf: 'flex-end' }}>
-          <SendButton
-            type="submit"
-            data-testid="message-bar-submit-button"
-            disabled={isEmpty || isPending}
-          >
-            {isPending ? <PendingIcon /> : <StyledSendIcon />}
-          </SendButton>
-        </FormControl>
-      </Form>
-    </StyledBox>
+          <FormControl sx={{ alignSelf: 'flex-end' }}>
+            <SendButton
+              type="submit"
+              data-testid="message-bar-submit-button"
+              disabled={isEmpty || isPending}
+            >
+              {isPending ? <PendingIcon /> : <StyledSendIcon />}
+            </SendButton>
+          </FormControl>
+        </Form>
+      </StyledBox>
+      <OptOut optOut={optOut} setOptOut={setOptOut} />
+    </div>
   );
 };
 
