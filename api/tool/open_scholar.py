@@ -17,14 +17,17 @@ from tool.use_search_apis import (
     search_paper_via_query,
     search_youcom_non_restricted,
 )
+from tool.models import TaskResult, GeneratedIteration, Citation
 
 from tool.utils import remove_citations
 
-RETRIEVAL_API = "http://tricycle.cs.washington.edu:5000/search"
+RETRIEVAL_API = "http://tricycle.cs.washington.edu:5001/search"
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 RUNPOD_ID = os.getenv("RUNPOD_ID")
 RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY")
+SNIPPET_LENGTH = int(os.getenv("SNIPPET_LENGTH", 300))
+
 
 class OpenScholar:
     def __init__(
@@ -83,11 +86,11 @@ class OpenScholar:
             },
         ]
         output = client.chat.completions.create(
-                model="akariasai/os_8b",
-                messages=messages,
-                temperature=0.7,
-                max_tokens=4096,
-            )
+            model="akariasai/os_8b",
+            messages=messages,
+            temperature=0.7,
+            max_tokens=4096,
+        )
 
         output = output.choices[0].message.content
         if "[Response_Start]" in output and "[Response_End]" not in output:
@@ -293,7 +296,7 @@ class OpenScholar:
 
     ############################ Code for API
     def update_task_state(self, task_id: str, status: str, estimated_time: str = None,
-                          curr_response: List[Dict[str, Any]] = None):
+                          curr_response: List[GeneratedIteration] = None):
         status = f"{time()}:{status}"
         if task_id:
             task_state = self.task_mgr.read_state(task_id)
@@ -301,7 +304,7 @@ class OpenScholar:
             if estimated_time:
                 task_state.estimated_time = estimated_time
             if curr_response:
-                task_state.task_result = {"iterations": curr_response}
+                task_state.task_result = TaskResult(iterations=curr_response)
             self.task_mgr.write_state(task_state)
 
     def retrieve(self, query: str, task_id: str) -> List[Dict[str, Any]]:
@@ -309,7 +312,6 @@ class OpenScholar:
         json_data = {"query": query, "n_docs": self.n_rerank, "domains": "pes2o"}
         headers = {"Content-Type": "application/json"}
         response = requests.post(RETRIEVAL_API, json=json_data, headers=headers)
-        print("retrieval done")
         if response.status_code != 200:
             print(f"Error in retrieving snippets from url: {RETRIEVAL_API}")
             raise Exception(
@@ -320,6 +322,7 @@ class OpenScholar:
             results = res_contents["results"]
             status_str = f'{len(results["passages"])} snippets retrieved successfully'
             self.update_task_state(task_id, status_str)
+            print(f"retrieval done - {status_str}")
             paper_titles = {}
             for pes2o_id in results["pes2o IDs"]:
                 paper_data = get_paper_data(pes2o_id)
@@ -342,7 +345,7 @@ class OpenScholar:
 
     def answer_query(
             self, query: str, feedback_toggle: bool, task_id: str
-    ) -> List[Dict[str, Any]]:
+    ) -> TaskResult:
         """
         This function takes a query and returns a response.
         Goes through the following steps:
@@ -354,6 +357,20 @@ class OpenScholar:
         :param query: A scientific query posed to nora by a user
         :return: A response to the query
         """
+
+        def truncate_snippet(snippet: str) -> str:
+            return snippet[:SNIPPET_LENGTH] + "..." if len(snippet) > SNIPPET_LENGTH else snippet
+
+        def get_response(iteration: Dict[str, Any]):
+            return GeneratedIteration(
+                text=iteration["text"],
+                feedback=iteration["feedback"],
+                citations=[Citation(id=f"[{idx}]", corpus_id=cite["corpus_id"], snippet=truncate_snippet(cite["text"]),
+                                    score=cite["score"])
+                           for
+                           idx, cite in enumerate(iteration["citations"])],
+            )
+
         responses = []
         citation_lists = []
         t = threading.Thread(target=self.llm_inference, args=("Just waking you up",))
@@ -368,13 +385,13 @@ class OpenScholar:
         self.update_task_state(task_id, "Generating the intial draft")
         initial_response = self.generate_response(query, retrieved_candidates)
         print("initial response", initial_response)
-        responses.append(
+        responses.append(get_response(
             {
                 "text": initial_response,
                 "feedback": None,
                 "citations": retrieved_candidates,
             }
-        )
+        ))
         self.update_task_state(task_id, "Initial draft generated successfully", curr_response=responses)
 
         # iteratiive feedback loop
@@ -408,12 +425,13 @@ class OpenScholar:
                         previous_response = edited_answer
                         citation_lists.append(copy.deepcopy(retrieved_candidates))
                         responses.append(
-                            {
-                                "text": edited_answer,
-                                "feedback": feedback[0],
-                                "citations": citation_lists[-1],
-                            }
-                        )
+                            get_response(
+                                {
+                                    "text": edited_answer,
+                                    "feedback": feedback[0],
+                                    "citations": citation_lists[-1],
+                                }
+                            ))
                     else:
                         print("Skipping as edited answers got too short")
                 else:
@@ -455,15 +473,16 @@ class OpenScholar:
                             prev_citations += new_papers[: self.top_n]
                             previous_response = edited_answer
                             responses.append(
-                                {
-                                    "text": edited_answer,
-                                    "feedback": feedback[0],
-                                    "citations": prev_citations,
-                                }
-                            )
+                                get_response(
+                                    {
+                                        "text": edited_answer,
+                                        "feedback": feedback[0],
+                                        "citations": prev_citations,
+                                    }
+                                ))
                             citation_lists.append(prev_citations)
                         else:
                             print("skipping as edited answers got too short")
                 self.update_task_state(task_id, f"Feedback {feedback_idx} incorporated successfully",
                                        curr_response=responses)
-        return responses
+        return TaskResult(iterations=responses)

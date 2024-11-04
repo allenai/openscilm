@@ -5,7 +5,6 @@ import multiprocessing
 import os
 import uuid
 from typing import Annotated, Optional, Union
-from time import time
 import boto3
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
@@ -31,7 +30,6 @@ ASYNC_STATE_DIR = "/async-state"
 task_state_manager = StateManager(AsyncTaskState, ASYNC_STATE_DIR)
 async_context = multiprocessing.get_context("fork")
 open_scholar = OpenScholar(task_state_manager)
-SNIPPET_LENGTH = int(os.getenv("SNIPPET_LENGTH", 300))
 
 
 def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
@@ -49,24 +47,9 @@ def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
     to write back.
     """
 
-    def truncate_snippet(snippet: str) -> str:
-        return snippet[:SNIPPET_LENGTH] + "..." if len(snippet) > SNIPPET_LENGTH else snippet
-
-    answer_map = open_scholar.answer_query(
+    return open_scholar.answer_query(
         tool_request.query, tool_request.feedback_toggle, task_id
     )
-    iterations = [
-        GeneratedIteration(
-            text=iteration["text"],
-            feedback=iteration["feedback"],
-            citations=[Citation(id=f"[{idx}]", corpus_id=cite["corpus_id"], snippet=truncate_snippet(cite["text"]),
-                                score=cite["score"])
-                       for
-                       idx, cite in enumerate(iteration["citations"])],
-        )
-        for iteration in answer_map
-    ]
-    return TaskResult(iterations=iterations)
 
 
 def _estimate_task_length(tool_request: ToolRequest) -> str:
@@ -77,7 +60,7 @@ def _estimate_task_length(tool_request: ToolRequest) -> str:
     have access to the request if you want to do something fancier.
     """
 
-    return str(time()) + ":" + (
+    return (
         "1 minute"
         if not tool_request.feedback_toggle
         else f"{open_scholar.n_feedback} minutes"
