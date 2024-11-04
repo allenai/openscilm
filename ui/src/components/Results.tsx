@@ -43,7 +43,8 @@ export const Results: React.FC<PropType> = (props) => {
       setIsLoading(false);
       console.log('setStatus', newStatus)
       setStatus(newStatus);
-      if (!newStatus.task_result && newStatus.httpStatus !== 404) {
+      const taskRunning = !newStatus || 'task_status' in newStatus
+      if (taskRunning && newStatus.httpStatus !== 404) {
         const timeoutId = window.setTimeout(inner, interval);
         timeoutIds.push(timeoutId);
       }
@@ -61,7 +62,9 @@ export const Results: React.FC<PropType> = (props) => {
       status: 'Loading...',
       httpStatus: 200
     }
-  if (!status?.task_result) {
+  // if (!status?.task_result) {
+  const taskRunning = !status || 'task_status' in status
+  if (taskRunning) {
     if (status?.httpStatus === 404) {
         progressProps = {
           estimatedTime: '---',
@@ -90,6 +93,12 @@ export const Results: React.FC<PropType> = (props) => {
     <div>
       {/* {isLoading && <LinearProgress style={{ marginBottom: '-4px' }} />} */}
       <h2>{status?.query}</h2>
+      {taskRunning && (
+        <>
+            <Button key="three" onClick={handleDeleteTask}>Abort This Task</Button>
+            <Progress {...progressProps} />
+        </>
+      )}
       {section && (
         <>
           <Box
@@ -105,19 +114,17 @@ export const Results: React.FC<PropType> = (props) => {
               },
             }}
           >
-            <ButtonGroup size="small" aria-label="Small button group" style={{marginRight: '12px'}}>
-              <Button key="one">Good</Button>
-              <Button key="two">Bad</Button>
-            </ButtonGroup>
-            <Button key="three" onClick={handleDeleteTask}>Delete</Button>
+            {!taskRunning && (
+              <>
+                <ButtonGroup size="small" aria-label="Small button group" style={{ marginRight: '12px' }}>
+                  <Button key="one">Good</Button>
+                  <Button key="two">Bad</Button>
+                </ButtonGroup>
+                <Button key="three" onClick={handleDeleteTask}>Delete</Button>
+              </>
+            )}
           </Box>
           <Report section={section} />
-        </>
-      )}
-      {!section && (
-        <>
-            <Button key="three" onClick={handleDeleteTask}>Abort This Task</Button>
-            <Progress {...progressProps} />
         </>
       )}
     </div>

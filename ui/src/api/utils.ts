@@ -21,7 +21,7 @@ export interface StatusTypeDone {
 export interface StatusTypeInProgress {
   task_id: string;
   query: string;
-  task_result: null 
+  task_result: TaskResultType | null;
   estimated_time: string;
   task_status: string;
   httpStatus: number;
