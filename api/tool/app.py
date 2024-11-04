@@ -241,5 +241,5 @@ def _handle_async_task_check_in(
         query=task_state.query,
         estimated_time=task_state.estimated_time,
         task_status=task_state.task_status,
-        task_result=None,
+        task_result=task_state.task_result,
     )

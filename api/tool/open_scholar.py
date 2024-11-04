@@ -23,15 +23,16 @@ from tool.utils import remove_citations
 RETRIEVAL_API = "http://tricycle.cs.washington.edu:5000/search"
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
+RUNPOD_ID = os.getenv("RUNPOD_ID")
+RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY")
 
 class OpenScholar:
     def __init__(
-        self,
-        task_mgr: StateManager,
-        n_retrieval: int = 100,
-        n_rerank: int = 10,
-        n_feedback: int = 1,
+            self,
+            task_mgr: StateManager,
+            n_retrieval: int = 100,
+            n_rerank: int = 10,
+            n_feedback: int = 1,
     ):
         # TODO: Initialize retriever and re-ranker clients here
         self.n_retrieval = n_retrieval
@@ -68,8 +69,8 @@ class OpenScholar:
 
     def llm_inference(self, input_query: str, **opt_kwargs):
         client = OpenAI(
-            api_key="APY_KEY",
-            base_url=f"https://api.runpod.ai/v2/RUNPOD_NAME/openai/v1",
+            api_key=RUNPOD_API_KEY,
+            base_url=f"https://api.runpod.ai/v2/{RUNPOD_ID}/openai/v1",
         )
         messages = [
             {
@@ -78,16 +79,15 @@ class OpenScholar:
             },
             {
                 "role": "user",
-                "content": input_query
-                + "<|start_header_id|>assistant<|end_header_id|>\n\n",  # this is a temporary hack until we update the runpod template.
+                "content": input_query,
             },
         ]
         output = client.chat.completions.create(
-            model="akariasai/os_8b",
-            messages=messages,
-            temperature=0.7,
-            max_tokens=4096,
-        )
+                model="akariasai/os_8b",
+                messages=messages,
+                temperature=0.7,
+                max_tokens=4096,
+            )
 
         output = output.choices[0].message.content
         if "[Response_Start]" in output and "[Response_End]" not in output:
@@ -108,10 +108,10 @@ class OpenScholar:
         return ctxs
 
     def generate_response(
-        self,
-        query: str,
-        retrieved_ctxs: List[Dict[str, Any]],
-        max_tokens: int = 3000,
+            self,
+            query: str,
+            retrieved_ctxs: List[Dict[str, Any]],
+            max_tokens: int = 3000,
     ):
         ctxs_text = self.process_passage(retrieved_ctxs)
 
@@ -161,18 +161,18 @@ class OpenScholar:
             paper["text"][:100] + paper["title"]: paper
             for paper in retrieved_papers
             if paper is not None
-            and type(paper["text"]) is str
-            and "title" in paper["title"]
+               and type(paper["text"]) is str
+               and "title" in paper["title"]
         }
         dedup_papers = list(papers_dicts.values())
 
         return dedup_papers
 
     def get_feedback(
-        self,
-        query: str,
-        ctxs: List[Dict[str, Any]],
-        initial_response: str,
+            self,
+            query: str,
+            ctxs: List[Dict[str, Any]],
+            initial_response: str,
     ):
         ctxs_text = self.process_passage(ctxs)
         input_query = tool.instructions.feedback_example_instance_prompt.format_map(
@@ -198,12 +198,12 @@ class OpenScholar:
         return feedbacks
 
     def edit_with_feedback(
-        self,
-        query: str,
-        ctxs: List[Dict[str, Any]],
-        previous_response: str,
-        feedback: str,
-        max_tokens: int = 3000,
+            self,
+            query: str,
+            ctxs: List[Dict[str, Any]],
+            previous_response: str,
+            feedback: str,
+            max_tokens: int = 3000,
     ):
         input_query = tool.instructions.editing_instance_prompt.format_map(
             {
@@ -230,13 +230,13 @@ class OpenScholar:
         return raw_output
 
     def edit_with_feedback_retrieval(
-        self,
-        query: str,
-        ctxs: List[Dict[str, Any]],
-        previous_response: str,
-        feedback: str,
-        passage_start_index,
-        max_tokens=3000,
+            self,
+            query: str,
+            ctxs: List[Dict[str, Any]],
+            previous_response: str,
+            feedback: str,
+            passage_start_index,
+            max_tokens=3000,
     ):
         processed_passages = ""
         for doc_idx, doc in enumerate(ctxs[: self.top_n]):
@@ -292,19 +292,24 @@ class OpenScholar:
         return search_queries
 
     ############################ Code for API
-    def update_task_state(self, task_id: str, status: str, estimated_time: str = None):
+    def update_task_state(self, task_id: str, status: str, estimated_time: str = None,
+                          curr_response: List[Dict[str, Any]] = None):
         status = f"{time()}:{status}"
         if task_id:
             task_state = self.task_mgr.read_state(task_id)
             task_state.task_status = status
             if estimated_time:
                 task_state.estimated_time = estimated_time
+            if curr_response:
+                task_state.task_result = curr_response
             self.task_mgr.write_state(task_state)
 
     def retrieve(self, query: str, task_id: str) -> List[Dict[str, Any]]:
+        print("retrieval started")
         json_data = {"query": query, "n_docs": self.n_rerank, "domains": "pes2o"}
         headers = {"Content-Type": "application/json"}
         response = requests.post(RETRIEVAL_API, json=json_data, headers=headers)
+        print("retrieval done")
         if response.status_code != 200:
             print(f"Error in retrieving snippets from url: {RETRIEVAL_API}")
             raise Exception(
@@ -336,7 +341,7 @@ class OpenScholar:
             return snippets_list
 
     def answer_query(
-        self, query: str, feedback_toggle: bool, task_id: str
+            self, query: str, feedback_toggle: bool, task_id: str
     ) -> List[Dict[str, Any]]:
         """
         This function takes a query and returns a response.
@@ -357,7 +362,7 @@ class OpenScholar:
         retrieved_candidates = self.retrieve(query, task_id)
         citation_lists.append(retrieved_candidates)
 
-        self.update_task_state(task_id, "Waiting for modal cold start...")
+        self.update_task_state(task_id, "Waiting for model cold start...")
         t.join()
         # generate response
         self.update_task_state(task_id, "Generating the intial draft")
@@ -370,6 +375,7 @@ class OpenScholar:
                 "citations": retrieved_candidates,
             }
         )
+        self.update_task_state(task_id, "Initial draft generated successfully", curr_response=responses)
 
         # iteratiive feedback loop
         if feedback_toggle:
@@ -396,8 +402,8 @@ class OpenScholar:
                             "Here is the revised answer:\n\n"
                         )[1]
                     if (
-                        len(edited_answer) > 0
-                        and len(edited_answer) / len(previous_response) > 0.9
+                            len(edited_answer) > 0
+                            and len(edited_answer) / len(previous_response) > 0.9
                     ):
                         previous_response = edited_answer
                         citation_lists.append(copy.deepcopy(retrieved_candidates))
@@ -458,4 +464,6 @@ class OpenScholar:
                             citation_lists.append(prev_citations)
                         else:
                             print("skipping as edited answers got too short")
+                self.update_task_state(task_id, f"Feedback {feedback_idx} incorporated successfully",
+                                       curr_response=responses)
         return responses
