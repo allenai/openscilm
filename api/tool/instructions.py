@@ -85,19 +85,19 @@ example_question_rag = (
     "How do language models leverage parametric and non-parametric knowledge?"
 )
 example_answer_rag = """
-[Response_Start]Language models leverage both parametric and non-parametric knowledge to perform various tasks.\n
+Language models leverage both parametric and non-parametric knowledge to perform various tasks.\n
 Parametric knowledge refers to the information stored in the model's parameters, which are learned during training [0]. This type of knowledge allows language models to perform tasks such as closed-book question answering, where the model produces answers based on its internal knowledge without accessing any external corpus [0]. However, language models' memorization of parametric knowledge is often limited to popular factual knowledge, and even large models like GPT-3 may fail to answer the majority of long-tail questions [4].\n
-On the other hand, non-parametric knowledge is retrieved from an external source, such as a large-scale collection of documents, during inference [1]. This type of knowledge is used in retrieval-augmented language models, which can reduce factual errors, provide better attributions, and enable flexible opt-in and out of sequences [1]. Retrieval-augmented language models have been shown to be effective in few-shot learning scenarios, where they can learn knowledge-intensive tasks with very few training examples [2]. For example, the Atlas model, a retrieval-augmented language model, can reach over 42% accuracy on Natural Questions using only 64 examples, outperforming a 540B parameters model by 3% despite having 50x fewer parameters [2]. Moreover, even without training, simply combining off-the-shelf LMs such as GPT3 with retrieval augmentation can significantly improve performance in long-tail and have been shown to mitigate the low performance on questions about less popular entities[4]. However, retrieval-augmented LMs have several limitations. Specifically, retrieval-augmented LMs can make inference much more inefficient due to increased context length [6].[Response_End]\n
+On the other hand, non-parametric knowledge is retrieved from an external source, such as a large-scale collection of documents, during inference [1]. This type of knowledge is used in retrieval-augmented language models, which can reduce factual errors, provide better attributions, and enable flexible opt-in and out of sequences [1]. Retrieval-augmented language models have been shown to be effective in few-shot learning scenarios, where they can learn knowledge-intensive tasks with very few training examples [2]. For example, the Atlas model, a retrieval-augmented language model, can reach over 42% accuracy on Natural Questions using only 64 examples, outperforming a 540B parameters model by 3% despite having 50x fewer parameters [2]. Moreover, even without training, simply combining off-the-shelf LMs such as GPT3 with retrieval augmentation can significantly improve performance in long-tail and have been shown to mitigate the low performance on questions about less popular entities[4]. However, retrieval-augmented LMs have several limitations. Specifically, retrieval-augmented LMs can make inference much more inefficient due to increased context length [6].\n
 """
 example_answer_rag_incorrect = """
-[Response_Start]Language models leverage both parametric and non-parametric knowledge to perform various tasks. Parametric knowledge refers to the information stored in the model's parameters, which are learned during training [0]. This type of knowledge allows language models to perform tasks such as closed-book question answering, where the model produces answers based on its internal knowledge without accessing any external corpus [0]. However, language models' memorization of parametric knowledge is often limited to popular factual knowledge, and even large models like GPT-4 often fail to answer the majority of long-tail questions [4].\n
-On the other hand, non-parametric knowledge is retrieved from an external source, such as a large-scale collection of documents, during inference [1]. This type of knowledge is used in retrieval-augmented language models, which can reduce factual errors, provide better attributions, and enable flexible opt-in and out of sequences [1]. Retrieval-augmented language models have been shown to be effective in few-shot learning scenarios, where they can learn knowledge-intensive tasks with very few training examples [2]. For example, the Atlas model, a retrieval-augmented language model, can reach over 42% accuracy on Natural Questions using only 64 examples, outperforming a 540B parameters model by 3% despite having 50x fewer parameters [2]. Moreover, even without training, simply combining off-the-shelf LMs such as GPT3 with retrieval augmentation can significantly improve performance in long-tail and have been shown to mitigate the low performance on questions about less popular entities [4]. However, retrieval-augmented LMs have several limitations. Specifically, retrieval-augmented LMs can make inference much more inefficient due to increased context length [6].[Response_End]\n
+Language models leverage both parametric and non-parametric knowledge to perform various tasks. Parametric knowledge refers to the information stored in the model's parameters, which are learned during training [0]. This type of knowledge allows language models to perform tasks such as closed-book question answering, where the model produces answers based on its internal knowledge without accessing any external corpus [0]. However, language models' memorization of parametric knowledge is often limited to popular factual knowledge, and even large models like GPT-4 often fail to answer the majority of long-tail questions [4].\n
+On the other hand, non-parametric knowledge is retrieved from an external source, such as a large-scale collection of documents, during inference [1]. This type of knowledge is used in retrieval-augmented language models, which can reduce factual errors, provide better attributions, and enable flexible opt-in and out of sequences [1]. Retrieval-augmented language models have been shown to be effective in few-shot learning scenarios, where they can learn knowledge-intensive tasks with very few training examples [2]. For example, the Atlas model, a retrieval-augmented language model, can reach over 42% accuracy on Natural Questions using only 64 examples, outperforming a 540B parameters model by 3% despite having 50x fewer parameters [2]. Moreover, even without training, simply combining off-the-shelf LMs such as GPT3 with retrieval augmentation can significantly improve performance in long-tail and have been shown to mitigate the low performance on questions about less popular entities [4]. However, retrieval-augmented LMs have several limitations. Specifically, retrieval-augmented LMs can make inference much more inefficient due to increased context length [6].\n
 """
 
 example_feedback = """
-[Response_Start]Feedback: Only concrete examples used in the answer are QA results. We should include more results from non QA tasks. Question: What tasks retrieval-augmented LMs have been applied to?\n
+Feedback: Only concrete examples used in the answer are QA results. We should include more results from non QA tasks. Question: What tasks retrieval-augmented LMs have been applied to?\n
 Feedback: Only one limitation discussed in the answer is efficiency. Question: What are the disadvantages of retrieval-augmented LMs?\n
-Feedback: The original answer can be improved by adding more logical structure e.g., grouping similar disussions together and add paragraph headers.\n[Response_End]
+Feedback: The original answer can be improved by adding more logical structure e.g., grouping similar disussions together and add paragraph headers.\n
 """
 example_question_peft = "Discuss various parameter-efficient fine-tuning (PEFT) techniques for large language models, highlighting their strengths and weaknesses."
 example_passages_peft = """
@@ -108,7 +108,7 @@ example_passages_peft = """
 [4] Title: I-Tuning: Tuning Frozen Language Models with Image for Lightweight Image Captioning  Text: We design an I-Tuning module to connect the pre-trained vision encoder (i.e., CLIP-ViT [7]) and the language decoder (i.e., GPT2 [8]). To align between the language and vision modals, it serves as a cross-modal filter that automatically picks the visual information from the output of the vision encoder and adjusts the output hidden states of the language decoder. During training, we only update the newly introduced parameters in the I-Tuning module, and the parameters of the two pre-trained models are frozen.\n
 """
 example_rating_peft = """
-[Response_Start][0] Rating: 3 Explanation: This paragraph discusses a high-level overview and goal of parameter efficient tuning but does not mention any particular methods of parameter efficient tuning and thus may not be super helpful. This could still be useful to discuss general advantages of PEFT.
+[0] Rating: 3 Explanation: This paragraph discusses a high-level overview and goal of parameter efficient tuning but does not mention any particular methods of parameter efficient tuning and thus may not be super helpful. This could still be useful to discuss general advantages of PEFT.
 [1] Rating: 5 Explanation: This paragraph introduces Prefix Tuning, one of the most representative methods in parameter efficient tuning and includes their core empirical results.
 [2] Rating: 3 Explanation: While this paragraph provides a taxonomy of parameter efficient tuning and analysis, it does not provide any details of individual methods. Moreover, this paper's main focus is PEFT for vision models, while the original question asks about parameter efficient tuning for large language models.
 [3] Rating: 4 Explanation: This paragraph briefly introduces multiple parameter efficient tuning methods such as adapter tuning, prefix tuning and prompt tuning. While they do not directly discuss their advantages or disadvantages or more detail about prefix or prompt tuning, still this paragraph gives a useful overview of this area.
@@ -186,18 +186,6 @@ Evaluate the relevance of passages from scientific papers to aid in crafting inf
 5 (Highly Relevant): The passage contains important information, and several sentences could be directly cited and used in the response to provide crucial insights into the question.\n
 """
 
-ranking_example_instance_prompt = "{prompts_reranking}\n##\nQuestion: {example_question}\nReferences\n{example_paragraph}\n{example_rating}".format_map(
-    {
-        "prompts_reranking": prompts_reranking,
-        "example_question": example_question_peft,
-        "example_paragraph": example_passages_peft,
-        "example_rating": example_rating_peft,
-    }
-)
-ranking_instance_prompt = (
-    ranking_example_instance_prompt
-    + "\n##\nQuestion: {question}\nReferences\n{passages}\n"
-)
 
 # Updated on June 15
 prompts_reranking_summarization = """
@@ -289,11 +277,23 @@ feedback_example_instance_prompt = (
 )
 
 editing_feedback = """
-We give you a question related to the most recent scientific literature, an answer from a strong language model, and feedback on the answer.
-Please incorporate the feedback to improve the answer. You only need to modify the parts that require enhancement as pointed out by the feedback, and keep the other sentences as they are. 
-Do not omit any crucial information in the original answer, unless the instruction points out the original sentences are incorrect and should be removed. 
-If you insert new paragraphs and discussions, make sure that you are not adding repetitve discussions or new paragraphs that are already included in the original response. 
+We provide a question related to recent scientific literature, an answer from a strong language model, and feedback on the answer.
+Please incorporate the feedback to improve the answer. Only modify the parts that require enhancement as noted in the feedback, keeping the other sentences unchanged.
+Do not omit any crucial information from the original answer unless the feedback specifies that certain sentences are incorrect and should be removed.
+If you add new paragraphs or discussions, ensure that you are not introducing repetitive content or duplicating ideas already included in the original response.
+Use existing references presented under References to support the new discussions, referring to their citation numbers.
 Your answer should be marked as [Response_Start] and [Response_End].\n
+References:
+[0] Title: Attributed Question Answering: Evaluation and Modeling for Attributed Large Language Models Text: Roberts et al. (2020) shows that T5 (Raffel et al., 2020) can perform a new task formulation, closedbook QA. Concretely, T5 can produce answers to questions without access to any corpus at inference time, instead producing answers based on its model parameters, tuned to remember information digested in pretraining.\n
+[1] Title: Reliable, Adaptable, and Attributable Language Models with Retrieval Text: Unlike parametric LMs—which use large-scale text data only during training—retrieval-augmented LMs leverage an external large-scale collection of documents (datastore) at inference by selecting relevant documents from the datastore (Asai et al., 2023a). Retrieval-augmented LMs can W1: largely reduce factual errors (Mallen et al., 2023), W2: provide better attributions (Gao et al., 2023a), W3: enabling flexible opt-in and out of sequences (Min et al., 2024).
+[2] Title: Atlas: Few-shot Learning with Retrieval Augmented Language Models Text: In this work we present Atlas, a carefully designed and pre-trained retrieval augmented language model able to learn knowledge intensive tasks with very few training examples. We perform evaluations on a wide range of tasks, including MMLU, KILT and NaturalQuestions, and study the impact of the content of the document index, showing that it can easily be updated. Notably, Atlas reaches over 42% accuracy on Natural Questions using only 64 examples, outperforming a 540B parameters model by 3% despite having 50x fewer parameters.
+[3] Title: Language Models are Few-Shot Learners Text: Similarly, GPT-3 achieves 64.3% accuracy on TriviaQA in the zero-shot setting, 68.0% in the one-shot setting, and 71.2% in the few-shot setting, the last of which is state-of-the-art relative to fine-tuned models operating in the same closed-book setting.
+Question: What are the advantages of retrieval-augmented LMs?
+Answer: Retrieval-augmented LMs have been effective in various use cases, including reducing hallucinations [0] and are oftn more parameter-efficient than non retrieval-augmented LMs [2].
+Feedback: 
+The answer provides only list advantages without providing any concrete examples. Please provide more examples of how retrieval-augmented LMs have been used in practice.
+Edited Answer:
+[Response_Start]Retrieval-augmented LMs have been effective in various use cases, including reducing hallucinations [0] and are oftn more parameter-efficient than non retrieval-augmented LMs [2]. For instance, Atlas [2] achieves 42% accuracy on Natural Questions using only 64 examples, outperforming a 540B parameters model by 3\% despite having 50x fewer parameters.[Response_End]
 """
 editing_instance_prompt = (
     editing_feedback
@@ -399,7 +399,7 @@ Feedback: The answer provides solid empirical results on hallucination reduction
 References:
 [20] Title: Fine-Tuning or Retrieval? Comparing Knowledge Injection in LLMs Text: Fine-Tuning vs. RAG: In MMLU and current events tasks, RAG consistently outperformed fine-tuning. RAG incorporates relevant context, unlike fine-tuning, which can lead to catastrophic forgetting. The performance of models like Orca2, fine-tuned via reinforcement learning, further demonstrates the advantages of RAG.
 Edited Answer:
-[Response_Start]Retrieval-augmented LMs have been effective in various use cases, including reducing hallucinations [0] and enabling efficient adaptations to new data, such as temporal shifts [1]. Empirical results suggest they reduce hallucinations by 30% [2]. Regarding efficient adaptations, studies show that RAG significantly outperforms fine-tuning in tasks like MMLU, offering better adaptation to new data without retraining the model [3].[Response_End]
+[Response_Start]Retrieval-augmented LMs have been effective in various use cases, including reducing hallucinations [0] and enabling efficient adaptations to new data, such as temporal shifts [1]. Empirical results suggest they reduce hallucinations by 30% [2]. Regarding efficient adaptations, studies show that RAG significantly outperforms fine-tuning in tasks like MMLU, offering better adaptation to new data without retraining the model [20].[Response_End]
 """
 # editing_with_retrieval_instance_prompt = \
 #     editing_feedback_with_retrieval +  "##\nQuestion: {question}\n\Answer:\n{answer}\nFeedback:\n{feedback}\nReferences:\n{retrieved_passages}\n"
