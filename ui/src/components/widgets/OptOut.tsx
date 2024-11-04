@@ -43,7 +43,7 @@ export const OptOut: React.FC<Props> = (props) => {
 
   const labelElement = (
     <span>Do not publish my input data&nbsp;
-      <Button aria-describedby={id} onClick={handleClick}>
+      <Button aria-describedby={id} onClick={handleClick} size='small'>
         <Chip label="?" size="small" variant="outlined" color='secondary'/>
       </Button>
       <Popover
@@ -64,8 +64,24 @@ export const OptOut: React.FC<Props> = (props) => {
   )
 
   return (
-    <FormGroup>
-      <FormControlLabel control={<Checkbox checked={optOut} />} label={labelElement} onClick={handleCheckboxOnchang} />
-    </FormGroup>
+    <div style={{display: 'flex', justifyContent:' space-between', alignItems: 'center'}}>
+      <FormGroup>
+        <FormControlLabel control={<Checkbox checked={optOut} />} label={labelElement} onClick={handleCheckboxOnchang} />
+      </FormGroup>
+      <div>
+        <a href="https://allenai.org" target="_blank" style={{ color: '#FAF2E9' }}>
+        Ai2
+        </a>
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        <a href="https://allenai.org/privacy-policy" target="_blank" style={{ color: '#FAF2E9' }}>
+          Privacy Policy
+        </a>
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        <a href="https://allenai.org/terms" target="_blank" style={{ color: '#FAF2E9' }}>
+          Terms of Use
+        </a>
+      </div>
+      
+    </div>
   );
 }
