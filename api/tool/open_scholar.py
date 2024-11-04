@@ -301,7 +301,7 @@ class OpenScholar:
             if estimated_time:
                 task_state.estimated_time = estimated_time
             if curr_response:
-                task_state.task_result = curr_response
+                task_state.task_result = {"iterations": curr_response}
             self.task_mgr.write_state(task_state)
 
     def retrieve(self, query: str, task_id: str) -> List[Dict[str, Any]]:
