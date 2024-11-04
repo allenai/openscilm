@@ -59,7 +59,6 @@ def _estimate_task_length(tool_request: ToolRequest) -> str:
     update on async tasks. This can just be a static guess, but you
     have access to the request if you want to do something fancier.
     """
-
     return (
         "1 minute"
         if not tool_request.feedback_toggle

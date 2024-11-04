@@ -13,7 +13,7 @@ from nora_lib.tasks.state import StateManager
 from openai import OpenAI
 from tool.modal_engine import ModalEngine
 from tool.use_search_apis import (
-    get_paper_data,
+    batch_paper_data_SS_ID,
     search_paper_via_query,
     search_youcom_non_restricted,
 )
@@ -324,10 +324,10 @@ class OpenScholar:
             self.update_task_state(task_id, status_str)
             print(f"retrieval done - {status_str}")
             paper_titles = {}
-            for pes2o_id in results["pes2o IDs"]:
-                paper_data = get_paper_data(pes2o_id)
-                if paper_data is not None:
-                    paper_titles[pes2o_id] = paper_data["title"]
+            paper_data = batch_paper_data_SS_ID(results["pes2o IDs"])
+            for pdata in paper_data.values():
+                if pdata and pdata["corpusId"]:
+                    paper_titles[pdata["corpusId"]] = pdata["title"]
             snippets_list = [
                 {
                     "corpus_id": cid,

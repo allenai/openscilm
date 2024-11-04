@@ -245,7 +245,7 @@ def batch_paper_data_SS_ID(paper_ids):
     response_data = query_s2_api(
         end_pt="paper/batch",
         params={
-            "fields": "referenceCount,citationCount,title,url,publicationDate,abstract,year,authors.name"
+            "fields": "referenceCount,citationCount,title,url,publicationDate,abstract,year,authors.name,corpusId"
         },
         payload={"ids": ["CorpusId:{0}".format(id) for id in paper_ids]},
         method="post",
