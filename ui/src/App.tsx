@@ -61,7 +61,7 @@ export const App = () => {
                 <Box sx={{ display: 'flex', flexGrow: 1, height: '100%' }}>
                     <Sidebar />
                     <Box component="main" sx={{
-                        flexGrow: 1, p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center'
+                        flexGrow: 1, p: 3, display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start', flexDirection: 'column',
                     }}>
                         <Routes>
                             {ROUTES.map(({ path, Component }) => (

@@ -20,7 +20,7 @@ export const Results: React.FC<PropType> = (props) => {
   const navigate = useNavigate();
 
   const [status, setStatus] = React.useState<StatusType | undefined>();
-  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [_isLoading, setIsLoading] = React.useState<boolean>(false);
 
   const handleDeleteTask = useCallback(() => {
     if (confirm('Are you sure you want to delete this? This cannot be undone.')) {
@@ -114,13 +114,13 @@ export const Results: React.FC<PropType> = (props) => {
               },
             }}
           >
-            {!taskRunning && (
+            {!(taskRunning) && (
               <>
                 <ButtonGroup size="small" aria-label="Small button group" style={{ marginRight: '12px' }}>
                   <Button key="one">Good</Button>
                   <Button key="two">Bad</Button>
                 </ButtonGroup>
-                <Button key="three" onClick={handleDeleteTask}>Delete</Button>
+                <Button key="three" onClick={handleDeleteTask}>Remove from history</Button>
               </>
             )}
           </Box>

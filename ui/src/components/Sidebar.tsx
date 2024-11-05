@@ -75,7 +75,7 @@ export default function Sidebar() {
                 selected={location.pathname.includes('/about')}
                 onClick={handleDeleteAllTasks}
               >
-                <ListItemText style={{color: 'hotpink'}} primary={'Delete All Recent Questions'} />
+                <ListItemText style={{color: 'hotpink'}} primary={'Clear Recent Questions'} />
               </ListItemButton>
             </ListItem>
           </>)
