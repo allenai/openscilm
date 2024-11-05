@@ -101,7 +101,7 @@ export const Results: React.FC<PropType> = (props) => {
       </div>
       {taskRunning && (
         <>
-            <Button key="three" onClick={handleDeleteTask}>Abort This Task</Button>
+            {/* <Button key="three" onClick={handleDeleteTask}>Abort This Task</Button> */}
             <Progress {...progressProps} />
         </>
       )}
