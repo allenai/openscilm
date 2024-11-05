@@ -131,10 +131,11 @@ export const updateStatus = async (taskId: string) => {
     })
   });
   const output = await response.json() as unknown as StatusType;
-  const lastIteration = output.task_result?.iterations?.at(-1)
-  if (output.task_result && lastIteration) {
-    // output.task_result.sections = await Promise.all(output.task_result.iterations.map(convertIterationToSection));
-    output.task_result.sections = [await convertIterationToSection(lastIteration)]
+  // const lastIteration = output.task_result?.iterations?.at(-1)
+  if (output.task_result) {
+  // if (output.task_result && lastIteration) {
+    output.task_result.sections = await Promise.all(output.task_result.iterations.map(convertIterationToSection));
+    // output.task_result.sections = [await convertIterationToSection(lastIteration)]
   }
   return {...output, httpStatus: response.status};
 }

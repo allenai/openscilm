@@ -5,6 +5,7 @@ import { Report } from './report/Report';
 import { useQueryHistory } from './shared';
 import { useNavigate } from 'react-router-dom';
 import { Progress, ProgressPropType } from './Progress';
+import { Sections } from './Sections';
 
 
 const DEFAULT_INTERVAL = 3000;
@@ -55,7 +56,8 @@ export const Results: React.FC<PropType> = (props) => {
     }
   }, [taskId, interval, setIsLoading]);
 
-  const section = status?.task_result?.sections.at(-1);
+  // const section = status?.task_result?.sections.at(-1);
+  const sections = status?.task_result?.sections ?? [];
     let progressProps: ProgressPropType = {
       estimatedTime: 'Loading...',
       startTime: -1,
@@ -99,7 +101,7 @@ export const Results: React.FC<PropType> = (props) => {
             <Progress {...progressProps} />
         </>
       )}
-      {section && (
+      {sections.length > 0 && (
         <>
           <Box
             sx={{
@@ -124,7 +126,8 @@ export const Results: React.FC<PropType> = (props) => {
               </>
             )}
           </Box>
-          <Report section={section} />
+          
+          <Sections sections={sections} />
         </>
       )}
     </div>
