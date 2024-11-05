@@ -123,7 +123,7 @@ export const StyledChip = styled(Chip)`
 
   &.inline-chip--wrap {
     background: none;
-    border-bottom: 1px dashed rgba(38, 239, 172, 0.8);
+    border-bottom: 1px dashed rgba(10, 142, 98, 1);
     border-radius: 0;
     display: inline;
     margin-top: -1px;
@@ -148,6 +148,7 @@ export const StyledChip = styled(Chip)`
       text-overflow: initial;
       text-wrap: initial;
       white-space: initial;
+      color: rgba(10, 142, 98, 1);
     }
   }
 `;
