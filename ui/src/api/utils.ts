@@ -1,4 +1,4 @@
-import { ReportSection } from "../models/Report";
+import { ReportCitation, ReportSection } from "../models/Report";
 
 export const BACKEND_ENDPOINT = '/api/query_open_scholar'
 export const BACKEND_DEFAULT_INIT = {
@@ -67,6 +67,11 @@ export const fetchPapersDetails = async (corpusIds: number[], fields: string[] =
   return await response.json() as unknown as PaperDetailsType[]
 }
 
+export const reportCitationToTag = (citation: ReportCitation) => {
+    const tag = `<Paper corpusId="${citation.corpusId}" id="${citation.id}" paperTitle="${citation.anchorText}" fullTitle="${citation.fullTitle}" isShortName></Paper>`
+    return tag;
+}
+
 export const convertIterationToSection = async (iteration: IterationType): Promise<ReportSection> => {
   let text = iteration.text;
   const corpusIds = [...new Set(iteration.citations.map(citation => citation.corpus_id))];
@@ -103,8 +108,17 @@ export const convertIterationToSection = async (iteration: IterationType): Promi
     }
   })
   console.log('iteraction pre', iteration)
-  iteration.citations.forEach(citation => {
-    text = text.replaceAll(citation.id, `<Paper corpusId="${citation.corpus_id}" id="${citation.id}" paperTitle="${id2RefText[citation.id] ?? citation.id}" fullTitle="${corpusId2Details[citation.corpus_id].title}" isShortName></Paper>`);
+  const citations: ReportCitation[] = iteration.citations.map(citation => ({
+      id: citation.id,
+      corpusId: citation.corpus_id,
+      title: corpusId2Details[citation.corpus_id].title,
+      snippets: [citation.snippet],
+      fullTitle: corpusId2Details[citation.corpus_id].title,
+      anchorText: id2RefText[citation.id] ?? citation.id,
+    }))
+  citations.forEach(citation => {
+    const tag = reportCitationToTag(citation);
+    text = text.replaceAll(citation.id, tag);
   });
   console.log('iteraction post', iteration)
   console.log(text);
@@ -112,12 +126,7 @@ export const convertIterationToSection = async (iteration: IterationType): Promi
     id: 'id',
     text,
     title: '',
-    citations: iteration.citations.map(citation => ({
-      id: citation.id,
-      corpusId: citation.corpus_id,
-      title: corpusId2Details[citation.corpus_id].title,
-      snippets: [citation.snippet]
-    }))
+    citations
   }
 }
 

@@ -20,6 +20,9 @@ export type ReportCitation = {
   title: string;
   corpusId: number;
   snippets: string[];
+  anchorText?: string;
+  tag?: string;
+  fullTitle?: string;
 };
 
 export interface ReportSection {
