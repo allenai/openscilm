@@ -113,7 +113,7 @@ While we generally found the system to be accurate, you should verify the accura
               style={{ marginBottom: '16px' }}
             >
               <ToggleButton size='small' value={'show'} aria-label="left aligned" >
-                Compare to previous iteration
+                Compare with previous iteration
               </ToggleButton>
             </ToggleButtonGroup>
           )}

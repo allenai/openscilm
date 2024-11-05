@@ -9,7 +9,6 @@ TimeAgo.addDefaultLocale(en)
 import { AuthorType } from '../api/utils';
 
 
-
 export interface PropType {
   authors: AuthorType[];
   year: number;
