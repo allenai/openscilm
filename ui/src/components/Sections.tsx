@@ -1,7 +1,7 @@
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { Tab } from '@mui/material';
 import { Box } from '@mui/system';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ReportSection } from 'src/models/Report';
 import { Report } from './report/Report';
 
@@ -13,6 +13,9 @@ interface PropType {
 export const Sections: React.FC<PropType> = (props) => {
   const { sections } = props
   const [value, setValue] = React.useState(`${sections.length - 1}`);
+  useEffect(() => {
+    setValue(`${sections.length - 1}`);
+  }, [sections?.length])
 
   const handleChange = (event: React.SyntheticEvent, newValue: string) => {
     setValue(newValue);

@@ -94,7 +94,11 @@ export const Results: React.FC<PropType> = (props) => {
   return (
     <div>
       {/* {isLoading && <LinearProgress style={{ marginBottom: '-4px' }} />} */}
-      <h2>{status?.query}</h2>
+      <div style={{display: 'flex', justifyContent: 
+      'space-between', alignItems: 'baseline'}}>
+        <h3 style={{ flexGrow: 1 }}>{status?.query ?? '---'}</h3>
+        <Button key="three" onClick={handleDeleteTask} style={{flex: '0 0 150px'}}>Remove from history</Button>
+      </div>
       {taskRunning && (
         <>
             <Button key="three" onClick={handleDeleteTask}>Abort This Task</Button>
@@ -103,7 +107,7 @@ export const Results: React.FC<PropType> = (props) => {
       )}
       {sections.length > 0 && (
         <>
-          <Box
+          {/* <Box
             sx={{
               display: 'flex',
               flexDirection: 'row',
@@ -125,7 +129,7 @@ export const Results: React.FC<PropType> = (props) => {
                 <Button key="three" onClick={handleDeleteTask}>Remove from history</Button>
               </>
             )}
-          </Box>
+          </Box> */}
           
           <Sections sections={sections} />
         </>
