@@ -6,8 +6,7 @@ import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
 TimeAgo.addDefaultLocale(en)
 
-import { useTimeAgo } from 'react-time-ago'
-import { AuthorType } from 'src/api/utils';
+import { AuthorType } from '../api/utils';
 
 
 

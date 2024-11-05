@@ -43,7 +43,7 @@ interface TaskResultType {
   sections: ReportSection[];
 }
 
-interface AuthorType {
+export interface AuthorType {
   authorId: string;
   name: string;
 }

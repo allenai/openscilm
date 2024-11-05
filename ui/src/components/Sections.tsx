@@ -33,7 +33,7 @@ export const Sections: React.FC<PropType> = (props) => {
         </Box>
             {sections.map((section, index) => (
               <TabPanel key={`Iteration${index}`} value={`${index}`}>
-                <Report section={section} />
+                <Report section={section} previousSection={index > 0 ? sections[index - 1] : undefined} />
               </TabPanel>
             ))}
       </TabContext>
