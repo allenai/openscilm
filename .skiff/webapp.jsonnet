@@ -435,6 +435,10 @@ function(
                                     value: 'google:json'
                                 },
                                 {
+                                    name: 'RETRIEVAL_SERVICE',
+                                    value: 'vespa'
+                                },
+                                {
                                     name: 'SNIPPET_LENGTH',
                                     value: '300'
                                 },
@@ -466,6 +470,15 @@ function(
                                         secretKeyRef: {
                                             name: "runpod-keys",
                                             key: "RUNPOD_ID"
+                                        }
+                                    }
+                                },
+                                {
+                                    name: "VESPA_INDEX_TOKEN",
+                                    valueFrom: {
+                                        secretKeyRef: {
+                                            name: "vespa-token",
+                                            key: "VESPA_INDEX_TOKEN"
                                         }
                                     }
                                 },

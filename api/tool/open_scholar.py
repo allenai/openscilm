@@ -4,6 +4,7 @@ import re
 import threading
 from time import time
 from typing import Any, Dict, List
+from enum import Enum
 
 import requests
 import tool.instructions
@@ -20,8 +21,7 @@ from tool.use_search_apis import (
 from tool.models import TaskResult, GeneratedIteration, Citation
 
 from tool.utils import remove_citations
-
-RETRIEVAL_API = "http://tricycle.cs.washington.edu:5001/search"
+from tool.retrieval import retrieve_s2_index, retrieve_contriever
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 RUNPOD_ID = os.getenv("RUNPOD_ID")
@@ -60,6 +60,8 @@ class OpenScholar:
         self.norm_cite = False
         self.ss_retriever = False
         self.use_contexts = True
+        self.retrieval_fn = retrieve_s2_index if os.getenv("RETRIEVAL_SERVICE",
+                                                           "contriever").lower() == "vespa" else retrieve_contriever
 
     ############################ OpenScholar Functions
 
@@ -88,8 +90,7 @@ class OpenScholar:
         output = client.chat.completions.create(
             model="akariasai/os_8b",
             messages=messages,
-            temperature=0.7,
-            max_tokens=4096,
+            **opt_kwargs
         )
 
         output = output.choices[0].message.content
@@ -309,39 +310,29 @@ class OpenScholar:
 
     def retrieve(self, query: str, task_id: str) -> List[Dict[str, Any]]:
         print("retrieval started")
-        json_data = {"query": query, "n_docs": self.n_rerank, "domains": "pes2o"}
-        headers = {"Content-Type": "application/json"}
-        response = requests.post(RETRIEVAL_API, json=json_data, headers=headers)
-        if response.status_code != 200:
-            print(f"Error in retrieving snippets from url: {RETRIEVAL_API}")
-            raise Exception(
-                f"Failed to retrieve snippets. Status code: {response.status_code}"
+        results = self.retrieval_fn(query, self.n_rerank)
+        status_str = f'{len(results["passages"])} snippets retrieved successfully'
+        self.update_task_state(task_id, status_str)
+        print(f"retrieval done - {status_str}")
+        paper_titles = {}
+        paper_data = batch_paper_data_SS_ID(results["pes2o IDs"])
+        for pdata in paper_data.values():
+            if pdata and pdata["corpusId"]:
+                paper_titles[pdata["corpusId"]] = pdata["title"]
+        snippets_list = [
+            {
+                "corpus_id": cid,
+                "text": remove_citations(snippet),
+                "score": score,
+                "title": paper_titles[cid] if cid in paper_titles else "",
+            }
+            for cid, snippet, score in zip(
+                results["pes2o IDs"],
+                results["passages"],
+                results["scores"],
             )
-        else:
-            res_contents = response.json()
-            results = res_contents["results"]
-            status_str = f'{len(results["passages"])} snippets retrieved successfully'
-            self.update_task_state(task_id, status_str)
-            print(f"retrieval done - {status_str}")
-            paper_titles = {}
-            paper_data = batch_paper_data_SS_ID(results["pes2o IDs"])
-            for pdata in paper_data.values():
-                if pdata and pdata["corpusId"]:
-                    paper_titles[pdata["corpusId"]] = pdata["title"]
-            snippets_list = [
-                {
-                    "corpus_id": cid,
-                    "text": remove_citations(snippet),
-                    "score": score,
-                    "title": paper_titles[cid] if cid in paper_titles else "",
-                }
-                for cid, snippet, score in zip(
-                    results["pes2o IDs"],
-                    results["passages"],
-                    results["scores"],
-                )
-            ]
-            return snippets_list
+        ]
+        return snippets_list
 
     def answer_query(
             self, query: str, feedback_toggle: bool, task_id: str
