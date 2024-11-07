@@ -29,16 +29,16 @@ class ModalEngine:
         fn = modal.Function.lookup(self.model_id, self.api_name, client=self.modal_client)
         return fn, opts if opts else None
 
-    def generate(self, input_query: str, streaming=False, **opt_kwargs) -> Union[str, List[Dict]]:
+    def generate(self, input_args: Tuple, streaming=False, **opt_kwargs) -> Union[str, List[Dict]]:
         gen_fn, opts = self.fn_lookup(**opt_kwargs)
         if streaming:
             outputs = []
             if opts:
-                for chunk in gen_fn.remote_gen(input_query, opts):
+                for chunk in gen_fn.remote_gen(*input_args, opts):
                     outputs.append(chunk)
             else:
-                for chunk in gen_fn.remote_gen(input_query):
+                for chunk in gen_fn.remote_gen(*input_args):
                     outputs.append(chunk)
             return "".join(outputs) if outputs and type(outputs[0]) == str else outputs
         else:
-            return gen_fn.remote(input_query, **opts) if opts else gen_fn.remote(input_query)
+            return gen_fn.remote(*input_args, **opts) if opts else gen_fn.remote(*input_args)

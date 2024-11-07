@@ -16,6 +16,7 @@ from tool.use_search_apis import (
     search_paper_via_query,
 )
 from tool.utils import remove_citations
+from tool.modal_engine import ModalEngine
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 RUNPOD_ID = os.getenv("RUNPOD_ID")
@@ -40,7 +41,7 @@ class OpenScholar:
         self.task_mgr = task_mgr
         self.top_n = n_rerank
         # FIXME: replace this with reranker API
-        self.reranker = None
+        self.reranker_engine = ModalEngine("akariasai/ranker_large", "inference_api")
         self.min_citation = None
         self.norm_cite = False
         self.ss_retriever = False
@@ -295,7 +296,6 @@ class OpenScholar:
         print(f"retrieval done - {status_str}")
         paper_titles = {}
         paper_data = batch_paper_data_SS_ID(results["pes2o IDs"])
-        print(paper_data)
         for pdata in paper_data.values():
             if pdata and pdata["corpusId"]:
                 paper_titles[int(pdata["corpusId"])] = pdata["title"]
@@ -313,6 +313,16 @@ class OpenScholar:
             )
         ]
         return snippets_list
+
+    def rerank(self, query: str, retrieved_ctxs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        passages = []
+        for doc in retrieved_ctxs:
+            passages.append(doc["text"])
+        rerank_scores = self.reranker_engine.generate((query, passages), streaming=False)
+        for doc,rerank_score in zip(retrieved_ctxs, rerank_scores):
+            doc["rerank_score"] = rerank_score
+        sorted_ctxs = sorted(retrieved_ctxs, key=lambda x: x["rerank_score"], reverse=True)[:self.n_rerank]
+        return sorted_ctxs
 
     def answer_query(
             self, query: str, feedback_toggle: bool, task_id: str
@@ -356,6 +366,8 @@ class OpenScholar:
         t.start()
         self.update_task_state(task_id, "retrieving relevant snippets from 40M papers")
         retrieved_candidates = self.retrieve(query, task_id)
+        #retrieved_candidates =  self.rerank(query, retrieved_candidates)
+
         citation_lists.append(retrieved_candidates)
 
         self.update_task_state(task_id, "Waiting for model cold start...")
@@ -363,7 +375,7 @@ class OpenScholar:
         # generate response
         self.update_task_state(task_id, "Generating the intial draft")
         initial_response = self.generate_response(query, retrieved_candidates)
-        #print("initial response", initial_response)
+        # print("initial response", initial_response)
         responses.append(get_response(
             {
                 "text": initial_response,
