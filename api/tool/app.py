@@ -11,6 +11,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from nora_lib.tasks.models import TASK_STATUSES
 from nora_lib.tasks.state import NoSuchTaskException, StateManager
+from tool.modal_engine import ModalEngine
 
 from tool import glog
 from tool.models import (
@@ -30,6 +31,7 @@ ASYNC_STATE_DIR = "/async-state"
 task_state_manager = StateManager(AsyncTaskState, ASYNC_STATE_DIR)
 async_context = multiprocessing.get_context("fork")
 open_scholar = OpenScholar(task_state_manager)
+wildguard_engine = ModalEngine(model_id="wildguard", api_name="wildguard_api", gen_options=dict())
 
 
 def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
@@ -46,7 +48,11 @@ def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
     use `task_state_manager.read_state(task_id)` to retrieve, and `.write_state()`
     to write back.
     """
-
+    print("Checking query for malicious content with wildguard...")
+    wildguard_out = wildguard_engine.generate(tool_request.query, streaming=True).pop()
+    if wildguard_out and "request_harmful" in wildguard_out:
+        if wildguard_out["request_harmful"] == "yes":
+            raise Exception("The input query contains harmful content. Please try again with a different query")
     return open_scholar.answer_query(
         tool_request.query, tool_request.feedback_toggle, task_id
     )
@@ -62,7 +68,7 @@ def _estimate_task_length(tool_request: ToolRequest) -> str:
     return (
         "1 minute"
         if not tool_request.feedback_toggle
-        else f"{open_scholar.n_feedback} minutes"
+        else f"{1+open_scholar.n_feedback} minutes"
     )
 
 
@@ -160,7 +166,6 @@ def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:
             task_status = TASK_STATUSES["COMPLETED"]
         except Exception as e:
             task_result = None
-
             task_status = TASK_STATUSES["FAILED"]
             extra_state["error"] = str(e)
 
@@ -204,7 +209,7 @@ def _handle_async_task_check_in(
         if task_state.extra_state:
             msg += f" Error: {task_state.extra_state['error']}"
         raise HTTPException(
-            status_code=500, detail=f"Referenced task {task_id} failed. Details {msg}."
+            status_code=500, detail=f"{msg}"
         )
 
     if task_state.task_status == TASK_STATUSES["COMPLETED"]:
