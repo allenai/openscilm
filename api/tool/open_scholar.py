@@ -295,9 +295,10 @@ class OpenScholar:
         print(f"retrieval done - {status_str}")
         paper_titles = {}
         paper_data = batch_paper_data_SS_ID(results["pes2o IDs"])
+        print(paper_data)
         for pdata in paper_data.values():
             if pdata and pdata["corpusId"]:
-                paper_titles[pdata["corpusId"]] = pdata["title"]
+                paper_titles[int(pdata["corpusId"])] = pdata["title"]
         snippets_list = [
             {
                 "corpus_id": cid,
@@ -362,7 +363,7 @@ class OpenScholar:
         # generate response
         self.update_task_state(task_id, "Generating the intial draft")
         initial_response = self.generate_response(query, retrieved_candidates)
-        print("initial response", initial_response)
+        #print("initial response", initial_response)
         responses.append(get_response(
             {
                 "text": initial_response,
