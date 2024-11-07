@@ -23,61 +23,6 @@ RUNPOD_API_URL = f"https://api.runpod.ai/v2/{RUNPOD_ID}/openai/v1"
 SNIPPET_LENGTH = int(os.getenv("SNIPPET_LENGTH", 300))
 
 
-def rerank_paragraphs_bge(query, paragraphs, reranker, norm_cite=False):
-    paragraphs = [p for p in paragraphs if p["text"] is not None]
-    paragraph_texts = [
-        (
-            p["title"] + " " + p["text"]
-            if "title" in p and p["title"] is not None
-            else p["text"]
-        )
-        for p in paragraphs
-    ]
-
-    scores = reranker.compute_score(
-        [[query, p] for p in paragraph_texts], batch_size=100
-    )
-    if type(scores) is float:
-        result_dic = {0: scores}
-    else:
-        result_dic = {p_id: score for p_id, score in enumerate(scores)}
-    if (
-        norm_cite is True
-        and len(
-            [
-                item["citation_counts"]
-                for item in paragraphs
-                if "citation_counts" in item and item["citation_counts"] is not None
-            ]
-        )
-        > 0
-    ):
-        # add normalized scores
-        max_citations = max(
-            [
-                item["citation_counts"]
-                for item in paragraphs
-                if "citation_counts" in item and item["citation_counts"] is not None
-            ]
-        )
-        for p_id in result_dic:
-            if (
-                "citation_counts" in paragraphs[p_id]
-                and paragraphs[p_id]["citation_counts"] is not None
-            ):
-                result_dic[p_id] = result_dic[p_id] + (
-                    paragraphs[p_id]["citation_counts"] / max_citations
-                )
-    p_ids = sorted(result_dic.items(), key=lambda x: x[1], reverse=True)
-    new_orders = []
-    id_mapping = {}
-    for i, p_id in enumerate(p_ids):
-        new_orders.append(paragraphs[p_id[0]])
-        id_mapping[i] = int(p_id[0])
-
-    return new_orders, result_dic, id_mapping
-
-
 class OpenScholar:
     def __init__(
         self,
