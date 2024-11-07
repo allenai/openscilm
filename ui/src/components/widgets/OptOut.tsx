@@ -3,7 +3,7 @@ import { Button, Dialog, DialogActions, DialogContent, DialogContentText, Dialog
 
 const DISCLAIMER_TEXT = [
   `By using this feature, you agree to Ai2's terms and conditions and that you will not submit any sensitive or confidential info.`,
-  `Ai2 may include your prompts and inputs in a public dataset for future AI research and development. Please check the box to opt-out.`
+  `Ai2 may include your prompts and inputs in a public dataset for future AI research and development. You can still use the system if you decided to opt-out.`
 ]
 
 interface Props {
@@ -32,7 +32,7 @@ export const OptOut: React.FC<Props> = (props) => {
 
   const consentPopover = (
       <Dialog
-      sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
+      sx={{ '& .MuiDialog-paper': { maxHeight: 435 } }}
       maxWidth="xs"
       open={open}
       {...other}
@@ -44,9 +44,9 @@ export const OptOut: React.FC<Props> = (props) => {
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button autoFocus color='secondary' onClick={handleOk}>I agree</Button>
+        <Button autoFocus color='secondary' onClick={handleOk}>Ok to use my queries 😉</Button>
         <Button onClick={handleCancel}>
-          I disagree
+          Opt-out 😭
         </Button>
       </DialogActions>
     </Dialog>
