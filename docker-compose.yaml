@@ -17,6 +17,7 @@ services:
       - LOG_LEVEL=INFO
       - MODAL_TOKEN=${MODAL_TOKEN}
       - MODAL_TOKEN_SECRET=${MODAL_TOKEN_SECRET}
+      - RETRIEVAL_SERVICE=vespa
     ports:
       - 8000:8000
     env_file:
