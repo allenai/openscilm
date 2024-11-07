@@ -14,7 +14,9 @@ import { split } from "sentence-splitter"
 
 function clean(text: string) {
   const rawSplits = split(text)
-  return rawSplits.map((sentence) => sentence.raw.trim()).join('\n').trim().replaceAll(/ \d\d\d\d[a-z]?"/g, ' year"')
+  return rawSplits.map((sentence) => sentence.raw.trim()).join('\n').trim()
+  .replaceAll(/ \d\d\d\d[a-z]?"/g, ' year"')
+  .replaceAll(/\[\d+\]/g, "[id]")
 }
 
 export const Report: React.FC<{ section: ReportSection, previousSection?: ReportSection }> = (props) => {
@@ -28,7 +30,6 @@ export const Report: React.FC<{ section: ReportSection, previousSection?: Report
         newValue={clean(section.text)}
         oldValue={clean(previousSection.text)}
         splitView={true}
-        disableWordDiff={false}
       />
     )
   } else {
