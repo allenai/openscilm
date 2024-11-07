@@ -67,7 +67,7 @@ def scan():
         print("")
         print("✨ Your local environment is ready:")
         print("")
-        print("     http://localhost:9090")
+        print("     http://localhost:8080")
         print("")
         print("⛵️ Smooth sailing!")
         print("")
