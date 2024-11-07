@@ -90,6 +90,9 @@ export const Results: React.FC<PropType> = (props) => {
 
     }
   }
+  const handleScrollToDisclaimer = useCallback(() => {
+    document.querySelector('.disclaimer')?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
   return (
     <div>
@@ -97,7 +100,10 @@ export const Results: React.FC<PropType> = (props) => {
       <div style={{display: 'flex', justifyContent: 
       'space-between', alignItems: 'baseline'}}>
         <h3 style={{ flexGrow: 1 }}>{status?.query ?? '---'}</h3>
-        <Button key="three" onClick={handleDeleteTask} style={{flex: '0 0 150px'}}>Remove from history</Button>
+        <ButtonGroup size="small" variant='text' aria-label="Small button group" style={{flex: '0 0 220px'}}>
+            <Button color='secondary' onClick={handleScrollToDisclaimer}>Disclaimer</Button>
+            <Button color='secondary' onClick={handleDeleteTask}>Remove from history</Button>
+        </ButtonGroup>
       </div>
       {taskRunning && (
         <>

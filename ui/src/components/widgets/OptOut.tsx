@@ -1,9 +1,5 @@
 import * as React from 'react';
-import { useCallback } from 'react';
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import { Button, Chip, Popover, Typography } from '@mui/material';
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from '@mui/material';
 
 const DISCLAIMER_TEXT = [
   `By using this feature, you agree to Ai2's terms and conditions and that you will not submit any sensitive or confidential info.`,
@@ -11,63 +7,54 @@ const DISCLAIMER_TEXT = [
 ]
 
 interface Props {
-  optOut: boolean;
-  setOptOut: React.Dispatch<React.SetStateAction<boolean>>;
+  open: boolean;
+  onClose: (value: 'yes' | 'no' | 'unset') => void;
 }
 
 export const OptOut: React.FC<Props> = (props) => {
-  const { optOut, setOptOut } = props;
-  const handleCheckboxOnchang: React.MouseEventHandler<HTMLLabelElement> = useCallback(
-    (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      console.log('optOut', optOut);
-      setOptOut(old => !old);
-    },
-    [setOptOut],
-  )
-  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
+  const { onClose, open, ...other } = props;
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation();
-    setAnchorEl(event.currentTarget);
+  const handleCancel = () => {
+    onClose('no');
   };
 
-  const handleClose = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation();
-    setAnchorEl(null);
+  const handleOk = () => {
+    onClose('yes');
   };
 
-  const open = Boolean(anchorEl);
-  const id = open ? 'disclaimer-popover' : undefined;
-
-  const labelElement = (
-    <span>Do not publish my input data&nbsp;
-      <Button aria-describedby={id} onClick={handleClick} size='small'>
-        <Chip label="?" size="small" variant="outlined" color='secondary'/>
-      </Button>
-      <Popover
-        id={id}
-        open={open}
-        anchorEl={anchorEl}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
-        }}
-      >
+  const disclaimerElement = (
+    <>
         {DISCLAIMER_TEXT.map((text) => (
           <Typography sx={{ p: 2, width: 300 }} key={text}>{text}</Typography>
         ))}
-      </Popover>
-    </span>
+    </>
+  )
+
+  const consentPopover = (
+      <Dialog
+      sx={{ '& .MuiDialog-paper': { width: '80%', maxHeight: 435 } }}
+      maxWidth="xs"
+      open={open}
+      {...other}
+    >
+      <DialogTitle>Consent to data collection</DialogTitle>
+      <DialogContent>
+        <DialogContentText id="alert-dialog-description">
+          {disclaimerElement}
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button autoFocus color='secondary' onClick={handleOk}>I agree</Button>
+        <Button onClick={handleCancel}>
+          I disagree
+        </Button>
+      </DialogActions>
+    </Dialog>
   )
 
   return (
     <div style={{display: 'flex', justifyContent:' space-between', alignItems: 'center'}}>
-      <FormGroup>
-        <FormControlLabel control={<Checkbox checked={optOut} />} label={labelElement} onClick={handleCheckboxOnchang} />
-      </FormGroup>
+      {consentPopover}
       <div>
         <a href="https://allenai.org" target="_blank" style={{ color: '#FAF2E9' }}>
         Ai2
@@ -80,8 +67,7 @@ export const OptOut: React.FC<Props> = (props) => {
         <a href="https://allenai.org/terms" target="_blank" style={{ color: '#FAF2E9' }}>
           Terms of Use
         </a>
-      </div>
-      
+      </div> 
     </div>
   );
 }

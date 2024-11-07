@@ -5,10 +5,11 @@ import {
   styled,
   TextareaAutosize,
 } from '@mui/material';
-import React, { useCallback, useContext, useEffect, useRef } from 'react';
+import React, { HtmlHTMLAttributes, KeyboardEvent, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import PendingIcon from '@mui/icons-material/Pending';
 import SendIcon from '@mui/icons-material/Send';
 import { OptOut } from './OptOut';
+import { useCookies } from 'react-cookie';
 
 type MessageBarProps = {
   onSend: (text: string) => Promise<any> | void;
@@ -26,21 +27,44 @@ const MessageBar = ({
   const formRef = useRef<HTMLFormElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const [text, setText] = React.useState('');
-  const [optOut, setOptOut] = React.useState(false);
 
   const isEmpty = (text ?? '').trim().length === 0;
+  const [consentModalOpen, setConsentModalOpen] = useState(false);
+
+  const [cookies, setCookie] = useCookies(['consented']);
+  if (!cookies.consented) {
+    setCookie('consented', { status: 'unset' }, { path: '/' });
+  }
+  const cookieConsent = cookies?.consented?.status ?? 'unset'
+  console.log(cookieConsent)
+  const [consent, setConsent] = useState(cookieConsent);
+  useEffect(() => {
+    setCookie('consented', { status: consent }, { path: '/' });
+  }, [consent])
 
   const handleOnSend = useCallback(
-    (event: React.ChangeEvent<HTMLFormElement>) => {
-      event.preventDefault();
+      (event?: React.FormEvent<HTMLFormElement> | React.KeyboardEvent<HTMLTextAreaElement>) => {
+      event?.preventDefault();
+      console.log('handle on sent')
       if (isEmpty) {
         return;
       }
-      onSend(text);
-      setText('')
+      if (consent  === 'unset') {
+        console.log('Opening consent modal???');
+        setConsentModalOpen(true);
+      } else {
+        onSend(text);
+        setText('')
+      }
     },
-    [onSend, setText, text, isEmpty],
+    [onSend, setText, text, isEmpty, consent, setConsentModalOpen],
   );
+
+  const handleConsentModalClose = useCallback((value: 'yes' | 'no' | 'unset') => {
+    console.log('Set consent value:', value);
+    setConsent(value);
+    setConsentModalOpen(false);
+  }, [setConsentModalOpen])
 
   const handleEnterKeyPress = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -48,10 +72,10 @@ const MessageBar = ({
       // if shift + enter is pressed, a new line should be created
       if (event.key === ENTER_KEY && !event.shiftKey && formRef.current) {
         event.preventDefault();
-        formRef.current.requestSubmit();
+        handleOnSend(event as React.KeyboardEvent<HTMLTextAreaElement>)
       }
     },
-    [formRef],
+    [formRef, handleOnSend],
   );
 
   const handleChange = useCallback(
@@ -87,7 +111,7 @@ const MessageBar = ({
           </FormControl>
         </Form>
       </StyledBox>
-      <OptOut optOut={optOut} setOptOut={setOptOut} />
+      <OptOut open={consentModalOpen} onClose={handleConsentModalClose} />
     </div>
   );
 };
