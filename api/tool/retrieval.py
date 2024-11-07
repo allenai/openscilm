@@ -13,6 +13,24 @@ sparseembed_key, sparseembed_val = "input.query(qse)", "embed(sparseembed, @quer
 
 CONTRIEVER_RETRIEVAL_API = "http://tricycle.cs.washington.edu:5001/search"
 
+S2UB_S2HOWABLE_API = "https://s2ub.prod.s2.allenai.org/service/s2howable/v1/show"
+S2HOWABLE_S2UB_TOKEN = os.getenv("S2HOWABLE_S2UB_TOKEN")
+
+
+def fetch_s2howable_flag(corpus_id: int) -> bool:
+    headers = {"Authorization": f"Bearer {S2HOWABLE_S2UB_TOKEN}"}
+    try:
+        url = f"{S2UB_S2HOWABLE_API}/{corpus_id}"
+        res = requests.get(url, headers=headers)
+        if res.status_code == 200:
+            return res.json()["s2howable"]
+        else:
+            print(f"Received status code {res.status_code} from s2ub for corpus_id: {corpus_id}")
+            raise Exception(f"Failed to fetch s2howable flag for corpus_id: {corpus_id}")
+    except Exception as e:
+        print(f"Exception while calling s2ub: {e}")
+        return False
+
 
 def vespa_snippet_from_dict(
         child_dict: dict

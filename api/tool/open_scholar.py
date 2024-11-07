@@ -21,7 +21,7 @@ from tool.use_search_apis import (
 from tool.models import TaskResult, GeneratedIteration, Citation
 
 from tool.utils import remove_citations
-from tool.retrieval import retrieve_s2_index, retrieve_contriever
+from tool.retrieval import retrieve_s2_index, retrieve_contriever, fetch_s2howable_flag
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 RUNPOD_ID = os.getenv("RUNPOD_ID")
@@ -350,13 +350,21 @@ class OpenScholar:
         """
 
         def truncate_snippet(snippet: str) -> str:
-            return snippet[:SNIPPET_LENGTH] + "..." if len(snippet) > SNIPPET_LENGTH else snippet
+            snippet_splits = snippet.split()
+            total_len = 0
+            for idx, split in enumerate(snippet_splits):
+                if len(split) + total_len > SNIPPET_LENGTH:
+                    return " ".join(snippet_splits[:idx]) + "..."
+
+                total_len += len(split) + 1
+            return snippet
 
         def get_response(iteration: Dict[str, Any]):
             return GeneratedIteration(
                 text=iteration["text"],
                 feedback=iteration["feedback"],
-                citations=[Citation(id=f"[{idx}]", corpus_id=cite["corpus_id"], snippet=truncate_snippet(cite["text"]),
+                citations=[Citation(id=f"[{idx}]", corpus_id=cite["corpus_id"], snippet=cite["text"]
+                if fetch_s2howable_flag(cite["corpus_id"]) else truncate_snippet(cite["text"]),
                                     score=cite["score"])
                            for
                            idx, cite in enumerate(iteration["citations"])],

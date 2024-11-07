@@ -526,6 +526,15 @@ function(
                                             key: "YOUR_API_KEY"
                                         }
                                     }
+                                },
+                                {
+                                    name: "S2HOWABLE_S2UB_TOKEN",
+                                    valueFrom: {
+                                        secretKeyRef: {
+                                            name: "s2ub-tokens",
+                                            key: "S2HOWABLE_S2UB_TOKEN"
+                                        }
+                                    }
                                 }
                             ],
                             volumeMounts: [
