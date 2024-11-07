@@ -20,3 +20,4 @@ fuzzy-match
 googlesearch-python
 openai
 tqdm
+FlagEmbedding

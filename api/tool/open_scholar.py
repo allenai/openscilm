@@ -5,18 +5,16 @@ import threading
 from time import time
 from typing import Any, Dict, List
 
+import tool.instructions
+from FlagEmbedding import FlagReranker
+
 from nora_lib.tasks.state import StateManager
 from openai import OpenAI
-
-import tool.instructions
-from tool.models import TaskResult, GeneratedIteration, Citation
-from tool.retrieval import retrieve_s2_index, retrieve_contriever, fetch_s2howable_flag
-from tool.use_search_apis import (
-    batch_paper_data_SS_ID,
-    search_paper_via_query,
-)
-from tool.utils import remove_citations
 from tool.modal_engine import ModalEngine
+from tool.models import Citation, GeneratedIteration, TaskResult
+from tool.retrieval import fetch_s2howable_flag, retrieve_contriever, retrieve_s2_index
+from tool.use_search_apis import batch_paper_data_SS_ID, search_paper_via_query
+from tool.utils import remove_citations
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 RUNPOD_ID = os.getenv("RUNPOD_ID")
@@ -25,14 +23,69 @@ RUNPOD_API_URL = f"https://api.runpod.ai/v2/{RUNPOD_ID}/openai/v1"
 SNIPPET_LENGTH = int(os.getenv("SNIPPET_LENGTH", 300))
 
 
+def rerank_paragraphs_bge(query, paragraphs, reranker, norm_cite=False):
+    paragraphs = [p for p in paragraphs if p["text"] is not None]
+    paragraph_texts = [
+        (
+            p["title"] + " " + p["text"]
+            if "title" in p and p["title"] is not None
+            else p["text"]
+        )
+        for p in paragraphs
+    ]
+
+    scores = reranker.compute_score(
+        [[query, p] for p in paragraph_texts], batch_size=100
+    )
+    if type(scores) is float:
+        result_dic = {0: scores}
+    else:
+        result_dic = {p_id: score for p_id, score in enumerate(scores)}
+    if (
+        norm_cite is True
+        and len(
+            [
+                item["citation_counts"]
+                for item in paragraphs
+                if "citation_counts" in item and item["citation_counts"] is not None
+            ]
+        )
+        > 0
+    ):
+        # add normalized scores
+        max_citations = max(
+            [
+                item["citation_counts"]
+                for item in paragraphs
+                if "citation_counts" in item and item["citation_counts"] is not None
+            ]
+        )
+        for p_id in result_dic:
+            if (
+                "citation_counts" in paragraphs[p_id]
+                and paragraphs[p_id]["citation_counts"] is not None
+            ):
+                result_dic[p_id] = result_dic[p_id] + (
+                    paragraphs[p_id]["citation_counts"] / max_citations
+                )
+    p_ids = sorted(result_dic.items(), key=lambda x: x[1], reverse=True)
+    new_orders = []
+    id_mapping = {}
+    for i, p_id in enumerate(p_ids):
+        new_orders.append(paragraphs[p_id[0]])
+        id_mapping[i] = int(p_id[0])
+
+    return new_orders, result_dic, id_mapping
+
+
 class OpenScholar:
     def __init__(
-            self,
-            task_mgr: StateManager,
-            n_retrieval: int = 100,
-            n_rerank: int = 10,
-            n_feedback: int = 1,
-            llm_model: str = "akariasai/os_8b",
+        self,
+        task_mgr: StateManager,
+        n_retrieval: int = 100,
+        n_rerank: int = 10,
+        n_feedback: int = 1,
+        llm_model: str = "akariasai/os_8b",
     ):
         # TODO: Initialize retriever and re-ranker clients here
         self.n_retrieval = n_retrieval
@@ -46,8 +99,11 @@ class OpenScholar:
         self.norm_cite = False
         self.ss_retriever = False
         self.use_contexts = True
-        self.retrieval_fn = retrieve_s2_index if os.getenv("RETRIEVAL_SERVICE",
-                                                           "contriever").lower() == "vespa" else retrieve_contriever
+        self.retrieval_fn = (
+            retrieve_s2_index
+            if os.getenv("RETRIEVAL_SERVICE", "contriever").lower() == "vespa"
+            else retrieve_contriever
+        )
         self.llm_model = llm_model
 
     ############################ OpenScholar Functions
@@ -68,9 +124,7 @@ class OpenScholar:
             },
         ]
         output = client.chat.completions.create(
-            model=self.llm_model,
-            messages=messages,
-            **opt_kwargs
+            model=self.llm_model, messages=messages, **opt_kwargs
         )
 
         output = output.choices[0].message.content
@@ -92,10 +146,10 @@ class OpenScholar:
         return ctxs
 
     def generate_response(
-            self,
-            query: str,
-            retrieved_ctxs: List[Dict[str, Any]],
-            max_tokens: int = 3000,
+        self,
+        query: str,
+        retrieved_ctxs: List[Dict[str, Any]],
+        max_tokens: int = 3000,
     ):
         ctxs_text = self.process_passage(retrieved_ctxs)
 
@@ -145,18 +199,18 @@ class OpenScholar:
             paper["text"][:100] + paper["title"]: paper
             for paper in retrieved_papers
             if paper is not None
-               and type(paper["text"]) is str
-               and "title" in paper["title"]
+            and type(paper["text"]) is str
+            and "title" in paper["title"]
         }
         dedup_papers = list(papers_dicts.values())
 
         return dedup_papers
 
     def get_feedback(
-            self,
-            query: str,
-            ctxs: List[Dict[str, Any]],
-            initial_response: str,
+        self,
+        query: str,
+        ctxs: List[Dict[str, Any]],
+        initial_response: str,
     ):
         ctxs_text = self.process_passage(ctxs)
         input_query = tool.instructions.feedback_example_instance_prompt.format_map(
@@ -182,12 +236,12 @@ class OpenScholar:
         return feedbacks
 
     def edit_with_feedback(
-            self,
-            query: str,
-            ctxs: List[Dict[str, Any]],
-            previous_response: str,
-            feedback: str,
-            max_tokens: int = 3000,
+        self,
+        query: str,
+        ctxs: List[Dict[str, Any]],
+        previous_response: str,
+        feedback: str,
+        max_tokens: int = 3000,
     ):
         input_query = tool.instructions.editing_instance_prompt.format_map(
             {
@@ -214,13 +268,13 @@ class OpenScholar:
         return raw_output
 
     def edit_with_feedback_retrieval(
-            self,
-            query: str,
-            ctxs: List[Dict[str, Any]],
-            previous_response: str,
-            feedback: str,
-            passage_start_index,
-            max_tokens=3000,
+        self,
+        query: str,
+        ctxs: List[Dict[str, Any]],
+        previous_response: str,
+        feedback: str,
+        passage_start_index,
+        max_tokens=3000,
     ):
         processed_passages = ""
         for doc_idx, doc in enumerate(ctxs[: self.top_n]):
@@ -276,8 +330,13 @@ class OpenScholar:
         return search_queries
 
     ############################ Code for API
-    def update_task_state(self, task_id: str, status: str, estimated_time: str = None,
-                          curr_response: List[GeneratedIteration] = None):
+    def update_task_state(
+        self,
+        task_id: str,
+        status: str,
+        estimated_time: str = None,
+        curr_response: List[GeneratedIteration] = None,
+    ):
         status = f"{time()}:{status}"
         if task_id:
             task_state = self.task_mgr.read_state(task_id)
@@ -314,18 +373,24 @@ class OpenScholar:
         ]
         return snippets_list
 
-    def rerank(self, query: str, retrieved_ctxs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def rerank(
+        self, query: str, retrieved_ctxs: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         passages = []
         for doc in retrieved_ctxs:
             passages.append(doc["text"])
-        rerank_scores = self.reranker_engine.generate((query, passages), streaming=False)
-        for doc,rerank_score in zip(retrieved_ctxs, rerank_scores):
+        rerank_scores = self.reranker_engine.generate(
+            (query, passages), streaming=False
+        )
+        for doc, rerank_score in zip(retrieved_ctxs, rerank_scores):
             doc["rerank_score"] = rerank_score
-        sorted_ctxs = sorted(retrieved_ctxs, key=lambda x: x["rerank_score"], reverse=True)[:self.n_rerank]
+        sorted_ctxs = sorted(
+            retrieved_ctxs, key=lambda x: x["rerank_score"], reverse=True
+        )[: self.n_rerank]
         return sorted_ctxs
 
     def answer_query(
-            self, query: str, feedback_toggle: bool, task_id: str
+        self, query: str, feedback_toggle: bool, task_id: str
     ) -> TaskResult:
         """
         This function takes a query and returns a response.
@@ -353,11 +418,19 @@ class OpenScholar:
             return GeneratedIteration(
                 text=iteration["text"],
                 feedback=iteration["feedback"],
-                citations=[Citation(id=f"[{idx}]", corpus_id=cite["corpus_id"], snippet=cite["text"]
-                if fetch_s2howable_flag(cite["corpus_id"]) else truncate_snippet(cite["text"]),
-                                    score=cite["score"])
-                           for
-                           idx, cite in enumerate(iteration["citations"])],
+                citations=[
+                    Citation(
+                        id=f"[{idx}]",
+                        corpus_id=cite["corpus_id"],
+                        snippet=(
+                            cite["text"]
+                            if fetch_s2howable_flag(cite["corpus_id"])
+                            else truncate_snippet(cite["text"])
+                        ),
+                        score=cite["score"],
+                    )
+                    for idx, cite in enumerate(iteration["citations"])
+                ],
             )
 
         responses = []
@@ -366,7 +439,7 @@ class OpenScholar:
         t.start()
         self.update_task_state(task_id, "retrieving relevant snippets from 40M papers")
         retrieved_candidates = self.retrieve(query, task_id)
-        #retrieved_candidates =  self.rerank(query, retrieved_candidates)
+        # retrieved_candidates =  self.rerank(query, retrieved_candidates)
 
         citation_lists.append(retrieved_candidates)
 
@@ -376,14 +449,18 @@ class OpenScholar:
         self.update_task_state(task_id, "Generating the intial draft")
         initial_response = self.generate_response(query, retrieved_candidates)
         # print("initial response", initial_response)
-        responses.append(get_response(
-            {
-                "text": initial_response,
-                "feedback": None,
-                "citations": retrieved_candidates,
-            }
-        ))
-        self.update_task_state(task_id, "Initial draft generated successfully", curr_response=responses)
+        responses.append(
+            get_response(
+                {
+                    "text": initial_response,
+                    "feedback": None,
+                    "citations": retrieved_candidates,
+                }
+            )
+        )
+        self.update_task_state(
+            task_id, "Initial draft generated successfully", curr_response=responses
+        )
 
         # iteratiive feedback loop
         if feedback_toggle:
@@ -410,8 +487,8 @@ class OpenScholar:
                             "Here is the revised answer:\n\n"
                         )[1]
                     if (
-                            len(edited_answer) > 0
-                            and len(edited_answer) / len(previous_response) > 0.9
+                        len(edited_answer) > 0
+                        and len(edited_answer) / len(previous_response) > 0.9
                     ):
                         previous_response = edited_answer
                         citation_lists.append(copy.deepcopy(retrieved_candidates))
@@ -422,7 +499,8 @@ class OpenScholar:
                                     "feedback": feedback[0],
                                     "citations": citation_lists[-1],
                                 }
-                            ))
+                            )
+                        )
                     else:
                         print("Skipping as edited answers got too short")
                 else:
@@ -470,10 +548,14 @@ class OpenScholar:
                                         "feedback": feedback[0],
                                         "citations": prev_citations,
                                     }
-                                ))
+                                )
+                            )
                             citation_lists.append(prev_citations)
                         else:
                             print("skipping as edited answers got too short")
-                self.update_task_state(task_id, f"Feedback {feedback_idx} incorporated successfully",
-                                       curr_response=responses)
+                self.update_task_state(
+                    task_id,
+                    f"Feedback {feedback_idx} incorporated successfully",
+                    curr_response=responses,
+                )
         return TaskResult(iterations=responses)
