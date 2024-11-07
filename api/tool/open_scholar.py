@@ -4,28 +4,23 @@ import re
 import threading
 from time import time
 from typing import Any, Dict, List
-from enum import Enum
 
-import requests
-import tool.instructions
-
-from httpx import get
 from nora_lib.tasks.state import StateManager
 from openai import OpenAI
-from tool.modal_engine import ModalEngine
+
+import tool.instructions
+from tool.models import TaskResult, GeneratedIteration, Citation
+from tool.retrieval import retrieve_s2_index, retrieve_contriever, fetch_s2howable_flag
 from tool.use_search_apis import (
     batch_paper_data_SS_ID,
     search_paper_via_query,
-    search_youcom_non_restricted,
 )
-from tool.models import TaskResult, GeneratedIteration, Citation
-
 from tool.utils import remove_citations
-from tool.retrieval import retrieve_s2_index, retrieve_contriever, fetch_s2howable_flag
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 RUNPOD_ID = os.getenv("RUNPOD_ID")
 RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY")
+RUNPOD_API_URL = f"https://api.runpod.ai/v2/{RUNPOD_ID}/openai/v1"
 SNIPPET_LENGTH = int(os.getenv("SNIPPET_LENGTH", 300))
 
 
@@ -36,23 +31,13 @@ class OpenScholar:
             n_retrieval: int = 100,
             n_rerank: int = 10,
             n_feedback: int = 1,
+            llm_model: str = "akariasai/os_8b",
     ):
         # TODO: Initialize retriever and re-ranker clients here
         self.n_retrieval = n_retrieval
         self.n_rerank = n_rerank
         self.n_feedback = n_feedback
-        # FIXME: temporarily use OAI for debugging; will replace with modal engine
-        self.modal_engine = ModalEngine()
         self.task_mgr = task_mgr
-
-        # OpenScholar Cofigurations
-        # FIXME: temporarily use OAI for debugging; will replace with modal engine
-        self.model = None
-        # self.client = OpenAI(
-        #     api_key=OPENAI_API_KEY,
-        # )
-        self.model_name = "gpt-4o"
-
         self.top_n = n_rerank
         # FIXME: replace this with reranker API
         self.reranker = None
@@ -62,20 +47,14 @@ class OpenScholar:
         self.use_contexts = True
         self.retrieval_fn = retrieve_s2_index if os.getenv("RETRIEVAL_SERVICE",
                                                            "contriever").lower() == "vespa" else retrieve_contriever
+        self.llm_model = llm_model
 
     ############################ OpenScholar Functions
-
-    # Model API codes
-    # def llm_inference(self, input_query: str, **opt_kwargs):
-    #     outputs = []
-    #     for chunk in self.modal_engine.generate(input_query, **opt_kwargs):
-    #         outputs.append(chunk)
-    #     return "".join(outputs)
 
     def llm_inference(self, input_query: str, **opt_kwargs):
         client = OpenAI(
             api_key=RUNPOD_API_KEY,
-            base_url=f"https://api.runpod.ai/v2/{RUNPOD_ID}/openai/v1",
+            base_url=RUNPOD_API_URL,
         )
         messages = [
             {
@@ -88,7 +67,7 @@ class OpenScholar:
             },
         ]
         output = client.chat.completions.create(
-            model="akariasai/os_8b",
+            model=self.llm_model,
             messages=messages,
             **opt_kwargs
         )
