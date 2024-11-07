@@ -49,6 +49,7 @@ def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
     to write back.
     """
     print("Checking query for malicious content with wildguard...")
+    open_scholar.update_task_state(task_id, TASK_STATUSES["STARTED"])
     wildguard_out = wildguard_engine.generate(tool_request.query, streaming=True).pop()
     if wildguard_out and "request_harmful" in wildguard_out:
         if wildguard_out["request_harmful"] == "yes":
