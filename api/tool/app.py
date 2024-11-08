@@ -1,28 +1,30 @@
 import json
-import requests
 import logging
 import multiprocessing
 import os
+import re
 import uuid
 from typing import Annotated, Optional, Union
+
 import boto3
+import requests
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from nora_lib.tasks.models import TASK_STATUSES
 from nora_lib.tasks.state import NoSuchTaskException, StateManager
-from tool.modal_engine import ModalEngine
 
 from tool import glog
+from tool.modal_engine import ModalEngine
 from tool.models import (
     AsyncTaskState,
     AsyncToolResponse,
     Citation,
     GeneratedIteration,
+    Papers,
     TaskResult,
     ToolRequest,
     ToolResponse,
-    Papers
 )
 from tool.open_scholar import OpenScholar
 from tool.utils import query_s2_api
@@ -31,7 +33,16 @@ ASYNC_STATE_DIR = "/async-state"
 task_state_manager = StateManager(AsyncTaskState, ASYNC_STATE_DIR)
 async_context = multiprocessing.get_context("fork")
 open_scholar = OpenScholar(task_state_manager)
-wildguard_engine = ModalEngine(model_id="wildguard", api_name="wildguard_api", gen_options=dict())
+wildguard_engine = ModalEngine(
+    model_id="wildguard", api_name="wildguard_api", gen_options=dict()
+)
+
+
+def _starts_with_who_is(question: str):
+    # Regular expression to match "Who is" at the beginning of the question
+    pattern = r"^who is\b"
+    # Perform case-insensitive match
+    return bool(re.match(pattern, question.lower(), re.IGNORECASE))
 
 
 def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
@@ -50,10 +61,18 @@ def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
     """
     print("Checking query for malicious content with wildguard...")
     open_scholar.update_task_state(task_id, TASK_STATUSES["STARTED"])
-    wildguard_out = wildguard_engine.generate((tool_request.query,), streaming=True).pop()
+    wildguard_out = wildguard_engine.generate(
+        (tool_request.query,), streaming=True
+    ).pop()
     if wildguard_out and "request_harmful" in wildguard_out:
         if wildguard_out["request_harmful"] == "yes":
-            raise Exception("The input query contains harmful content. Please try again with a different query")
+            raise Exception(
+                "The input query contains harmful content. Please try again with a different query"
+            )
+    if _starts_with_who_is(tool_request.query):
+        raise Exception(
+            "We cannot answer questions about people. Please try again with a different query"
+        )
     return open_scholar.answer_query(
         tool_request.query, tool_request.feedback_toggle, task_id
     )
@@ -97,7 +116,7 @@ def create_app() -> FastAPI:
 
     @app.get("/")
     def root():
-        return 'nothing to see here :)'
+        return "nothing to see here :)"
 
     # This tells the machinery that powers Skiff (Kubernetes) that your application
     # is ready to receive traffic. Returning a non 200 response code will prevent the
@@ -108,8 +127,8 @@ def create_app() -> FastAPI:
 
     @app.post("/query_open_scholar")
     def use_tool(
-            tool_request: ToolRequest,
-            # credentials: Annotated[HTTPAuthorizationCredentials, Depends(api_key_scheme)]
+        tool_request: ToolRequest,
+        # credentials: Annotated[HTTPAuthorizationCredentials, Depends(api_key_scheme)]
     ) -> Union[AsyncToolResponse, ToolResponse]:
         # TODO: Uncomment the following lines if you need to authenticate incoming requests
         # if credentials.credentials not in api_keys:
@@ -137,11 +156,15 @@ def create_app() -> FastAPI:
 
     @app.post("/paper_details")
     def paper_details(papers: Papers):  # pyright: ignore reportUnusedFunction
-        fieldstring = 'authors,title,year'
-        if (papers.fields):
-            fieldstring = ','.join(papers.fields)
-        data = query_s2_api(end_pt="paper/batch", method="post", params={'fields': fieldstring},
-                            payload={"ids": [f"CorpusId:{cid}" for cid in papers.corpus_ids]})
+        fieldstring = "authors,title,year"
+        if papers.fields:
+            fieldstring = ",".join(papers.fields)
+        data = query_s2_api(
+            end_pt="paper/batch",
+            method="post",
+            params={"fields": fieldstring},
+            payload={"ids": [f"CorpusId:{cid}" for cid in papers.corpus_ids]},
+        )
         return data
 
     return app
@@ -186,7 +209,7 @@ def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:
 
 
 def _handle_async_task_check_in(
-        task_id: str,
+    task_id: str,
 ) -> Union[ToolResponse | AsyncToolResponse]:
     """
     For tasks that will take a while to complete, we issue a task id
@@ -209,9 +232,7 @@ def _handle_async_task_check_in(
         msg = f"Referenced task {task_id} failed."
         if task_state.extra_state:
             msg += f" Error: {task_state.extra_state['error']}"
-        raise HTTPException(
-            status_code=500, detail=f"{msg}"
-        )
+        raise HTTPException(status_code=500, detail=f"{msg}")
 
     if task_state.task_status == TASK_STATUSES["COMPLETED"]:
         if not task_state.task_result:
@@ -221,7 +242,9 @@ def _handle_async_task_check_in(
             )
 
         return ToolResponse(
-            task_id=task_state.task_id, query=task_state.query, task_result=task_state.task_result
+            task_id=task_state.task_id,
+            query=task_state.query,
+            task_result=task_state.task_result,
         )
 
     return AsyncToolResponse(
