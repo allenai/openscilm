@@ -2,6 +2,7 @@ import React from 'react';
 import {
     styled,
     Box,
+    Link,
 } from '@mui/material';
 import { Route, Routes } from 'react-router-dom';
 
@@ -44,6 +45,13 @@ const DarkBackground = styled('div')`
     flex-direction: column;
 `;
 
+const AppHeader = styled('div')`
+    border-bottom: 1px solid rgba(250, 242, 233, 0.1);
+    width: 100%;
+    display: flex;
+    padding: 16px;
+`;
+
 export const App = () => {
 
     return (
@@ -53,8 +61,11 @@ export const App = () => {
                 <Box sx={{ display: 'flex', flexGrow: 1, height: '100%' }}>
                     <Sidebar />
                     <Box component="main" sx={{
-                        flexGrow: 1, p: 3, display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start', flexDirection: 'column',
-                    }}>
+                        flexGrow: 1, display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start', flexDirection: 'column',
+                    }}> 
+                        <AppHeader>
+                            <Link href="/about">About OpenScholar</Link>
+                        </AppHeader>
                         <Routes>
                             {ROUTES.map(({ path, Component }) => (
                                 <Route key={path} path={path} element={<Component />} />

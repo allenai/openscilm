@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import MessageBar from '../components/widgets/MessageBar';
 import { useNavigate } from "react-router-dom";
 import { CircularProgress } from '@mui/material';
+import OpenScholarLogo from '../components/OpenScholarLogo';
 import { createTask } from '../api/utils';
 import { useQueryHistory } from '../components/shared';
 
@@ -35,13 +36,12 @@ export const Home = () => {
   }, []);
 
   return (
-    <div style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1 }}>
-      <div style={{ width: '100%', maxWidth: '860px' }}>
-        <div style={{ padding: '24px 10px' }}>
-          <MessageBar onSend={handleSubmit} />
-        </div>
-        {isLoading && <CircularProgress />}
+    <>
+      <OpenScholarLogo />
+      <MessageBar onSend={handleSubmit} />
+      <div>
+          {isLoading && <CircularProgress />}
       </div>
-    </div>
+    </>
   );
 };

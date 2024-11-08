@@ -43,12 +43,7 @@ export default function Sidebar() {
     >
       <Toolbar />
       <Box sx={{ overflow: 'auto', paddingTop: '40px' }}>
-        <List
-          subheader={
-            <ListSubheader component="div" id="nested-list-subheader">
-              OpenScholar
-            </ListSubheader>
-          }>
+        <List>
           <ListItem disablePadding>
             <ListItemButton
               selected={location.pathname === '/'}
@@ -59,27 +54,6 @@ export default function Sidebar() {
               <ListItemText primary={'Ask a New Question'} />
             </ListItemButton>
           </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton
-              selected={location.pathname.includes('/about')}
-              onClick={() => {
-                navigate(`/about`, { replace: true });
-              }}
-            >
-              <ListItemText primary={'About OpenScholar'} />
-            </ListItemButton>
-          </ListItem>
-          {Object.keys(history).length > 3 && (<>
-            <ListItem disablePadding>
-              <ListItemButton
-                selected={location.pathname.includes('/about')}
-                onClick={handleDeleteAllTasks}
-              >
-                <ListItemText style={{color: 'hotpink'}} primary={'Clear Recent Questions'} />
-              </ListItemButton>
-            </ListItem>
-          </>)
-          }
         </List>
         <Divider />
         <List

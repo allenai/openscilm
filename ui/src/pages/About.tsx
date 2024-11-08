@@ -3,7 +3,7 @@ import { MaxWidthText } from '@allenai/varnish2';
 
 export const About = () => {
     return (
-        <MaxWidthText>
+        <MaxWidthText style={{ padding: '36px'}}>
             <h1>About this Demo</h1>
             <p>
                 This is a fresh application derived from the{' '}
