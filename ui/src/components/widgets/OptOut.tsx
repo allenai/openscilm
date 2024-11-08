@@ -44,10 +44,8 @@ export const OptOut: React.FC<Props> = (props) => {
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button autoFocus color='secondary' onClick={handleOk}>Ok to use my queries 😉</Button>
-        <Button onClick={handleCancel}>
-          Opt-out 😭
-        </Button>
+        <Button autoFocus color='secondary' onClick={handleOk}>Ok to use my queries</Button>
+        <Button onClick={handleCancel}>Opt-out</Button>
       </DialogActions>
     </Dialog>
   )

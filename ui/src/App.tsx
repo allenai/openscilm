@@ -4,8 +4,6 @@ import {
     Box,
 } from '@mui/material';
 import { Route, Routes } from 'react-router-dom';
-import { Header } from '@allenai/varnish2';
-// import { Footer } from '@allenai/varnish2';
 
 import { About } from './pages/About';
 import { Home } from './pages/Home';
@@ -52,12 +50,6 @@ export const App = () => {
         <CookiesProvider defaultSetOptions={{ path: '/' }}>
 
             <DarkBackground>
-                <Header style={{ zIndex: 9999 }}>
-                    <Header.Columns columns="auto 1fr auto">
-                        <Header.Logo label={<Header.AppName>OpenScholar</Header.AppName>}>
-                        </Header.Logo>
-                    </Header.Columns>
-                </Header>
                 <Box sx={{ display: 'flex', flexGrow: 1, height: '100%' }}>
                     <Sidebar />
                     <Box component="main" sx={{
@@ -70,7 +62,6 @@ export const App = () => {
                         </Routes>
                     </Box>
                 </Box>
-                {/* <Footer /> */}
             </DarkBackground>
         </CookiesProvider>
     );
