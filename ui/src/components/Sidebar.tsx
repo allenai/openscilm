@@ -9,6 +9,7 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import Link from '@mui/material/Link';
+import Typography from '@mui/material/Typography';
 import { useQueryHistory } from './shared';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ListSubheader } from '@mui/material';
@@ -43,18 +44,14 @@ export default function Sidebar() {
         [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
       }}
     >
-      <Box sx={{display: 'flex', flexDirection: 'column', height:'100%', padding: '8px'}}>
+      <Box sx={{display: 'flex', flexDirection: 'column', height:'100%', padding: '16px'}}>
         
         <Button href="/" variant="contained" sx={{ display: 'flex' }} startIcon={<AddIcon />} color="secondary" size="medium">
           New Question
         </Button>
 
+        <Typography variant="h6">Recent Questions</Typography>
         <List
-          subheader={
-            <ListSubheader component="div" id="nested-list-subheader">
-              Recent Questions
-            </ListSubheader>
-          }
           sx={{
             overflow: `auto`,
             flexGrow: `1`
