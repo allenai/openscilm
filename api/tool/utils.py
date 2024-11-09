@@ -7,6 +7,7 @@ from xml.etree.ElementTree import iselement
 import jsonlines
 import requests
 from fastapi import HTTPException
+from google.cloud import storage
 
 S2_APIKEY = os.getenv("S2_PARTNER_API_KEY", "")
 S2_HEADERS = {"x-api-key": S2_APIKEY}
@@ -65,3 +66,14 @@ def extract_citations(text):
         # Split by commas, strip any extra whitespace, and convert to integers
         citations.extend([int(num.strip()) for num in match.split(",")])
     return citations
+
+
+def push_to_gcs(text: str, bucket: str, file_path: str):
+    try:
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(bucket)
+        blob = bucket.blob(file_path)
+        blob.upload_from_string(text)
+        print(f"Pushed event trace: {file_path} to GCS")
+    except Exception as e:
+        print(f"Error pushing {file_path} to GCS: {e}")
