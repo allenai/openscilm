@@ -34,7 +34,7 @@ class OpenScholar:
         n_retrieval: int = 50,
         n_rerank: int = 10,
         n_feedback: int = 1,
-        context_threshold: float = 0.5,
+        context_threshold: float = 0.8,
         llm_model: str = "akariasai/os_8b",
     ):
         # TODO: Initialize retriever and re-ranker clients here
@@ -345,6 +345,8 @@ class OpenScholar:
         )
         max_rerank_score = max(rerank_scores)
         if max_rerank_score < self.context_threshold:
+            print("There is no relevant information in the retrieved snippets.")
+            print(rerank_scores)
             raise Exception(
                 "There is no relevant information in the retrieved snippets. Please try a different query."
             )
