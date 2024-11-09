@@ -39,7 +39,7 @@ class OpenScholar:
         self.task_mgr = task_mgr
         self.top_n = n_rerank
         # FIXME: replace this with reranker API
-        self.reranker_engine = ModalEngine("akariasai/ranker_large", "inference_api")
+        self.reranker_engine = ModalEngine("akariasai-ranker-large", "inference_api", gen_options=dict())
         self.min_citation = None
         self.norm_cite = False
         self.ss_retriever = False
@@ -384,7 +384,7 @@ class OpenScholar:
         t.start()
         self.update_task_state(task_id, "retrieving relevant snippets from 40M papers")
         retrieved_candidates = self.retrieve(query, task_id)
-        # retrieved_candidates =  self.rerank(query, retrieved_candidates)
+        retrieved_candidates =  self.rerank(query, retrieved_candidates)
 
         citation_lists.append(retrieved_candidates)
 
