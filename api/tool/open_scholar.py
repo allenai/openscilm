@@ -18,7 +18,7 @@ from tool.use_search_apis import (
     get_paper_data,
     search_paper_via_query,
 )
-from tool.utils import remove_citations
+from tool.utils import extract_citations, remove_citations
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 RUNPOD_ID = os.getenv("RUNPOD_ID")
@@ -406,6 +406,19 @@ class OpenScholar:
         # generate response
         self.update_task_state(task_id, "Generating the intial draft")
         initial_response = self.generate_response(query, retrieved_candidates)
+        # filter out unused citations
+        used_ctxs_ids = extract_citations(initial_response)
+        for cand_idx, cand in enumerate(retrieved_candidates):
+            if cand_idx in used_ctxs_ids:
+                cand["used"] = True
+            else:
+                cand["used"] = False
+        for used_ctx_id in used_ctxs_ids:
+            if used_ctx_id >= len(retrieved_candidates):
+                initial_response = initial_response.replace(
+                    "[{}]".format(used_ctx_id), ""
+                )
+
         # print("initial response", initial_response)
         responses.append(
             get_response(
@@ -448,8 +461,20 @@ class OpenScholar:
                         len(edited_answer) > 0
                         and len(edited_answer) / len(previous_response) > 0.9
                     ):
+                        citation_lists.append(copy.deepcopy(edited_answer))
+                        used_ctxs_ids = extract_citations(citation_lists[-1])
+                        for used_ctx_id in used_ctxs_ids:
+                            if used_ctx_id >= len(citation_lists[-1]):
+                                initial_response = edited_answer.replace(
+                                    "[{}]".format(used_ctx_id), ""
+                                )
                         previous_response = edited_answer
-                        citation_lists.append(copy.deepcopy(retrieved_candidates))
+
+                        for cand_idx, cand in enumerate(citation_lists[-1]):
+                            if cand_idx in used_ctxs_ids:
+                                cand["used"] = True
+                            else:
+                                cand["used"] = False
                         responses.append(
                             get_response(
                                 {
@@ -498,7 +523,21 @@ class OpenScholar:
 
                         if (len(edited_answer) / len(previous_response)) > 0.9:
                             prev_citations += new_papers[: self.top_n]
+                            used_ctxs_ids = extract_citations(edited_answer)
+                            for used_ctx_id in used_ctxs_ids:
+                                if used_ctx_id >= len(citation_lists[-1]):
+                                    initial_response = edited_answer.replace(
+                                        "[{}]".format(used_ctx_id), ""
+                                    )
+
                             previous_response = edited_answer
+
+                            for cand_idx, cand in enumerate(prev_citations):
+                                if cand_idx in used_ctxs_ids:
+                                    cand["used"] = True
+                                else:
+                                    cand["used"] = False
+
                             responses.append(
                                 get_response(
                                     {
