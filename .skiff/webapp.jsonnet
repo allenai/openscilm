@@ -529,6 +529,15 @@ function(
                                     }
                                 },
                                 {
+                                    name: "MODAL_WEB_AUTH",
+                                    valueFrom: {
+                                        secretKeyRef: {
+                                            name: "modal-tokens",
+                                            key: "MODAL_WEB_AUTH"
+                                        }
+                                    }
+                                },
+                                {
                                     name: "YOUR_API_KEY",
                                     valueFrom: {
                                         secretKeyRef: {
