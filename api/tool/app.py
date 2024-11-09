@@ -29,7 +29,11 @@ from tool.models import (
 from tool.open_scholar import OpenScholar
 from tool.utils import query_s2_api
 
-ASYNC_STATE_DIR = "/async-state"
+ASYNC_STATE_DIR = os.getenv("ASYNC_STATE_DIR", "/async-state")
+
+if not os.path.exists(ASYNC_STATE_DIR):
+    os.makedirs(ASYNC_STATE_DIR)
+
 task_state_manager = StateManager(AsyncTaskState, ASYNC_STATE_DIR)
 async_context = multiprocessing.get_context("fork")
 open_scholar = OpenScholar(task_state_manager)

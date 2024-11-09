@@ -367,6 +367,12 @@ function(
                     nodeSelector: nodeSelector,
                     volumes: [
                         {
+                                name: 'skiff-files',
+                                persistentVolumeClaim: {
+                                    claimName: 'skiff-files-server-open-scholar'
+                                    }
+                        },
+                        {
                             name: "event-tracer-gcs-key",
                             secret: {
                                 secretName: "event-tracer-gcs-key"
@@ -445,6 +451,10 @@ function(
                                 {
                                     name: 'GOOGLE_APPLICATION_CREDENTIALS',
                                     value: '/secret/GCS_SVC_ACCOUNT_KEY'
+                                },
+                                {
+                                    name: 'ASYNC_STATE_DIR',
+                                    value: '/skiff_files/apps/open-scholar/async-state'
                                 },
                                 {
                                     name: "OPENAI_API_KEY",
@@ -538,6 +548,11 @@ function(
                                 }
                             ],
                             volumeMounts: [
+                                {
+                                    mountPath: '/skiff_files/apps/open-scholar',
+                                    name: 'skiff-files',
+                                    readOnly: false
+                                },
                                 {
                                     /* This must match the volume name above. */
                                     name: "event-tracer-gcs-key",
