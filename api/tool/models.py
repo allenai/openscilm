@@ -9,6 +9,7 @@ class Papers(BaseModel):
     corpus_ids: List[int] = Field(description="List of corpus ids of the papers")
     fields: Optional[List[str]] = Field(description="List of fields to be fetched from the papers")
 
+
 # TODO: define your request data
 class ToolRequest(BaseModel):
     task_id: Optional[str] = Field(default=None, description=(
@@ -20,6 +21,8 @@ class ToolRequest(BaseModel):
     ))
     feedback_toggle: Optional[bool] = Field(default=False, description=("Flag to indicate whether to run feedback aware"
                                                                         " iterations on the generated output"))
+    opt_in: Optional[bool] = Field(default=True, description=(
+        "Flag to indicate whether to include the query and response in public release"))
 
 
 class Citation(BaseModel):
