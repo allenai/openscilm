@@ -13,7 +13,11 @@ from openai import OpenAI
 from tool.modal_engine import ModalEngine
 from tool.models import Citation, GeneratedIteration, TaskResult
 from tool.retrieval import fetch_s2howable_flag, retrieve_contriever, retrieve_s2_index
-from tool.use_search_apis import batch_paper_data_SS_ID, search_paper_via_query
+from tool.use_search_apis import (
+    batch_paper_data_SS_ID,
+    get_paper_data,
+    search_paper_via_query,
+)
 from tool.utils import remove_citations
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -29,7 +33,7 @@ class OpenScholar:
         task_mgr: StateManager,
         n_retrieval: int = 100,
         n_rerank: int = 10,
-        n_feedback: int = 1,
+        n_feedback: int = 2,
         llm_model: str = "akariasai/os_8b",
     ):
         # TODO: Initialize retriever and re-ranker clients here
@@ -166,7 +170,7 @@ class OpenScholar:
             }
         )
 
-        outputs = self.llm_inference(input_query, temperature=0.7, max_tokens=2500)
+        outputs = self.llm_inference(input_query, temperature=0.7, max_tokens=1000)
 
         raw_output = (
             [
@@ -264,7 +268,7 @@ class OpenScholar:
             )
         ]
 
-        outputs = self.llm_inference(prompt[0], temperature=0.7, max_tokens=1000)
+        outputs = self.llm_inference(prompt[0], temperature=0.7, max_tokens=1500)
 
         search_queries = outputs.split(", ")[:3]
         search_queries = [
@@ -299,10 +303,13 @@ class OpenScholar:
         self.update_task_state(task_id, status_str)
         print(f"retrieval done - {status_str}")
         paper_titles = {}
-        paper_data = batch_paper_data_SS_ID(results["pes2o IDs"])
-        for pdata in paper_data.values():
-            if pdata and pdata["corpusId"]:
-                paper_titles[int(pdata["corpusId"])] = pdata["title"]
+        paper_data = {
+            pes2o_id: get_paper_data(pes2o_id) for pes2o_id in results["pes2o IDs"]
+        }
+        for paper_id in paper_data:
+            if "title" in paper_data[paper_id]:
+                paper_titles[paper_id] = paper_data[paper_id]["title"]
+
         snippets_list = [
             {
                 "corpus_id": cid,
@@ -316,14 +323,20 @@ class OpenScholar:
                 results["scores"],
             )
         ]
+
+        snippets_list = [
+            snippet for snippet in snippets_list if len(snippet["text"]) > 100
+        ]
         return snippets_list
 
     def rerank(
         self, query: str, retrieved_ctxs: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         passages = []
+
         for doc in retrieved_ctxs:
             passages.append(doc["text"])
+
         rerank_scores = self.reranker_engine.generate(
             (query, passages), streaming=False
         )
@@ -384,7 +397,7 @@ class OpenScholar:
         t.start()
         self.update_task_state(task_id, "retrieving relevant snippets from 40M papers")
         retrieved_candidates = self.retrieve(query, task_id)
-        # retrieved_candidates =  self.rerank(query, retrieved_candidates)
+        # retrieved_candidates = self.rerank(query, retrieved_candidates)
 
         citation_lists.append(retrieved_candidates)
 
