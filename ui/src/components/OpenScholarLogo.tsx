@@ -2,8 +2,8 @@ import React from 'react';
 
 export default function OpenScholarLogo({
   id,
-  height = 79,
-  width = 600,
+  height = 42,
+  width = 319,
 }: {
   id?: string;
   height?: number;

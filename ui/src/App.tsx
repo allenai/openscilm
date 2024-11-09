@@ -36,6 +36,7 @@ const ROUTES: AppRoute[] = [
     },
 ];
 
+const location = window.location.pathname;
 
 const DarkBackground = styled('div')`
     color: ${({ theme }) => theme.palette.text.reversed};
@@ -49,7 +50,8 @@ const AppHeader = styled('div')`
     border-bottom: 1px solid rgba(250, 242, 233, 0.1);
     width: 100%;
     display: flex;
-    padding: 16px;
+    justify-content: space-between;
+    padding: 16px 32px;
 `;
 
 export const App = () => {
@@ -60,11 +62,15 @@ export const App = () => {
             <DarkBackground>
                 <Box sx={{ display: 'flex', flexGrow: 1, height: '100%' }}>
                     <Sidebar />
-                    <Box component="main" sx={{
-                        flexGrow: 1, display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start', flexDirection: 'column',
-                    }}> 
+                    <Box component="main" sx={{ width: `100%` }}> 
                         <AppHeader>
-                            <Link href="/about">About OpenScholar</Link>
+                            <Box>
+                                &nbsp;
+                            </Box>
+                            <Box sx={{ display: 'flex', gap:'16px'}}>
+                                <Link href="/about">About OpenScholar</Link>
+                                {/* <Link href="#">Blog Post</Link> */}
+                            </Box>
                         </AppHeader>
                         <Routes>
                             {ROUTES.map(({ path, Component }) => (

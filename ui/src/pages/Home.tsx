@@ -1,4 +1,7 @@
 import React, { useCallback } from 'react';
+import {  
+  Box,
+} from '@mui/material';
 import MessageBar from '../components/widgets/MessageBar';
 import { useNavigate } from "react-router-dom";
 import { CircularProgress } from '@mui/material';
@@ -37,11 +40,15 @@ export const Home = () => {
 
   return (
     <>
-      <OpenScholarLogo />
-      <MessageBar onSend={handleSubmit} />
-      <div>
-          {isLoading && <CircularProgress />}
-      </div>
+      <Box sx={{ alignItems:'center', display: 'flex', flexGrow: '1', flexDirection: 'column', justifyContent: 'center', padding: '32px', width: '100%', paddingTop: '240px'}}>
+        <Box sx={{maxWidth: '800px', width: '100%', display: 'flex', flexDirection: 'column', gap: '12px'}}>
+          <OpenScholarLogo />
+          <MessageBar onSend={handleSubmit} />      
+          <div>
+            {isLoading && <CircularProgress />}
+          </div>
+        </Box>
+      </Box>
     </>
   );
 };

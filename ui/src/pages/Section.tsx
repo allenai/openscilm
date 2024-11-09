@@ -1,4 +1,5 @@
 import React from 'react';
+import { Box } from '@mui/material';
 import { useParams } from "react-router-dom";
 import { Results } from '../components/Results';
 
@@ -8,8 +9,8 @@ export const Section = () => {
   const { taskId } = useParams();
 
   return (
-    <div style={{ maxWidth: '1200px', width: '100%', marginBottom: '250px' }}>
+    <Box sx={{ padding: '32px', width: '100%' }}>
       {taskId && <Results taskId={taskId} key={taskId} />}
-    </div>
+    </Box>
   );
 };

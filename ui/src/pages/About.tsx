@@ -1,9 +1,15 @@
 import React from 'react';
-import { MaxWidthText } from '@allenai/varnish2';
+import { styled } from '@mui/material';
+
+const AboutPage = styled('div')`
+    width: 100%;
+    max-width: 720px;
+    padding: 32px;
+`;
 
 export const About = () => {
     return (
-        <MaxWidthText style={{ padding: '36px'}}>
+        <AboutPage>
             <h1>About this Demo</h1>
             <p>
                 This is a fresh application derived from the{' '}
@@ -25,6 +31,6 @@ export const About = () => {
                 contact us at <a href="mailto:reviz@allenai.org">reviz@allenai.org</a>.
             </p>
             <p>Smooth sailing!</p>
-        </MaxWidthText>
+        </AboutPage>
     );
 };

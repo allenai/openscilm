@@ -1,12 +1,14 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import AddIcon from '@mui/icons-material/Add';
 import Drawer from '@mui/material/Drawer';
 import Toolbar from '@mui/material/Toolbar';
 import List from '@mui/material/List';
-import Divider from '@mui/material/Divider';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
+import Link from '@mui/material/Link';
 import { useQueryHistory } from './shared';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ListSubheader } from '@mui/material';
@@ -41,27 +43,23 @@ export default function Sidebar() {
         [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
       }}
     >
-      <Toolbar />
-      <Box sx={{ overflow: 'auto', paddingTop: '40px' }}>
-        <List>
-          <ListItem disablePadding>
-            <ListItemButton
-              selected={location.pathname === '/'}
-              onClick={() => {
-                navigate(`/`, { replace: true });
-              }}
-            >
-              <ListItemText primary={'Ask a New Question'} />
-            </ListItemButton>
-          </ListItem>
-        </List>
-        <Divider />
+      <Box sx={{display: 'flex', flexDirection: 'column', height:'100%', padding: '8px'}}>
+        
+        <Button href="/" variant="contained" sx={{ display: 'flex' }} startIcon={<AddIcon />} color="secondary" size="medium">
+          New Question
+        </Button>
+
         <List
           subheader={
             <ListSubheader component="div" id="nested-list-subheader">
               Recent Questions
             </ListSubheader>
-          }>
+          }
+          sx={{
+            overflow: `auto`,
+            flexGrow: `1`
+          }}
+        >
           {sortedHistory.map((item) => {
             return (
               <ListItem key={item.taskId} disablePadding>
@@ -77,6 +75,12 @@ export default function Sidebar() {
             )
           })}
         </List>
+
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+          <Link href="https://allenai.org" target="_blank">Ai2</Link>
+          <Link href="https://allenai.org/privacy-policy" target="_blank">Privacy Policy</Link>
+          <Link href="https://allenai.org/terms" target="_blank">Terms of Use</Link>
+        </Box>
       </Box>
     </Drawer>
   );
