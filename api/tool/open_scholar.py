@@ -31,9 +31,9 @@ class OpenScholar:
     def __init__(
         self,
         task_mgr: StateManager,
-        n_retrieval: int = 100,
+        n_retrieval: int = 50,
         n_rerank: int = 10,
-        n_feedback: int = 2,
+        n_feedback: int = 1,
         llm_model: str = "akariasai/os_8b",
     ):
         # TODO: Initialize retriever and re-ranker clients here
@@ -43,7 +43,9 @@ class OpenScholar:
         self.task_mgr = task_mgr
         self.top_n = n_rerank
         # FIXME: replace this with reranker API
-        self.reranker_engine = ModalEngine("akariasai-ranker-large", "inference_api", gen_options=dict())
+        self.reranker_engine = ModalEngine(
+            "akariasai-ranker-large", "inference_api", gen_options=dict()
+        )
         self.min_citation = None
         self.norm_cite = False
         self.ss_retriever = False
@@ -298,7 +300,7 @@ class OpenScholar:
 
     def retrieve(self, query: str, task_id: str) -> List[Dict[str, Any]]:
         print("retrieval started")
-        results = self.retrieval_fn(query, self.n_rerank)
+        results = self.retrieval_fn(query, self.n_retrieval)
         status_str = f'{len(results["passages"])} snippets retrieved successfully'
         self.update_task_state(task_id, status_str)
         print(f"retrieval done - {status_str}")
@@ -340,6 +342,11 @@ class OpenScholar:
         rerank_scores = self.reranker_engine.generate(
             (query, passages), streaming=False
         )
+        max_rerank_score = max(rerank_scores)
+        if max_rerank_score < 0.5:
+            raise Exception(
+                "There is no relevant information in the retrieved snippets. Please try a different query."
+            )
         for doc, rerank_score in zip(retrieved_ctxs, rerank_scores):
             doc["rerank_score"] = rerank_score
         sorted_ctxs = sorted(
@@ -397,7 +404,7 @@ class OpenScholar:
         t.start()
         self.update_task_state(task_id, "retrieving relevant snippets from 40M papers")
         retrieved_candidates = self.retrieve(query, task_id)
-        retrieved_candidates =  self.rerank(query, retrieved_candidates)
+        retrieved_candidates = self.rerank(query, retrieved_candidates)
 
         citation_lists.append(retrieved_candidates)
 
