@@ -2,6 +2,7 @@ import os
 
 import re
 from typing import Any, Dict
+from xml.etree.ElementTree import iselement
 
 import jsonlines
 import requests
@@ -50,3 +51,17 @@ def remove_citations(text):
     cleaned_text = cleaned_text.replace(" .", ".")
     cleaned_text = cleaned_text.replace(" ,", ",")
     return cleaned_text
+
+
+def extract_citations(text):
+    print(text)
+    # Regular expression to match [number] or [number_1, number_2, number_3]
+    citation_pattern = r"\[(\d+(?:,\s*\d+)*)\]"
+    # Find all matches in the text
+    matches = re.findall(citation_pattern, text)
+    # Extract individual numbers and convert them to integers
+    citations = []
+    for match in matches:
+        # Split by commas, strip any extra whitespace, and convert to integers
+        citations.extend([int(num.strip()) for num in match.split(",")])
+    return citations

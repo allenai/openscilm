@@ -13,8 +13,12 @@ from openai import OpenAI
 from tool.modal_engine import ModalEngine
 from tool.models import Citation, GeneratedIteration, TaskResult
 from tool.retrieval import fetch_s2howable_flag, retrieve_contriever, retrieve_s2_index
-from tool.use_search_apis import batch_paper_data_SS_ID, search_paper_via_query
-from tool.utils import remove_citations
+from tool.use_search_apis import (
+    batch_paper_data_SS_ID,
+    get_paper_data,
+    search_paper_via_query,
+)
+from tool.utils import extract_citations, remove_citations
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 RUNPOD_ID = os.getenv("RUNPOD_ID")
@@ -29,7 +33,7 @@ class OpenScholar:
         task_mgr: StateManager,
         n_retrieval: int = 100,
         n_rerank: int = 10,
-        n_feedback: int = 1,
+        n_feedback: int = 2,
         llm_model: str = "akariasai/os_8b",
     ):
         # TODO: Initialize retriever and re-ranker clients here
@@ -166,7 +170,7 @@ class OpenScholar:
             }
         )
 
-        outputs = self.llm_inference(input_query, temperature=0.7, max_tokens=2500)
+        outputs = self.llm_inference(input_query, temperature=0.7, max_tokens=1000)
 
         raw_output = (
             [
@@ -264,7 +268,7 @@ class OpenScholar:
             )
         ]
 
-        outputs = self.llm_inference(prompt[0], temperature=0.7, max_tokens=1000)
+        outputs = self.llm_inference(prompt[0], temperature=0.7, max_tokens=1500)
 
         search_queries = outputs.split(", ")[:3]
         search_queries = [
@@ -299,10 +303,13 @@ class OpenScholar:
         self.update_task_state(task_id, status_str)
         print(f"retrieval done - {status_str}")
         paper_titles = {}
-        paper_data = batch_paper_data_SS_ID(results["pes2o IDs"])
-        for pdata in paper_data.values():
-            if pdata and pdata["corpusId"]:
-                paper_titles[int(pdata["corpusId"])] = pdata["title"]
+        paper_data = {
+            pes2o_id: get_paper_data(pes2o_id) for pes2o_id in results["pes2o IDs"]
+        }
+        for paper_id in paper_data:
+            if "title" in paper_data[paper_id]:
+                paper_titles[paper_id] = paper_data[paper_id]["title"]
+
         snippets_list = [
             {
                 "corpus_id": cid,
@@ -316,14 +323,20 @@ class OpenScholar:
                 results["scores"],
             )
         ]
+
+        snippets_list = [
+            snippet for snippet in snippets_list if len(snippet["text"]) > 100
+        ]
         return snippets_list
 
     def rerank(
         self, query: str, retrieved_ctxs: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         passages = []
+
         for doc in retrieved_ctxs:
             passages.append(doc["text"])
+
         rerank_scores = self.reranker_engine.generate(
             (query, passages), streaming=False
         )
@@ -393,6 +406,19 @@ class OpenScholar:
         # generate response
         self.update_task_state(task_id, "Generating the intial draft")
         initial_response = self.generate_response(query, retrieved_candidates)
+        # filter out unused citations
+        used_ctxs_ids = extract_citations(initial_response)
+        for cand_idx, cand in enumerate(retrieved_candidates):
+            if cand_idx in used_ctxs_ids:
+                cand["used"] = True
+            else:
+                cand["used"] = False
+        for used_ctx_id in used_ctxs_ids:
+            if used_ctx_id >= len(retrieved_candidates):
+                initial_response = initial_response.replace(
+                    "[{}]".format(used_ctx_id), ""
+                )
+
         # print("initial response", initial_response)
         responses.append(
             get_response(
@@ -435,8 +461,20 @@ class OpenScholar:
                         len(edited_answer) > 0
                         and len(edited_answer) / len(previous_response) > 0.9
                     ):
+                        citation_lists.append(copy.deepcopy(edited_answer))
+                        used_ctxs_ids = extract_citations(citation_lists[-1])
+                        for used_ctx_id in used_ctxs_ids:
+                            if used_ctx_id >= len(citation_lists[-1]):
+                                initial_response = edited_answer.replace(
+                                    "[{}]".format(used_ctx_id), ""
+                                )
                         previous_response = edited_answer
-                        citation_lists.append(copy.deepcopy(retrieved_candidates))
+
+                        for cand_idx, cand in enumerate(citation_lists[-1]):
+                            if cand_idx in used_ctxs_ids:
+                                cand["used"] = True
+                            else:
+                                cand["used"] = False
                         responses.append(
                             get_response(
                                 {
@@ -485,7 +523,21 @@ class OpenScholar:
 
                         if (len(edited_answer) / len(previous_response)) > 0.9:
                             prev_citations += new_papers[: self.top_n]
+                            used_ctxs_ids = extract_citations(edited_answer)
+                            for used_ctx_id in used_ctxs_ids:
+                                if used_ctx_id >= len(citation_lists[-1]):
+                                    initial_response = edited_answer.replace(
+                                        "[{}]".format(used_ctx_id), ""
+                                    )
+
                             previous_response = edited_answer
+
+                            for cand_idx, cand in enumerate(prev_citations):
+                                if cand_idx in used_ctxs_ids:
+                                    cand["used"] = True
+                                else:
+                                    cand["used"] = False
+
                             responses.append(
                                 get_response(
                                     {
