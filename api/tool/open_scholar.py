@@ -34,6 +34,7 @@ class OpenScholar:
         n_retrieval: int = 50,
         n_rerank: int = 10,
         n_feedback: int = 1,
+        context_threshold: float = 0.5,
         llm_model: str = "akariasai/os_8b",
     ):
         # TODO: Initialize retriever and re-ranker clients here
@@ -42,6 +43,7 @@ class OpenScholar:
         self.n_feedback = n_feedback
         self.task_mgr = task_mgr
         self.top_n = n_rerank
+        self.context_threshold = context_threshold
         # FIXME: replace this with reranker API
         self.reranker_engine = ModalEngine(
             "akariasai-ranker-large", "inference_api", gen_options=dict()
@@ -299,7 +301,6 @@ class OpenScholar:
             self.task_mgr.write_state(task_state)
 
     def retrieve(self, query: str, task_id: str) -> List[Dict[str, Any]]:
-        print("retrieval started")
         results = self.retrieval_fn(query, self.n_retrieval)
         status_str = f'{len(results["passages"])} snippets retrieved successfully'
         self.update_task_state(task_id, status_str)
@@ -337,13 +338,13 @@ class OpenScholar:
         passages = []
 
         for doc in retrieved_ctxs:
-            passages.append(doc["text"])
+            passages.append(doc["title"] + " " + doc["text"])
 
         rerank_scores = self.reranker_engine.generate(
             (query, passages), streaming=False
         )
         max_rerank_score = max(rerank_scores)
-        if max_rerank_score < 0.5:
+        if max_rerank_score < self.context_threshold:
             raise Exception(
                 "There is no relevant information in the retrieved snippets. Please try a different query."
             )
@@ -404,6 +405,7 @@ class OpenScholar:
         t.start()
         self.update_task_state(task_id, "retrieving relevant snippets from 40M papers")
         retrieved_candidates = self.retrieve(query, task_id)
+        self.update_task_state(task_id, "reranking top passages")
         retrieved_candidates = self.rerank(query, retrieved_candidates)
 
         citation_lists.append(retrieved_candidates)
