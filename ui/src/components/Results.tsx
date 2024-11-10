@@ -67,12 +67,12 @@ export const Results: React.FC<PropType> = (props) => {
   // if (!status?.task_result) {
   const taskRunning = !status || 'task_status' in status
   if (taskRunning) {
-    if (status?.httpStatus === 404) {
+    if (status?.httpStatus !== 200) {
         progressProps = {
-          estimatedTime: '---',
+          estimatedTime: 'Error',
           startTime: -1,
-          status: 'Answer not found - please try asking again',
-          httpStatus: status.httpStatus
+          status: status?.detail ?? 'Something went wrong - please try asking again',
+          httpStatus: status?.httpStatus ?? 500
         }
     } else {
       try {

@@ -23,6 +23,7 @@ export interface StatusTypeInProgress {
   query: string;
   task_result: TaskResultType | null;
   estimated_time: string;
+  detail?: string;
   task_status: string;
   httpStatus: number;
 }
