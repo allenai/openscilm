@@ -41,7 +41,7 @@ class OpenScholar:
         n_retrieval: int = 50,
         n_rerank: int = 8,
         n_feedback: int = 1,
-        context_threshold: float = 0.8,
+        context_threshold: float = 0.7,
         llm_model: str = "akariasai/os_8b",
     ):
         # TODO: Initialize retriever and re-ranker clients here
@@ -344,15 +344,22 @@ class OpenScholar:
     ) -> List[Dict[str, Any]]:
         passages = []
 
+        retrieved_ctxs = [ctx for ctx in retrieved_ctxs if ctx["text"] is not None]
         for doc in retrieved_ctxs:
-            passages.append(doc["title"] + " " + doc["text"])
-
+            if doc["text"] is None:
+                continue
+            if "title" in doc:
+                passages.append(doc["title"] + " " + doc["text"])
+            else:
+                passages.append(doc["text"])
         rerank_scores = self.reranker_engine.generate(
             (query, passages), streaming=False
         )
         print(rerank_scores)
-        max_rerank_score = max(rerank_scores)
-        if max_rerank_score < self.context_threshold:
+        passages_above_threshold = [
+            score for score in rerank_scores if score > self.context_threshold
+        ]
+        if len(passages_above_threshold) < 5:
             print("There is no relevant information in the retrieved snippets.")
             raise Exception(
                 "There is no relevant information in the retrieved snippets. Please try a different query."
@@ -362,7 +369,6 @@ class OpenScholar:
         sorted_ctxs = sorted(
             retrieved_ctxs, key=lambda x: x["rerank_score"], reverse=True
         )[: self.n_rerank]
-        print("finish reranking")
         return sorted_ctxs
 
     def retrieve_additional_passages_ss(self, query: str):
@@ -378,7 +384,9 @@ class OpenScholar:
                     for paper in top_papers:
                         if paper["paperId"] not in paper_list:
                             paper["text"] = paper["abstract"]
+                            paper["title"] = paper["title"]
                             paper["citation_counts"] = paper["citationCount"]
+                            paper["corpus_id"] = paper["externalIds"]["CorpusId"]
                             paper_list[paper["paperId"]] = paper
             new_papers += list(paper_list.values())
         return new_papers
@@ -419,7 +427,7 @@ class OpenScholar:
                             if fetch_s2howable_flag(cite["corpus_id"])
                             else truncate_snippet(cite["text"])
                         ),
-                        score=cite["score"],
+                        score=cite["score"] if "score" in cite else 0.0,
                     )
                     for idx, cite in enumerate(iteration["citations"])
                 ],
@@ -442,6 +450,9 @@ class OpenScholar:
         self.update_task_state(task_id, "retrieving relevant snippets from 40M papers")
         retrieved_candidates = self.retrieve(query, task_id)
 
+        self.update_task_state(
+            task_id, "fetching additonal passages from semantic scholar."
+        )
         retrieved_candidates += self.retrieve_additional_passages_ss(query)
         print("retrieved new ppaers")
         print(len(retrieved_candidates))
@@ -458,7 +469,6 @@ class OpenScholar:
         # generate response
         self.update_task_state(task_id, "Generating the intial draft")
         initial_response = self.generate_response(query, retrieved_candidates)
-        print(initial_response)
         # filter out unused citations
         used_ctxs_ids = extract_citations(initial_response)
         for cand_idx, cand in enumerate(retrieved_candidates):
@@ -472,7 +482,6 @@ class OpenScholar:
                     "[{}]".format(used_ctx_id), ""
                 )
 
-        # print("initial response", initial_response)
         responses.append(
             get_response(
                 {
@@ -496,7 +505,6 @@ class OpenScholar:
                 ctxs=retrieved_candidates,
                 initial_response=initial_response,
             )[: self.n_feedback]
-
             previous_response = initial_response
             for feedback_idx, feedback in enumerate(feedbacks):
                 self.update_task_state(
@@ -518,6 +526,7 @@ class OpenScholar:
                     ):
                         citation_lists.append(copy.deepcopy(edited_answer))
                         used_ctxs_ids = extract_citations(citation_lists[-1])
+
                         for used_ctx_id in used_ctxs_ids:
                             if used_ctx_id >= len(citation_lists[-1]):
                                 initial_response = edited_answer.replace(
