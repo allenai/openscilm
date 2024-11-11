@@ -27,7 +27,7 @@ export const Sections: React.FC<PropType> = (props) => {
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <TabList onChange={handleChange} aria-label="lab API tabs example">
             {sections.map((_section, index) => (
-              <Tab label={`Iteration${index}`} key={`Iteration${index}`} value={`${index}`} style={{ color: value !== `${index}` ? "#FAF2E9" : 'hotpink' }} />
+              <Tab label={`Iteration ${index}`} key={`Iteration${index}`} value={`${index}`} style={{ color: value !== `${index}` ? "#FAF2E9" : 'hotpink' }} />
             ))}
           </TabList>
         </Box>
