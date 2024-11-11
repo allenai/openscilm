@@ -16,7 +16,7 @@ interface PropType {
 }
 
 export const Results: React.FC<PropType> = (props) => {
-  const { taskId, interval=DEFAULT_INTERVAL } = props;
+  const { taskId, interval = DEFAULT_INTERVAL } = props;
   const { history, setHistory } = useQueryHistory();
   const navigate = useNavigate();
 
@@ -27,9 +27,9 @@ export const Results: React.FC<PropType> = (props) => {
     if (confirm('Are you sure you want to delete this? This cannot be undone.')) {
       const newHistory = { ...history };
       try {
-      delete newHistory[taskId];
-      setHistory(newHistory);
-      navigate('/');
+        delete newHistory[taskId];
+        setHistory(newHistory);
+        navigate('/');
       } catch (e) {
         console.error('delete task failed', e);
       }
@@ -58,59 +58,58 @@ export const Results: React.FC<PropType> = (props) => {
 
   // const section = status?.task_result?.sections.at(-1);
   const sections = status?.task_result?.sections ?? [];
-    let progressProps: ProgressPropType = {
-      estimatedTime: 'Loading...',
+  let progressProps: Omit<ProgressPropType, 'isRunning'> = {
+    estimatedTime: 'Loading...',
+    startTime: -1,
+    status: 'Loading...',
+    httpStatus: 200
+  }
+  if (status?.httpStatus !== 200) {
+    console.log('A')
+    progressProps = {
+      estimatedTime: 'Error',
       startTime: -1,
-      status: 'Loading...',
-      httpStatus: 200
+      status: status?.detail ?? 'Something went wrong - please try asking again',
+      httpStatus: status?.httpStatus ?? 500
     }
+  }
   // if (!status?.task_result) {
   const taskRunning = !status || 'task_status' in status
-  if (taskRunning) {
-    if (status?.httpStatus === 404) {
-        progressProps = {
-          estimatedTime: '---',
-          startTime: -1,
-          status: 'Answer not found - please try asking again',
-          httpStatus: status.httpStatus
-        }
-    } else {
-      try {
-        const startTime = parseFloat(status?.task_status.split(':').at(0) ?? '0')
-        const statusText = status?.task_status.split(':').at(-1) ?? 'Loading...'
-        progressProps = {
-          estimatedTime: status?.estimated_time?.split(':')?.at(-1) ?? 'Loading...',
-          startTime,
-          status: statusText,
-          httpStatus: status?.httpStatus ?? 200
-        }
-      } catch (e) {
-        console.error('error parsing status', e);
+  console.log('taskRunning', taskRunning, status)
+  if (taskRunning && status?.httpStatus !== 200) {
+    try {
+      console.log('B')
+      const startTime = parseFloat(status?.task_status.split(':').at(0) ?? '0')
+      const statusText = status?.task_status.split(':').at(-1) ?? 'Loading...'
+      progressProps = {
+        estimatedTime: status?.estimated_time?.split(':')?.at(-1) ?? 'Loading...',
+        startTime,
+        status: statusText,
+        httpStatus: status?.httpStatus ?? 200
       }
-
+    } catch (e) {
+      console.error('error parsing status', e);
     }
   }
   const handleScrollToDisclaimer = useCallback(() => {
     document.querySelector('.disclaimer')?.scrollIntoView({ behavior: 'smooth' });
   }, []);
+  console.log('progressProps', progressProps)
 
   return (
     <div>
       {/* {isLoading && <LinearProgress style={{ marginBottom: '-4px' }} />} */}
-      <div style={{display: 'flex', justifyContent: 
-      'space-between', alignItems: 'baseline'}}>
-        <h3 style={{ flexGrow: 1 }}>{status?.query ?? '---'}</h3>
-        <ButtonGroup size="small" variant='text' aria-label="Small button group" style={{flex: '0 0 220px'}}>
-            <Button color='secondary' onClick={handleScrollToDisclaimer}>Disclaimer</Button>
-            <Button color='secondary' onClick={handleDeleteTask}>Remove from history</Button>
+      <div style={{
+        display: 'flex', justifyContent:
+          'space-between', alignItems: 'baseline'
+      }}>
+        <h3 style={{ flexGrow: 1 }}>{status?.query ?? 'Error'}</h3>
+        <ButtonGroup size="small" variant='text' aria-label="Small button group" style={{ flex: '0 0 220px' }}>
+          {sections.length > 0 && <Button color='secondary' onClick={handleScrollToDisclaimer}>Disclaimer</Button>}
+          <Button color='secondary' onClick={handleDeleteTask}>Remove from history</Button>
         </ButtonGroup>
       </div>
-      {taskRunning && (
-        <>
-            {/* <Button key="three" onClick={handleDeleteTask}>Abort This Task</Button> */}
-            <Progress {...progressProps} />
-        </>
-      )}
+      <Progress {...progressProps} isRunning={taskRunning} />
       {sections.length > 0 && (
         <>
           {/* <Box
@@ -136,7 +135,7 @@ export const Results: React.FC<PropType> = (props) => {
               </>
             )}
           </Box> */}
-          
+
           <Sections sections={sections} />
         </>
       )}

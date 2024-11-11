@@ -2,10 +2,12 @@ import os
 
 import re
 from typing import Any, Dict
+from xml.etree.ElementTree import iselement
 
 import jsonlines
 import requests
 from fastapi import HTTPException
+from google.cloud import storage
 
 S2_APIKEY = os.getenv("S2_PARTNER_API_KEY", "")
 S2_HEADERS = {"x-api-key": S2_APIKEY}
@@ -50,3 +52,28 @@ def remove_citations(text):
     cleaned_text = cleaned_text.replace(" .", ".")
     cleaned_text = cleaned_text.replace(" ,", ",")
     return cleaned_text
+
+
+def extract_citations(text):
+    print(text)
+    # Regular expression to match [number] or [number_1, number_2, number_3]
+    citation_pattern = r"\[(\d+(?:,\s*\d+)*)\]"
+    # Find all matches in the text
+    matches = re.findall(citation_pattern, text)
+    # Extract individual numbers and convert them to integers
+    citations = []
+    for match in matches:
+        # Split by commas, strip any extra whitespace, and convert to integers
+        citations.extend([int(num.strip()) for num in match.split(",")])
+    return citations
+
+
+def push_to_gcs(text: str, bucket: str, file_path: str):
+    try:
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(bucket)
+        blob = bucket.blob(file_path)
+        blob.upload_from_string(text)
+        print(f"Pushed event trace: {file_path} to GCS")
+    except Exception as e:
+        print(f"Error pushing {file_path} to GCS: {e}")

@@ -12,10 +12,12 @@ import { OptOut } from './OptOut';
 import { useCookies } from 'react-cookie';
 
 type MessageBarProps = {
-  onSend: (text: string) => Promise<any> | void;
+  onSend: (text: string, optin: boolean) => Promise<any> | void;
   isPending?: boolean;
   placeholder?: string;
 };
+
+export type ConsentType = 'yes' | 'no' | 'unset';
 
 const ENTER_KEY = 'Enter' as const;
 
@@ -35,7 +37,7 @@ const MessageBar = ({
   if (!cookies.consented) {
     setCookie('consented', { status: 'unset' }, { path: '/' });
   }
-  const cookieConsent = cookies?.consented?.status ?? 'unset'
+  const cookieConsent: ConsentType = cookies?.consented?.status ?? 'unset'
   console.log(cookieConsent)
   const [consent, setConsent] = useState(cookieConsent);
   useEffect(() => {
@@ -53,14 +55,14 @@ const MessageBar = ({
         console.log('Opening consent modal???');
         setConsentModalOpen(true);
       } else {
-        onSend(text);
+        onSend(text, consent === 'yes');
         setText('')
       }
     },
     [onSend, setText, text, isEmpty, consent, setConsentModalOpen],
   );
 
-  const handleConsentModalClose = useCallback((value: 'yes' | 'no' | 'unset') => {
+  const handleConsentModalClose = useCallback((value: ConsentType) => {
     console.log('Set consent value:', value);
     setConsent(value);
     setConsentModalOpen(false);

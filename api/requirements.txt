@@ -20,4 +20,4 @@ fuzzy-match
 googlesearch-python
 openai
 tqdm
-FlagEmbedding
+google-cloud-storage==2.18.2
