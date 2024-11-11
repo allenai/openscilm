@@ -54,7 +54,7 @@ def remove_citations(text):
     return cleaned_text
 
 
-def extract_citations(text):
+def extract_citations(text, return_sentence_end=False):
     print(text)
     # Regular expression to match [number] or [number_1, number_2, number_3]
     citation_pattern = r"\[(\d+(?:,\s*\d+)*)\]"
@@ -65,6 +65,16 @@ def extract_citations(text):
     for match in matches:
         # Split by commas, strip any extra whitespace, and convert to integers
         citations.extend([int(num.strip()) for num in match.split(",")])
+    
+    if return_sentence_end:
+        # Extra regular expression to match references at the end of sentences
+        sentence_end_citation_pattern = r"\[(\d+(?:,\s*\d+)*)\][,.;]"
+        matches = re.findall(sentence_end_citation_pattern, text)
+        sentence_end_citations = []
+        for match in matches:
+            # Split by commas, strip any extra whitespace, and convert to integers
+            sentence_end_citations.extend([int(num.strip()) for num in match.split(",")])
+        return citations, sentence_end_citations
     return citations
 
 

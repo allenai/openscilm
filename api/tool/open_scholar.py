@@ -430,7 +430,7 @@ class OpenScholar:
         initial_response = self.generate_response(query, retrieved_candidates)
         print(initial_response)
         # filter out unused citations
-        used_ctxs_ids = extract_citations(initial_response)
+        used_ctxs_ids, sentence_end_citations = extract_citations(initial_response, return_sentence_end=True)
         for cand_idx, cand in enumerate(retrieved_candidates):
             if cand_idx in used_ctxs_ids:
                 cand["used"] = True
@@ -441,6 +441,13 @@ class OpenScholar:
                 initial_response = initial_response.replace(
                     "[{}]".format(used_ctx_id), ""
                 )
+        # filter out hallucination citations at senetence end
+        for sentence_end_citation in sentence_end_citations:
+            if sentence_end_citation not in used_ctxs_ids:
+                initial_response = initial_response.replace(
+                    "[{}]".format(sentence_end_citation), ""
+                )
+        
 
         # print("initial response", initial_response)
         responses.append(
@@ -487,11 +494,17 @@ class OpenScholar:
                             and len(edited_answer) / len(previous_response) > 0.9
                     ):
                         citation_lists.append(copy.deepcopy(edited_answer))
-                        used_ctxs_ids = extract_citations(citation_lists[-1])
+                        used_ctxs_ids, sentence_end_citations = extract_citations(citation_lists[-1], return_sentence_end=True)
                         for used_ctx_id in used_ctxs_ids:
                             if used_ctx_id >= len(citation_lists[-1]):
                                 initial_response = edited_answer.replace(
                                     "[{}]".format(used_ctx_id), ""
+                                )
+                        # filter out hallucination citations at senetence end
+                        for sentence_end_citation in sentence_end_citations:
+                            if sentence_end_citation not in used_ctxs_ids:
+                                initial_response = initial_response.replace(
+                                    "[{}]".format(sentence_end_citation), ""
                                 )
                         previous_response = edited_answer
 
@@ -551,11 +564,17 @@ class OpenScholar:
 
                         if (len(edited_answer) / len(previous_response)) > 0.9:
                             prev_citations += new_papers[: self.top_n]
-                            used_ctxs_ids = extract_citations(edited_answer)
+                            used_ctxs_ids, sentence_end_citations = extract_citations(edited_answer, return_sentence_end=True)
                             for used_ctx_id in used_ctxs_ids:
                                 if used_ctx_id >= len(citation_lists[-1]):
                                     initial_response = edited_answer.replace(
                                         "[{}]".format(used_ctx_id), ""
+                                    )
+                            # filter out hallucination citations at senetence end
+                            for sentence_end_citation in sentence_end_citations:
+                                if sentence_end_citation not in used_ctxs_ids:
+                                    initial_response = initial_response.replace(
+                                        "[{}]".format(sentence_end_citation), ""
                                     )
 
                             previous_response = edited_answer
