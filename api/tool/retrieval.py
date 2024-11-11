@@ -6,7 +6,7 @@ import requests
 VESPA_INDEX_URL = "https://openscholar-vespa.semanticscholar.org/search_pub/"
 VESPA_INDEX_TOKEN = os.getenv("VESPA_INDEX_TOKEN")
 timeout = 60
-ranking_profile = "rank-by-denseembed-score"
+ranking_profile = "rank-by-bm25-denseembed-linear"
 yql_target_hits = 10000
 denseembed_key, denseembed_val = "input.query(qde)", "embed(denseembed, @query_with_prefix)"
 sparseembed_key, sparseembed_val = "input.query(qse)", "embed(sparseembed, @query)"
