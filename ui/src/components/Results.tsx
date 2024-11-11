@@ -101,12 +101,12 @@ export const Results: React.FC<PropType> = (props) => {
     <>
       {/* {isLoading && <LinearProgress style={{ marginBottom: '-4px' }} />} */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <h3 style={{ flexGrow: 1 }}>{status?.query ?? 'Error'}</h3>
+          <h2 style={{ flexGrow: 1 }}>{status?.query ?? 'Error'}</h2>
           <Button color='secondary' onClick={handleDeleteTask} startIcon={<DeleteIcon />}>Remove from history</Button>
       </Box>
 
       <Progress {...progressProps} isRunning={taskRunning} />
-      
+
       {sections.length > 0 && (
         <>
           {/* <Box
