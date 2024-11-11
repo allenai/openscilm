@@ -44,36 +44,39 @@ export default function Sidebar() {
         [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
       }}
     >
-      <Box sx={{display: 'flex', flexDirection: 'column', height:'100%', padding: '16px'}}>
+      <Box sx={{display: 'flex', flexDirection: 'column', height:'100%', padding: '8px'}}>
         
-        <Button href="/" variant="contained" sx={{ display: 'flex' }} startIcon={<AddIcon />} color="secondary" size="medium">
-          New Question
-        </Button>
+        <Box sx={{padding: `8px`}}>
+          <Button href="/" variant="contained" sx={{ display: 'flex', justifyContent: 'flex-start' }} startIcon={<AddIcon />} color="secondary" size="medium">
+            New Question
+          </Button>
+        </Box>
 
-        <Typography variant="h6">Recent Questions</Typography>
+        <Typography variant="h6" sx={{margin: '16px 8px 0 8px'}}>Recent Questions</Typography>
         <List
           sx={{
-            overflow: `auto`,
-            flexGrow: `1`
+            overflow: 'auto',
+            flexGrow: '1'
           }}
         >
           {sortedHistory.map((item) => {
             return (
-              <ListItem key={item.taskId} disablePadding>
+              <ListItem key={item.taskId} disablePadding sx={{ marginBottom: '8px' }}>
                 <ListItemButton
                   selected={location.pathname.includes(item.taskId)}
+                  sx={{ padding: '6px 8px', borderRadius: '4px' }}
                   onClick={() => {
                     navigate(`/query/${item.taskId}`, { replace: true });
                   }}
                 >
-                  <ListItemText primary={item.query} />
+                  <Typography sx={{ fontSize: '14px' }}>{item.query}</Typography>
                 </ListItemButton>
               </ListItem>
             )
           })}
         </List>
 
-        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', padding: '8px' }}>
           <Link href="https://allenai.org" target="_blank">Ai2</Link>
           <Link href="https://allenai.org/privacy-policy" target="_blank">Privacy Policy</Link>
           <Link href="https://allenai.org/terms" target="_blank">Terms of Use</Link>
