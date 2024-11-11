@@ -342,6 +342,14 @@ function(
                     annotations: annotations
                 },
                 spec: {
+                    volumes: [
+                                {
+                                    name: 'skiff-files',
+                                    persistentVolumeClaim: {
+                                        claimName: 'skiff-files-server-open-scholar-demo'
+                                    }
+                                }
+                            ],
                     # This block tells the cluster that we'd like to make sure
                     # each instance of your application is on a different node. This
                     # way if a node goes down, your application doesn't:
@@ -383,6 +391,13 @@ function(
                         {
                             name: fullyQualifiedName + '-api',
                             image: apiImage,
+                            volumeMounts: [
+                                            {
+                                                mountPath: '/skiff_files/apps/open-scholar-demo',
+                                                name: 'skiff-files',
+                                                readOnly: false
+                                            }
+                                        ],
                             command: [ '/api/start.sh' ],
                             # The "probes" below allow Kubernetes to determine
                             # if your application is working properly.
