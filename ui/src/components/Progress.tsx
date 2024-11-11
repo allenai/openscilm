@@ -21,8 +21,8 @@ export interface ProgressPropType {
 }
 
 export const Progress: React.FC<ProgressPropType> = (props) => {
+  
   const { estimatedTime, startTime, status, httpStatus, isRunning } = props;
-
   const timeAgo = useTimeAgo({ date: startTime * 1000, locale: 'en-US', updateInterval: 1, timeStyle: 'twitter' });
 
   return (
