@@ -140,11 +140,12 @@ export const updateStatus = async (taskId: string) => {
   return {...output, httpStatus: response.status};
 }
 
-export const createTask = async (query: string) => {
+export const createTask = async (query: string, optin: boolean) => {
   const response = await fetch(BACKEND_ENDPOINT, {
     ...BACKEND_DEFAULT_INIT,
     body: JSON.stringify({
       query,
+      opt_in: optin,
       feedback_toggle: true
     })
   })

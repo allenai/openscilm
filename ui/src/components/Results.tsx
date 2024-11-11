@@ -105,7 +105,7 @@ export const Results: React.FC<PropType> = (props) => {
       }}>
         <h3 style={{ flexGrow: 1 }}>{status?.query ?? 'Error'}</h3>
         <ButtonGroup size="small" variant='text' aria-label="Small button group" style={{ flex: '0 0 220px' }}>
-          <Button color='secondary' onClick={handleScrollToDisclaimer}>Disclaimer</Button>
+          {sections.length > 0 && <Button color='secondary' onClick={handleScrollToDisclaimer}>Disclaimer</Button>}
           <Button color='secondary' onClick={handleDeleteTask}>Remove from history</Button>
         </ButtonGroup>
       </div>
