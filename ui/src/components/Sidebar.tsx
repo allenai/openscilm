@@ -8,6 +8,8 @@ import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
+import IconButton from '@mui/material/IconButton';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { useQueryHistory } from './shared';
@@ -71,6 +73,9 @@ export default function Sidebar() {
                 >
                   <Typography sx={{ fontSize: '14px' }}>{item.query}</Typography>
                 </ListItemButton>
+                <IconButton aria-label="delete">
+                  <DeleteIcon />
+                </IconButton>
               </ListItem>
             )
           })}
