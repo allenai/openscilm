@@ -93,8 +93,6 @@ ${section.citations?.map((citation) => {
   }
 
   return (
-    <div style={{ color: '#3a3a3a' }}>
-      <DocumentContainer>
         <SectionContainer>
           {previousSection && (
 
@@ -113,8 +111,6 @@ ${section.citations?.map((citation) => {
           )}
           {content}
         </SectionContainer>
-      </DocumentContainer>
-    </div>
   );
 };
 
@@ -123,6 +119,7 @@ const DocumentContainer = styled('div')`
 
 const SectionContainer = styled('div')`
   padding: 32px 32px;
-  background: #eaeaea;
-  border-radius: 6px;
+  background: #FAF2E9;
+  border-radius: 4px;
+  color: #0A3235;
 `;
