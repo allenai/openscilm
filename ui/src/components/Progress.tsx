@@ -11,7 +11,6 @@ TimeAgo.addDefaultLocale(en)
 import { useTimeAgo } from 'react-time-ago'
 
 
-
 export interface ProgressPropType {
   estimatedTime: string;
   startTime: number;
