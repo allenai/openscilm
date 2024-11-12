@@ -12,6 +12,7 @@ services:
       - ./api:/api
       - ./secret:/secret
       - ./async-state:/skiff_files/apps/open-scholar/async-state
+      - ./open_access:/skiff_files/apps/open-scholar/open_access
     environment:
       # This ensures that errors are printed as they occur, which
       # makes debugging easier.
@@ -21,6 +22,7 @@ services:
       - MODAL_TOKEN_SECRET=${MODAL_TOKEN_SECRET}
       - RETRIEVAL_SERVICE=vespa
       - ASYNC_STATE_DIR=/skiff_files/apps/open-scholar/async-state
+      - OPEN_ACCESS_FILE=/skiff_files/apps/open-scholar/open_access/oa_corpus_ids.csv
       - GOOGLE_APPLICATION_CREDENTIALS=/secret/GCS_SVC_ACCOUNT_KEY
     ports:
       - 8000:8000
