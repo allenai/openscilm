@@ -3,6 +3,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import AddIcon from '@mui/icons-material/Add';
 import Drawer from '@mui/material/Drawer';
+import DeleteIcon from '@mui/icons-material/Delete';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -11,6 +12,7 @@ import Typography from '@mui/material/Typography';
 import { useQueryHistory } from './shared';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCallback } from 'react';
+import { IconButton } from '@mui/material';
 
 interface PropType {
   mobileOpen: boolean;
@@ -81,7 +83,12 @@ export const Sidebar: React.FC<PropType> = (props) => {
                   navigate(`/query/${item.taskId}`, { replace: true });
                 }}
               >
-                <Typography sx={{ fontSize: '14px', lineClamp: '2', webkitLineClamp: '2' }}>{item.query}</Typography>
+                <Typography sx={{ fontSize: '14px', lineClamp: '2', webkitLineClamp: '2', fontWeight: selected ? 'bold' : 'unset' }}>{item.query}</Typography>
+                {selected && (
+                  <IconButton aria-label='delete' size='small' onClick={(event) => handleDeleteTask(event, item.taskId)}>
+                    <DeleteIcon fontSize='small' />
+                  </IconButton>
+                )}
               </ListItemButton>
             </ListItem>
           )
