@@ -3,14 +3,113 @@ from typing import Dict, Any, List
 
 import requests
 from tool.use_search_apis import get_paper_data
+import csv
 
-VESPA_INDEX_URL = "https://openscholar-vespa.semanticscholar.org/search_pub/"
+VESPA_BASE_URL = "https://openscholar-vespa.semanticscholar.org/"
 VESPA_INDEX_TOKEN = os.getenv("VESPA_INDEX_TOKEN")
-timeout = 60
-ranking_profile = "rank-by-bm25-denseembed-linear"
-yql_target_hits = 10000
-denseembed_key, denseembed_val = "input.query(qde)", "embed(denseembed, @query_with_prefix)"
-sparseembed_key, sparseembed_val = "input.query(qse)", "embed(sparseembed, @query)"
+
+
+class VespaIndex:
+    def __init__(self, end_pt: str, query_id: str, ranking_profile: str, nn_arg: str, embed_dict: Dict[str, str],
+                 yql_target_hits=10000, timeout=60, corpus_id_filter_file: str = None, hit_mult_factor: float = 1.0):
+        self.index_url = f"{VESPA_BASE_URL}/{end_pt}/"
+        self.query_id = query_id
+        self.nn_arg = nn_arg
+        self.ranking_profile = ranking_profile
+        self.embed_dict = embed_dict
+        self.yql_target_hits = yql_target_hits
+        self.timeout = timeout
+        if corpus_id_filter_file:
+            # read csv from corpus_id_filter_file and save it in a set next
+            self.corpus_id_filter = set()
+            print("Loading open access corpus ids...")
+            with open(corpus_id_filter_file, 'r') as f:
+                reader = csv.reader(f)
+                for idx, row in enumerate(reader):
+                    if idx == 0:
+                        continue
+                    self.corpus_id_filter.add(row[0])
+            print(f"Loaded {len(self.corpus_id_filter)} open access corpus ids")
+        else:
+            self.corpus_id_filter = None
+        self.hit_mul_factor = hit_mult_factor
+
+    def get_yql_query(self, query: str, topk: int) -> Dict[str, Any]:
+        topk = round(topk * self.hit_mul_factor)
+        payload = {
+            "yql": f"select * from snippet where (({{targetHits:{self.yql_target_hits}}}nearestNeighbor({self.nn_arg})) or ({{defaultIndex: \"text\"}}userInput(@{self.query_id})))",
+            self.query_id: query,
+            "ranking": self.ranking_profile,
+            "hits": topk,
+            **self.embed_dict,
+            'timeout': self.timeout
+        }
+        return payload
+
+    def retrieve_s2_index(self, query: str, topk: int, filter_open_access=True) -> List[Dict[str, Any]]:
+        """
+        Retrieve topk papers from the S2 index using a query string.
+        """
+        payload = self.get_yql_query(query, topk)
+        headers = {"Content-Type": "application/json", "Authorization": f"{VESPA_INDEX_TOKEN}"}
+        print(payload)
+        response = requests.post(self.index_url, json=payload, headers=headers)
+        if response.status_code != 200:
+            print(response.status_code)
+            raise Exception(f"Failed to retrieve papers from the S2 index. {response.text}")
+        else:
+            results = response.json()
+            unsorted_snippets = []
+            if "children" in results["root"]:
+                children = results["root"]["children"]
+                for child in children:
+                    unsorted_snippets.append(
+                        vespa_snippet_from_dict(
+                            child_dict=child
+                        )
+                    )
+            if filter_open_access and self.corpus_id_filter:
+                print(f"{len(unsorted_snippets)} retrieved from the index initially")
+                unsorted_snippets = [snippet for snippet in unsorted_snippets if
+                                     snippet["corpus_id"] in self.corpus_id_filter]
+                print(f"{len(unsorted_snippets)} retained after filtering for open access")
+
+            sorted_snippets = sorted(
+                unsorted_snippets, key=lambda s: s["score"], reverse=True
+            )[:topk]
+            paper_titles = get_paper_titles([snippet["corpus_id"] for snippet in sorted_snippets])
+            for snippet in sorted_snippets:
+                snippet["title"] = paper_titles[snippet["corpus_id"]] if snippet["corpus_id"] in paper_titles else ""
+            return sorted_snippets
+
+
+def get_vespa_index(version="v1"):
+    print(f"Loading vespa index version: {version}")
+    if version == "v1":
+        return VespaIndex(
+            end_pt="search",
+            query_id="query",
+            ranking_profile="rank-by-bm25-gist-sparseembed-linear",
+            nn_arg="text_gist,qg",
+            embed_dict={
+                "input.query(qg)": "embed(gist, @query)",
+                "input.query(qse)": "embed(sparseembed, @query)"
+            },
+            corpus_id_filter_file=f'{os.getenv("OPEN_ACCESS_FILE", "./open_access/oa_corpus_ids.csv")}',
+            hit_mult_factor=1.5
+        )
+    else:
+        return VespaIndex(
+            end_pt="search_pub",
+            query_id="query_no_prefix",
+            ranking_profile="rank-by-bm25-denseembed-linear",
+            nn_arg="text_denseembed_quantized,qde",
+            embed_dict={
+                "input.query(qde)": "embed(denseembed, @query_with_prefix)",
+                "queryProfile": "query-prefix"
+            }
+        )
+
 
 CONTRIEVER_RETRIEVAL_API = "http://tricycle.cs.washington.edu:5001/search"
 
@@ -54,61 +153,6 @@ def vespa_snippet_from_dict(
     res_map["text"] = fields["text"]
     res_map["score"] = child_dict["relevance"]
     return res_map
-
-
-def retrieve_s2_index(query: str, topk: int, version="v2") -> List[Dict[str, Any]]:
-    """
-    Retrieve topk papers from the S2 index using a query string.
-    """
-    if version == "v1":
-        gist_key, gist_val = "input.query(qg)", "embed(gist, @query)"
-        sparseembed_key, sparseembed_val = "input.query(qse)", "embed(sparseembed, @query)"
-
-        payload = {
-            "yql": f"select * from snippet where (({{targetHits:{10000}}}nearestNeighbor(text_gist,qg)) or ({{defaultIndex: \"text\"}}userInput(@query)))",
-            "query": query,
-            "ranking": "rank-by-bm25-gist-sparseembed-linear",
-            "hits": topk,
-            gist_key: gist_val,
-            sparseembed_key: sparseembed_val,
-            'timeout': 60
-        }
-    else:
-        payload = {
-            "yql": f"select * from snippet where (({{targetHits:{yql_target_hits}}}nearestNeighbor(text_denseembed_quantized,qde)) or ({{defaultIndex: \"text\"}}userInput(@query_no_prefix)))",
-            "query_no_prefix": query,
-            "ranking": ranking_profile,
-            "hits": topk,
-            "queryProfile": "query-prefix",
-            denseembed_key: denseembed_val,
-            'timeout': timeout
-        }
-    headers = {"Content-Type": "application/json", "Authorization": f"{VESPA_INDEX_TOKEN}"}
-    print(payload)
-    vespa_url = VESPA_INDEX_URL if version == "v2" else "https://openscholar-vespa.semanticscholar.org/search/"
-    response = requests.post(vespa_url, json=payload, headers=headers)
-    if response.status_code != 200:
-        print(response.status_code)
-        raise Exception(f"Failed to retrieve papers from the S2 index. {response.text}")
-    else:
-        results = response.json()
-        unsorted_snippets = []
-        if "children" in results["root"]:
-            children = results["root"]["children"]
-            for child in children:
-                unsorted_snippets.append(
-                    vespa_snippet_from_dict(
-                        child_dict=child
-                    )
-                )
-
-        sorted_snippets = sorted(
-            unsorted_snippets, key=lambda s: s["score"], reverse=True
-        )
-        paper_titles = get_paper_titles([snippet["corpus_id"] for snippet in sorted_snippets])
-        for snippet in sorted_snippets:
-            snippet["title"] = paper_titles[snippet["corpus_id"]] if snippet["corpus_id"] in paper_titles else ""
-        return sorted_snippets
 
 
 def retrieve_contriever(query: str, topk: int) -> List[Dict[str, Any]]:
