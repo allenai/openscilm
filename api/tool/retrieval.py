@@ -2,13 +2,14 @@ import os
 from typing import Dict, Any, List
 
 import requests
+from tool.use_search_apis import get_paper_data
 
-VESPA_INDEX_URL = "https://openscholar-vespa.semanticscholar.org/search/"
+VESPA_INDEX_URL = "https://openscholar-vespa.semanticscholar.org/search_pub/"
 VESPA_INDEX_TOKEN = os.getenv("VESPA_INDEX_TOKEN")
 timeout = 60
-ranking_profile = "rank-by-bm25-gist-sparseembed-linear"
+ranking_profile = "rank-by-bm25-denseembed-linear"
 yql_target_hits = 10000
-gist_key, gist_val = "input.query(qg)", "embed(gist, @query)"
+denseembed_key, denseembed_val = "input.query(qde)", "embed(denseembed, @query_with_prefix)"
 sparseembed_key, sparseembed_val = "input.query(qse)", "embed(sparseembed, @query)"
 
 CONTRIEVER_RETRIEVAL_API = "http://tricycle.cs.washington.edu:5001/search"
@@ -32,6 +33,17 @@ def fetch_s2howable_flag(corpus_id: int) -> bool:
         return False
 
 
+def get_paper_titles(corpus_ids: List[int]):
+    paper_titles = {}
+    paper_data = {
+        pes2o_id: get_paper_data(pes2o_id) for pes2o_id in corpus_ids
+    }
+    for paper_id in paper_data:
+        if "title" in paper_data[paper_id]:
+            paper_titles[paper_id] = paper_data[paper_id]["title"]
+    return paper_titles
+
+
 def vespa_snippet_from_dict(
         child_dict: dict
 ) -> Dict[str, Any]:
@@ -44,22 +56,37 @@ def vespa_snippet_from_dict(
     return res_map
 
 
-def retrieve_s2_index(query: str, topk: int) -> Dict[str, list]:
+def retrieve_s2_index(query: str, topk: int, version="v2") -> List[Dict[str, Any]]:
     """
     Retrieve topk papers from the S2 index using a query string.
     """
-    payload = {
-        "yql": f"select * from snippet where (({{targetHits:{yql_target_hits}}}nearestNeighbor(text_gist,qg)) or ({{defaultIndex: \"text\"}}userInput(@query)))",
-        "query": query,
-        "ranking": ranking_profile,
-        "hits": topk,
-        gist_key: gist_val,
-        sparseembed_key: sparseembed_val,
-        'timeout': timeout
-    }
+    if version == "v1":
+        gist_key, gist_val = "input.query(qg)", "embed(gist, @query)"
+        sparseembed_key, sparseembed_val = "input.query(qse)", "embed(sparseembed, @query)"
+
+        payload = {
+            "yql": f"select * from snippet where (({{targetHits:{10000}}}nearestNeighbor(text_gist,qg)) or ({{defaultIndex: \"text\"}}userInput(@query)))",
+            "query": query,
+            "ranking": "rank-by-bm25-gist-sparseembed-linear",
+            "hits": topk,
+            gist_key: gist_val,
+            sparseembed_key: sparseembed_val,
+            'timeout': 60
+        }
+    else:
+        payload = {
+            "yql": f"select * from snippet where (({{targetHits:{yql_target_hits}}}nearestNeighbor(text_denseembed_quantized,qde)) or ({{defaultIndex: \"text\"}}userInput(@query_no_prefix)))",
+            "query_no_prefix": query,
+            "ranking": ranking_profile,
+            "hits": topk,
+            "queryProfile": "query-prefix",
+            denseembed_key: denseembed_val,
+            'timeout': timeout
+        }
     headers = {"Content-Type": "application/json", "Authorization": f"{VESPA_INDEX_TOKEN}"}
     print(payload)
-    response = requests.post(VESPA_INDEX_URL, json=payload, headers=headers)
+    vespa_url = VESPA_INDEX_URL if version == "v2" else "https://openscholar-vespa.semanticscholar.org/search/"
+    response = requests.post(vespa_url, json=payload, headers=headers)
     if response.status_code != 200:
         print(response.status_code)
         raise Exception(f"Failed to retrieve papers from the S2 index. {response.text}")
@@ -78,15 +105,13 @@ def retrieve_s2_index(query: str, topk: int) -> Dict[str, list]:
         sorted_snippets = sorted(
             unsorted_snippets, key=lambda s: s["score"], reverse=True
         )
-        formatted_result = {"pes2o IDs": [], "passages": [], "scores": []}
+        paper_titles = get_paper_titles([snippet["corpus_id"] for snippet in sorted_snippets])
         for snippet in sorted_snippets:
-            formatted_result["pes2o IDs"].append(snippet["corpus_id"])
-            formatted_result["passages"].append(snippet["text"])
-            formatted_result["scores"].append(snippet["score"])
-        return formatted_result
+            snippet["title"] = paper_titles[snippet["corpus_id"]] if snippet["corpus_id"] in paper_titles else ""
+        return sorted_snippets
 
 
-def retrieve_contriever(query: str, topk: int) -> Dict[str, List]:
+def retrieve_contriever(query: str, topk: int) -> List[Dict[str, Any]]:
     json_data = {"query": query, "n_docs": topk, "domains": "pes2o"}
     headers = {"Content-Type": "application/json"}
     response = requests.post(CONTRIEVER_RETRIEVAL_API, json=json_data, headers=headers)
@@ -97,4 +122,21 @@ def retrieve_contriever(query: str, topk: int) -> Dict[str, List]:
         )
     else:
         res_contents = response.json()
-        return res_contents["results"]
+        results = res_contents["results"]
+        paper_titles = get_paper_titles([pid for pid in results["pes2o IDs"]])
+        results["titles"] = [paper_titles[pid] if pid in paper_titles else "" for pid in results["pes2o IDs"]]
+        snippets_list = [
+            {
+                "corpus_id": cid,
+                "text": snippet,
+                "score": score,
+                "title": title
+            }
+            for cid, snippet, score, title in zip(
+                results["pes2o IDs"],
+                results["passages"],
+                results["scores"],
+                results["titles"],
+            )
+        ]
+        return snippets_list

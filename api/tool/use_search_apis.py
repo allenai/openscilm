@@ -118,7 +118,7 @@ def search_paper_via_query(query, max_paper_num=10):
     }
     # try:
     response_data = query_s2_api("paper/search", params=query_params)
-    time.sleep(0.5)
+    time.sleep(0.1)
     # Check response status
     if response_data is None or len(response_data) == 0 or "data" not in response_data:
         print("retrieval failed")
