@@ -27,6 +27,7 @@ from tool.models import (
     ToolResponse,
 )
 from tool.open_scholar import OpenScholar
+from tool.retrieval import retrieve_s2_index
 from tool.utils import query_s2_api
 
 ASYNC_STATE_DIR = os.getenv("ASYNC_STATE_DIR", "/async-state")
@@ -128,6 +129,10 @@ def create_app() -> FastAPI:
     @app.get("/health", status_code=204)
     def health():
         return "OK"
+
+    @app.get("/retrieve")
+    def retrieve(query: str, topk: int):
+        return retrieve_s2_index(query, topk)
 
     @app.post("/query_open_scholar")
     def use_tool(
