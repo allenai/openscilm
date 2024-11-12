@@ -14,10 +14,7 @@ from tool.event_tracing import EventTrace
 from tool.modal_engine import ModalEngine
 from tool.models import Citation, GeneratedIteration, TaskResult, ToolRequest
 from tool.retrieval import fetch_s2howable_flag, retrieve_contriever, retrieve_s2_index
-from tool.use_search_apis import (
-    batch_paper_data_SS_ID,
-    search_paper_via_query,
-)
+from tool.use_search_apis import batch_paper_data_SS_ID, search_paper_via_query
 from tool.utils import extract_citations, remove_citations
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -37,7 +34,7 @@ class OpenScholar:
     def __init__(
         self,
         task_mgr: StateManager,
-        n_retrieval: int = 50,
+        n_retrieval: int = 100,
         n_rerank: int = 8,
         n_feedback: int = 1,
         context_threshold: float = 0.5,
@@ -108,7 +105,7 @@ class OpenScholar:
         self,
         query: str,
         retrieved_ctxs: List[Dict[str, Any]],
-        max_tokens: int = 3000,
+        max_tokens: int = 2000,
     ):
         ctxs_text = self.process_passage(retrieved_ctxs)
 
@@ -118,6 +115,7 @@ class OpenScholar:
             )
         )
 
+        print(len(input_query.split()))
         outputs = self.llm_inference(
             input_query, temperature=0.7, max_tokens=max_tokens
         )
@@ -308,7 +306,7 @@ class OpenScholar:
 
     def retrieve(self, query: str, task_id: str) -> List[Dict[str, Any]]:
         snippets_list = self.retrieval_fn(query, self.n_retrieval)
-        status_str = f'{len(snippets_list)} snippets retrieved successfully'
+        status_str = f"{len(snippets_list)} snippets retrieved successfully"
         self.update_task_state(task_id, status_str)
         print(f"retrieval done - {status_str}")
 
@@ -316,8 +314,9 @@ class OpenScholar:
             snippet["text"] = remove_citations(snippet["text"])
 
         snippets_list = [
-            snippet for snippet in snippets_list if len(snippet["text"]) > 100
+            snippet for snippet in snippets_list if len(snippet["text"].split(" ")) > 20
         ]
+
         return snippets_list
 
     def rerank(
@@ -445,6 +444,7 @@ class OpenScholar:
         event_trace.trace_rerank_event(retrieved_candidates, 0)
         citation_lists.append(retrieved_candidates)
 
+        print(len(citation_lists[0]))
         self.update_task_state(task_id, "Waiting for model cold start...")
         t.join()
         # generate response
