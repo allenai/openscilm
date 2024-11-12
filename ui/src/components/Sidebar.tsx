@@ -3,18 +3,15 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import AddIcon from '@mui/icons-material/Add';
 import Drawer from '@mui/material/Drawer';
-import Toolbar from '@mui/material/Toolbar';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { useQueryHistory } from './shared';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ListSubheader } from '@mui/material';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useCallback } from 'react';
 
 const drawerWidth = 240;
@@ -36,6 +33,22 @@ export default function Sidebar() {
       }
     }
   }, [setHistory]);
+
+  const handleDeleteTask = useCallback((event: React.MouseEvent, taskId: string) => {
+    event.preventDefault()
+    event.stopPropagation()
+    if (confirm('Are you sure you want to delete this? This cannot be undone.')) {
+      const newHistory = { ...history };
+      try {
+        delete newHistory[taskId];
+        setHistory(newHistory);
+        navigate('/');
+      } catch (e) {
+        console.error('delete task failed', e);
+      }
+    }
+  }, [history, setHistory]);
+
 
   return (
     <Drawer
@@ -62,20 +75,23 @@ export default function Sidebar() {
           }}
         >
           {sortedHistory.map((item) => {
+            const selected = location.pathname.includes(item.taskId)
             return (
               <ListItem key={item.taskId} disablePadding sx={{ marginBottom: '8px' }}>
                 <ListItemButton
-                  selected={location.pathname.includes(item.taskId)}
-                  sx={{ padding: '6px 8px', borderRadius: '4px' }}
+                  selected={selected}
+                  sx={{ padding: '6px 8px', borderRadius: '4px', display: 'flex', justifyContent: 'space-between' }}
                   onClick={() => {
                     navigate(`/query/${item.taskId}`, { replace: true });
                   }}
                 >
-                  <Typography sx={{ fontSize: '14px' }}>{item.query}</Typography>
+                  <Typography sx={{ fontSize: '14px', fontWeight: selected ? 'bold' : 'unset' }}>{item.query}</Typography>
+                  {selected && (
+                    <IconButton aria-label="delete" size='small' onClick={(event) => handleDeleteTask(event, item.taskId)}>
+                      <DeleteIcon fontSize='small'/>
+                    </IconButton>
+                  )}
                 </ListItemButton>
-                <IconButton aria-label="delete">
-                  <DeleteIcon />
-                </IconButton>
               </ListItem>
             )
           })}
