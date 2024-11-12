@@ -83,7 +83,15 @@ export const Sidebar: React.FC<PropType> = (props) => {
                   navigate(`/query/${item.taskId}`, { replace: true });
                 }}
               >
-                <Typography sx={{ fontSize: '14px', lineClamp: '2', webkitLineClamp: '2', fontWeight: selected ? 'bold' : 'unset' }}>{item.query}</Typography>
+                <Typography sx={{
+                  fontSize: '14px',
+                  lineClamp: '2',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: '2',
+                  WebkitBoxOrient: 'vertical',
+                  fontWeight: selected ? 'bold' : 'unset' }}>{item.query}</Typography>
                 {selected && (
                   <IconButton aria-label='delete' size='small' onClick={(event) => handleDeleteTask(event, item.taskId)}>
                     <DeleteIcon fontSize='small' />
