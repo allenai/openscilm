@@ -25,7 +25,7 @@ export const Progress: React.FC<ProgressPropType> = (props) => {
   const timeAgo = useTimeAgo({ date: startTime * 1000, locale: 'en-US', updateInterval: 1, timeStyle: 'twitter' });
 
   return (
-    <Card sx={{ width: 500, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <Card sx={{ width: 500, maxWidth: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <CardContent>
         <Typography variant="h5" component="div">
           {status}

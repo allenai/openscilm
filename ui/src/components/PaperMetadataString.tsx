@@ -25,7 +25,7 @@ export const PaperMetadataString = (props: PropType): string => {
       `${authors.map((author, index) => {
         console.log(author, index)
         const out = (`
-          <a key={author.authorId} target='_blank' href="https://www.semanticscholar.org/author/${author.authorId}">${author.name}</a>${index < authors.length - 1 ? ', ' : ''}`)
+          <a key="${author.authorId}" target='_blank' href="https://www.semanticscholar.org/author/${author.authorId}">${author.name}</a>${index < authors.length - 1 ? ', ' : ''}`)
           console.log(out)
         return out}).join('')}${truncated ? 'et al' : ''}. ${title}. ${year}. ${venue}.
       `

@@ -8,10 +8,11 @@ import { Report } from './report/Report';
 
 interface PropType {
   sections: ReportSection[];
+  isRunning: boolean;
 }
 
 export const Sections: React.FC<PropType> = (props) => {
-  const { sections } = props
+  const { sections, isRunning } = props
   const [value, setValue] = React.useState(`${sections.length - 1}`);
   useEffect(() => {
     setValue(`${sections.length - 1}`);
@@ -30,9 +31,22 @@ export const Sections: React.FC<PropType> = (props) => {
       <TabContext value={value}>
         <Box sx={{ display:'flex', justifyContent:'space-between', paddingLeft: '8px' }}>
           <TabList onChange={handleChange} aria-label="lab API tabs example" sx={{ justifyContent:'space-between' }}>
-            {sections.map((_section, index) => (
-              <Tab label={`Iteration ${index+1}`} key={`Iteration${index}`} value={`${index}`} style={{ color: value !== `${index}` ? "#FAF2E9" : '#0FCB8C' }} />
-            ))}
+            {sections.map((_section, index) => {
+              let label = 'Draft';
+              if (!isRunning && index === sections.length - 1) {
+                label = 'Answer'
+              } else {
+                label = `Draft ${index + 1}`
+                if (
+                  (isRunning && sections.length === 1) ||
+                  (!isRunning && sections.length === 2)) {
+                  label = 'Draft'
+                }
+              }
+              return (
+                <Tab label={label} key={`Iteration${index}`} value={`${index}`} style={{ color: value !== `${index}` ? "#FAF2E9" : '#0FCB8C' }} />
+              )
+            })}
           </TabList>
           <Button onClick={handleModalOpen}>Disclaimer</Button>
         </Box>

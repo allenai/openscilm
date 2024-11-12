@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Box, Button } from '@mui/material';
 import { StatusType, updateStatus } from '../api/utils';
 import { useQueryHistory } from './shared';
 import { useNavigate } from 'react-router-dom';
@@ -15,8 +14,6 @@ interface PropType {
 
 export const Results: React.FC<PropType> = (props) => {
   const { taskId, interval = DEFAULT_INTERVAL } = props;
-  const { history, setHistory } = useQueryHistory();
-  const navigate = useNavigate();
 
   const [status, setStatus] = useState<StatusType | undefined>();
 
@@ -26,19 +23,6 @@ export const Results: React.FC<PropType> = (props) => {
     status: 'Loading...',
     httpStatus: 200
   })
-
-  const handleDeleteTask = useCallback(() => {
-    if (confirm('Are you sure you want to delete this? This cannot be undone.')) {
-      const newHistory = { ...history };
-      try {
-        delete newHistory[taskId];
-        setHistory(newHistory);
-        navigate('/');
-      } catch (e) {
-        console.error('delete task failed', e);
-      }
-    }
-  }, [taskId, history, setHistory]);
 
   useEffect(() => {
     const timeoutIds: number[] = [];
@@ -93,15 +77,10 @@ export const Results: React.FC<PropType> = (props) => {
 
   return (
     <>
-      {/* {isLoading && <LinearProgress style={{ marginBottom: '-4px' }} />} */}
-      <Box sx={{display: 'flex', justifyContent:'space-between', alignItems: 'baseline'}}>
-          <h2 style={{ flexGrow: 1 }}>{status?.query ?? ''}</h2>
-          <Button color='secondary' onClick={handleDeleteTask}>Remove from history</Button>
-      </Box>
       {(taskRunning || status?.httpStatus !== 200) && <Progress {...progressProps} isRunning={taskRunning} />}
 
       {sections.length > 0 && (
-        <Sections sections={sections} />
+        <Sections sections={sections} isRunning={taskRunning}/>
       )}
     </>
   );

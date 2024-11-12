@@ -56,7 +56,7 @@ export const EvidenceCard = (props: EvidenceCardProps): React.ReactNode => {
         id={id}
         open={open}
         anchorEl={anchorEl}
-        style={{ width: '500px' }}
+        style={{ width: '500px', maxWidth: '95%' }}
         onClose={handleClose}
         anchorOrigin={{
           vertical: 'bottom',
@@ -89,7 +89,7 @@ const Container = styled.div`
 
 const CardContainer = styled.div`
   padding: 14px;
-  width: 420px;
+  width: 100%;
   max-height: 300px;
   overflow: auto;
 `;

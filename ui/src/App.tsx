@@ -118,7 +118,7 @@ export const App = () => {
                                 })}
                             </Routes>
                             <Box sx={{ display: 'flex', gap: '16px' }}>
-                                <Link href="/about">About OpenScholar</Link>
+                                <Link href="/about">About</Link>
                                 {/* <Link href="#">Blog Post</Link> */}
                             </Box>
                         </AppHeader>
