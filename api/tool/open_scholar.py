@@ -41,7 +41,7 @@ class OpenScholar:
         n_retrieval: int = 50,
         n_rerank: int = 8,
         n_feedback: int = 1,
-        context_threshold: float = 0.7,
+        context_threshold: float = 0.5,
         llm_model: str = "akariasai/os_8b",
     ):
         # TODO: Initialize retriever and re-ranker clients here
