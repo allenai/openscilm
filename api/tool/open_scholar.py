@@ -108,6 +108,9 @@ class OpenScholar:
         max_tokens: int = 2000,
     ):
         ctxs_text = self.process_passage(retrieved_ctxs)
+        if len(ctxs_text.split()) > 4500:
+            ctxs_text = ctxs_text.split()
+            ctxs_text = " ".join(ctxs_text[:4000])
 
         input_query = (
             tool.instructions.generation_instance_prompts_w_references.format_map(
@@ -339,7 +342,7 @@ class OpenScholar:
         passages_above_threshold = [
             score for score in rerank_scores if score > self.context_threshold
         ]
-        if len(passages_above_threshold) < 5:
+        if len(passages_above_threshold) < 3:
             print("There is no relevant information in the retrieved snippets.")
             raise Exception(
                 "There is no relevant information in the retrieved snippets. Please try a different query."
