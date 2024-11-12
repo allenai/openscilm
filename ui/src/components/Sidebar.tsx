@@ -85,12 +85,16 @@ export default function Sidebar() {
                     navigate(`/query/${item.taskId}`, { replace: true });
                   }}
                 >
+<<<<<<< HEAD
                   <Typography sx={{ fontSize: '14px', fontWeight: selected ? 'bold' : 'unset' }}>{item.query}</Typography>
                   {selected && (
                     <IconButton aria-label="delete" size='small' onClick={(event) => handleDeleteTask(event, item.taskId)}>
                       <DeleteIcon fontSize='small'/>
                     </IconButton>
                   )}
+=======
+                  <Typography sx={{ fontSize: '14px', lineClamp: '2', webkitLineClamp: '2' }}>{item.query}</Typography>
+>>>>>>> 3e2d9dc (Styles)
                 </ListItemButton>
               </ListItem>
             )

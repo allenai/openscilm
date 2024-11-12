@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Button } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import { StatusType, updateStatus } from '../api/utils';
 import { useQueryHistory } from './shared';
 import { useNavigate } from 'react-router-dom';

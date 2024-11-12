@@ -114,8 +114,6 @@ ${section.citations?.map((citation) => {
   );
 };
 
-const DocumentContainer = styled('div')`
-`;
 
 const SectionContainer = styled('div')`
   padding: 32px 32px;
