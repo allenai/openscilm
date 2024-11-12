@@ -10,7 +10,6 @@ TimeAgo.addDefaultLocale(en)
 import { useTimeAgo } from 'react-time-ago'
 
 
-
 export interface ProgressPropType {
   estimatedTime: string;
   startTime: number;
@@ -38,7 +37,7 @@ export const Progress: React.FC<ProgressPropType> = (props) => {
         component='div'
         sx={{ width: 60, minWidth: 60 }}
       >
-        {isRunning ? (
+        {isRunning || startTime === -2 ? (
           <CircularProgress />
         ) : (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>

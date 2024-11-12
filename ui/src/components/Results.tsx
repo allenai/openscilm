@@ -22,7 +22,7 @@ export const Results: React.FC<PropType> = (props) => {
 
   const [progressProps, setProgressProps] = useState<Omit<ProgressPropType, 'isRunning'>>({
     estimatedTime: 'Loading...',
-    startTime: -1,
+    startTime: -2,
     status: 'Loading...',
     httpStatus: 200
   })
@@ -98,7 +98,7 @@ export const Results: React.FC<PropType> = (props) => {
         display: 'flex', justifyContent:
           'space-between', alignItems: 'baseline'
       }}>
-        <h3 style={{ flexGrow: 1 }}>{status?.query ?? 'Error'}</h3>
+        <h3 style={{ flexGrow: 1 }}>{status?.query ?? ''}</h3>
         <ButtonGroup size="small" variant='text' aria-label="Small button group" style={{ flex: '0 0 220px' }}>
           {sections.length > 0 && <Button color='secondary' onClick={handleScrollToDisclaimer}>Disclaimer</Button>}
           <Button color='secondary' onClick={handleDeleteTask}>Remove from history</Button>
