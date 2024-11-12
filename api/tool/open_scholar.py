@@ -4,6 +4,7 @@ import re
 import threading
 from time import time
 from typing import Any, Dict, List
+import logging
 
 import tool.instructions
 
@@ -20,6 +21,8 @@ from tool.use_search_apis import (
     search_paper_via_query,
 )
 from tool.utils import extract_citations, remove_citations
+
+logger = logging.getLogger(__name__)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 RUNPOD_ID = os.getenv("RUNPOD_ID")
@@ -301,6 +304,7 @@ class OpenScholar:
         if task_id:
             task_state = self.task_mgr.read_state(task_id)
             task_state.task_status = status
+            logger.info(status)
             if estimated_time:
                 task_state.estimated_time = estimated_time
             if curr_response:
@@ -311,7 +315,7 @@ class OpenScholar:
         results = self.retrieval_fn(query, self.n_retrieval)
         status_str = f'{len(results["passages"])} snippets retrieved successfully'
         self.update_task_state(task_id, status_str)
-        print(f"retrieval done - {status_str}")
+        logger.info(f"Retrieval complete - {status_str}")
         paper_titles = {}
         paper_data = {
             pes2o_id: get_paper_data(pes2o_id) for pes2o_id in results["pes2o IDs"]
@@ -346,13 +350,13 @@ class OpenScholar:
 
         for doc in retrieved_ctxs:
             passages.append(doc["title"] + " " + doc["text"])
-
+        logger.info("Invoking the reranker deployed on Modal")
         rerank_scores = self.reranker_engine.generate(
             (query, passages), streaming=False
         )
         max_rerank_score = max(rerank_scores)
         if max_rerank_score < self.context_threshold:
-            print("There is no relevant information in the retrieved snippets.")
+            logger.warn("There is no relevant information in the retrieved snippets.")
             raise Exception(
                 "There is no relevant information in the retrieved snippets. Please try a different query."
             )
@@ -408,17 +412,19 @@ class OpenScholar:
             )
 
         query, feedback_toggle = req.query, req.feedback_toggle
+        logger.info(f"Received query: {query} with feedback toggle: {feedback_toggle}")
         event_trace = EventTrace(task_id, self.llm_model, self.n_retrieval, self.n_rerank, self.n_feedback, req)
         responses = []
         citation_lists = []
+        logger.info("Waking the modal deployment for a warm start")
         t = threading.Thread(target=self.llm_inference, args=("Just waking you up",))
         t.start()
 
-        self.update_task_state(task_id, "retrieving relevant snippets from 40M papers")
+        self.update_task_state(task_id, f"Retrieving {self.n_retrieval} relevant paper snippets from our corpus")
         retrieved_candidates = self.retrieve(query, task_id)
         event_trace.trace_retrieval_event(retrieved_candidates, 0)
 
-        self.update_task_state(task_id, "reranking top passages")
+        self.update_task_state(task_id, f"Re-ranking to obtain top {self.n_rerank} snippets")
         retrieved_candidates = self.rerank(query, retrieved_candidates)
         event_trace.trace_rerank_event(retrieved_candidates, 0)
         citation_lists.append(retrieved_candidates)
@@ -428,7 +434,6 @@ class OpenScholar:
         # generate response
         self.update_task_state(task_id, "Generating the intial draft")
         initial_response = self.generate_response(query, retrieved_candidates)
-        print(initial_response)
         # filter out unused citations
         used_ctxs_ids = extract_citations(initial_response)
         for cand_idx, cand in enumerate(retrieved_candidates):

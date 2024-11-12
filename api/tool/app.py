@@ -1,16 +1,11 @@
-import json
 import logging
 import multiprocessing
 import os
 import re
 import uuid
-from typing import Annotated, Optional, Union
+from typing import Union
 
-import boto3
-import requests
-from fastapi import Depends, FastAPI, HTTPException, Request, Response
-from fastapi.responses import RedirectResponse
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import FastAPI, HTTPException
 from nora_lib.tasks.models import TASK_STATUSES
 from nora_lib.tasks.state import NoSuchTaskException, StateManager
 
@@ -19,8 +14,6 @@ from tool.modal_engine import ModalEngine
 from tool.models import (
     AsyncTaskState,
     AsyncToolResponse,
-    Citation,
-    GeneratedIteration,
     Papers,
     TaskResult,
     ToolRequest,
@@ -28,6 +21,8 @@ from tool.models import (
 )
 from tool.open_scholar import OpenScholar
 from tool.utils import query_s2_api
+
+logger = logging.getLogger(__name__)
 
 ASYNC_STATE_DIR = os.getenv("ASYNC_STATE_DIR", "/async-state")
 
@@ -63,8 +58,8 @@ def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
     use `task_state_manager.read_state(task_id)` to retrieve, and `.write_state()`
     to write back.
     """
-    print("Checking query for malicious content with wildguard...")
-    open_scholar.update_task_state(task_id, TASK_STATUSES["STARTED"])
+    open_scholar.update_task_state(task_id, "Validating the query")
+    logger.info("Checking query for malicious content with wildguard...")
     wildguard_out = wildguard_engine.generate(
         (tool_request.query,), streaming=True
     ).pop()
@@ -108,14 +103,6 @@ def create_app() -> FastAPI:
     level = os.environ.get("LOG_LEVEL", default=logging.INFO)
     logging.basicConfig(level=level, handlers=handlers)
 
-    # TODO: Uncomment the following lines if you need to authenticate incoming requests
-    # If you need to authenticate incoming requests, you can use the following
-    # secrets_manager = boto3.client("secretsmanager", region_name="us-west-2")
-    # api_keys = set(json.loads(secrets_manager.get_secret_value(
-    #     SecretId="nora/agent-api-tokens"
-    # )["SecretString"]).values())
-    # api_key_scheme = HTTPBearer()
-
     app = FastAPI(root_path="/api")
 
     @app.get("/")
@@ -132,14 +119,7 @@ def create_app() -> FastAPI:
     @app.post("/query_open_scholar")
     def use_tool(
         tool_request: ToolRequest,
-        # credentials: Annotated[HTTPAuthorizationCredentials, Depends(api_key_scheme)]
     ) -> Union[AsyncToolResponse, ToolResponse]:
-        # TODO: Uncomment the following lines if you need to authenticate incoming requests
-        # if credentials.credentials not in api_keys:
-        #     raise HTTPException(
-        #         status_code=401,
-        #         detail="Could not validate credentials",
-        #     )
 
         # Caller is asking for a status update of long-running request
         if tool_request.task_id:
@@ -148,6 +128,7 @@ def create_app() -> FastAPI:
         # New task
         task_id = str(uuid.uuid4())
 
+        logger.info(f"New task: {task_id}")
         estimated_time = _start_async_task(task_id, tool_request)
 
         return AsyncToolResponse(
@@ -236,13 +217,16 @@ def _handle_async_task_check_in(
         msg = f"Referenced task {task_id} failed."
         if task_state.extra_state:
             msg += f" Error: {task_state.extra_state['error']}"
+            logger.exception(msg)
         raise HTTPException(status_code=500, detail=f"{msg}")
 
     if task_state.task_status == TASK_STATUSES["COMPLETED"]:
         if not task_state.task_result:
+            msg = f"Task {task_id} marked completed but has no result."
+            logger.error(msg)
             raise HTTPException(
                 status_code=500,
-                detail=f"Task {task_id} marked completed but has no result.",
+                detail=msg,
             )
 
         return ToolResponse(
