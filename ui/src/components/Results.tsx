@@ -23,7 +23,7 @@ export const Results: React.FC<PropType> = (props) => {
 
   const [progressProps, setProgressProps] = useState<Omit<ProgressPropType, 'isRunning'>>({
     estimatedTime: 'Loading...',
-    startTime: -1,
+    startTime: -2,
     status: 'Loading...',
     httpStatus: 200
   })
@@ -95,7 +95,7 @@ export const Results: React.FC<PropType> = (props) => {
   return (
     <>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <h2 style={{ flexGrow: 1 }}>{status?.query ?? 'Error'}</h2>
+          <h2 style={{ flexGrow: 1 }}>{status?.query ?? ''}</h2>
           <Button color='secondary' onClick={handleDeleteTask} startIcon={<DeleteIcon />}>Remove from history</Button>
       </Box>
 
