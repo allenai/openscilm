@@ -1,7 +1,7 @@
 import reactToText from 'react-to-text';
 
 import React from 'react';
-import { ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Link, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import styled from 'styled-components';
 import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
 import { InlinePaperChipWidgetWithEvidence } from '../widgets/InlinePaperChipWidgetWithEvidence';
@@ -9,6 +9,7 @@ import { InlinePaperChipWidgetProps } from '../widgets/InlinePaperChipWidget';
 import { ReportSection } from '../../models/Report';
 import ReactDiffViewer from 'react-diff-viewer'
 import { split } from "sentence-splitter"
+import { PaperMetadataString } from '../PaperMetadataString';
 
 
 
@@ -43,7 +44,13 @@ export const Report: React.FC<{ section: ReportSection, previousSection?: Report
       overrides: {
         p: {
           component: (props) => <Typography {...props} />,
-          props: { paragraph: true, variant: 'body1' },
+          props: { paragraph: true, variant: 'body1'},
+        },
+        a: {
+          component: (props) => <Link {...props} />,
+          props: { paragraph: true, variant: 'body1', style: {
+            color: 'rgba(10, 142, 98, 1)'
+          } },
         },
         Paper: {
           component: (props: Partial<InlinePaperChipWidgetProps>) => {
@@ -54,6 +61,7 @@ export const Report: React.FC<{ section: ReportSection, previousSection?: Report
             }
 
             if (corpusId && paperTitleStr && id) {
+              console.log('X1', section.corpusId2Details?.[corpusId])
               return (
                 <InlinePaperChipWidgetWithEvidence
                   {...rest}
@@ -62,6 +70,7 @@ export const Report: React.FC<{ section: ReportSection, previousSection?: Report
                   corpusId={corpusId}
                   fullTitle={fullTitle ?? 'Error: Paper Title Unkonwn'}
                   id={id}
+                  paperDetails={section.corpusId2Details?.[corpusId]}
                   evidences={
                     id2Snippets?.[id]?.map((snippet) => ({
                       text: snippet,
@@ -82,10 +91,12 @@ export const Report: React.FC<{ section: ReportSection, previousSection?: Report
         <Markdown options={markdownOptions}>
           {`${section.text}
 ### References
-${section.citations?.map((citation) => {
-            console.log(citation)
-            return `- <Paper corpusId="${citation.corpusId}" id="${citation.id}" paperTitle="${citation.anchorText}" fullTitle="${citation.fullTitle}" isShortName></Paper>: ${citation.snippets.join('... ')}`;
-          }).join('\n')}`}
+${Object.values(section.corpusId2Details ?? {}).map((details) => {
+  return `- ${PaperMetadataString(details)}`
+            // return `- ${details.title} ${details.venue} (${details.year})`;
+          }
+).join('\n')}
+`}
         </Markdown>
       </>
     );

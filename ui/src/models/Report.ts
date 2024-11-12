@@ -1,3 +1,4 @@
+import { PaperDetailsType } from '../api/utils';
 import { ReportWidgetData, WidgetType } from './PanelWidgets';
 
 import { v4 as uuidV4 } from 'uuid';
@@ -31,6 +32,7 @@ export interface ReportSection {
   tldr?: string;
   text: string;
   citations?: ReportCitation[];
+  corpusId2Details?: { [corpusId: number]: PaperDetailsType };
 }
 
 // keep these models in sync with the nora-widget-service report.py models

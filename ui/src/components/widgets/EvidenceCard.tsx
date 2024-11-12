@@ -9,6 +9,8 @@ import styled from 'styled-components';
 
 import { EvidenceCardContent } from './EvidenceCardContent';
 import { Evidence } from './utils';
+import { PaperDetailsType } from 'src/api/utils';
+import { PaperMetadata } from '../PaperMetadata';
 
 export interface EvidenceCardProps{
   evidences: Evidence[];
@@ -16,13 +18,14 @@ export interface EvidenceCardProps{
   children?: React.ReactNode;
   fullTitle: string;
   id: string;
+  paperDetails?: PaperDetailsType
 }
 
 // This component can either look up evidence if an id is provided
 // or use existing evidence provided to it
 
 export const EvidenceCard = (props: EvidenceCardProps): React.ReactNode => {
-  const { children, ...rest } = props;
+  const { children, paperDetails, ...rest } = props;
   const [anchorEl, setAnchorEl] = React.useState<HTMLAnchorElement | null>(
     null,
   );
@@ -61,11 +64,16 @@ export const EvidenceCard = (props: EvidenceCardProps): React.ReactNode => {
         }}
       >
         <CardContainer>
-          <Typography sx={{ mb: 1.5, mt: 0.5 }} variant="h6">
+          <Typography sx={{ mb: 0.5, mt: 0.5 }} variant="h6">
             <Link href={`https://semanticscholar.org/p/${props.corpusId}`} target='_blank' rel="noreferrer">
               {rest.fullTitle}
             </Link>
           </Typography>
+          {paperDetails && (
+            <Typography sx={{ mb: 1.5, mt: 0.5 }} variant="body1">
+              {PaperMetadata(paperDetails)}
+            </Typography>
+          )}
           <Divider />
           {open && <EvidenceCardContent {...rest} />}
         </CardContainer>

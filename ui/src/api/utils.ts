@@ -38,15 +38,16 @@ export interface AuthorType {
   authorId: string;
   name: string;
 }
-interface PaperDetailsType {
+export interface PaperDetailsType {
   title: string;
   year: number;
   corpusId: number;
   authors: AuthorType[];
+  venue: string
 
 }
 
-export const fetchPapersDetails = async (corpusIds: number[], fields: string[] = ['title', 'authors', 'year', 'corpusId']) => {
+export const fetchPapersDetails = async (corpusIds: number[], fields: string[] = ['title', 'authors', 'year', 'corpusId', 'venue']) => {
   const response = await fetch(
     '/api/paper_details',
     {
@@ -117,7 +118,8 @@ export const convertIterationToSection = async (iteration: IterationType): Promi
     id: 'id',
     text,
     title: '',
-    citations
+    citations,
+    corpusId2Details
   }
 }
 
