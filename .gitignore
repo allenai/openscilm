@@ -15,3 +15,6 @@ ui/*.log
 
 # Skiff env file
 .env
+
+# skiff files?
+async-state/**
