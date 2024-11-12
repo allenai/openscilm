@@ -131,8 +131,8 @@ def create_app() -> FastAPI:
         return "OK"
 
     @app.get("/retrieve")
-    def retrieve(query: str, topk: int):
-        return retrieve_s2_index(query, topk)
+    def retrieve(query: str, topk: int, version="v2"):
+        return retrieve_s2_index(query, topk, version)
 
     @app.post("/query_open_scholar")
     def use_tool(

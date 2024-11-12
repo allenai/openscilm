@@ -56,22 +56,37 @@ def vespa_snippet_from_dict(
     return res_map
 
 
-def retrieve_s2_index(query: str, topk: int) -> List[Dict[str, Any]]:
+def retrieve_s2_index(query: str, topk: int, version="v2") -> List[Dict[str, Any]]:
     """
     Retrieve topk papers from the S2 index using a query string.
     """
-    payload = {
-        "yql": f"select * from snippet where (({{targetHits:{yql_target_hits}}}nearestNeighbor(text_denseembed_quantized,qde)) or ({{defaultIndex: \"text\"}}userInput(@query_no_prefix)))",
-        "query_no_prefix": query,
-        "ranking": ranking_profile,
-        "hits": topk,
-        "queryProfile": "query-prefix",
-        denseembed_key: denseembed_val,
-        'timeout': timeout
-    }
+    if version == "v1":
+        gist_key, gist_val = "input.query(qg)", "embed(gist, @query)"
+        sparseembed_key, sparseembed_val = "input.query(qse)", "embed(sparseembed, @query)"
+
+        payload = {
+            "yql": f"select * from snippet where (({{targetHits:{10000}}}nearestNeighbor(text_gist,qg)) or ({{defaultIndex: \"text\"}}userInput(@query)))",
+            "query": query,
+            "ranking": "rank-by-bm25-gist-sparseembed-linear",
+            "hits": topk,
+            gist_key: gist_val,
+            sparseembed_key: sparseembed_val,
+            'timeout': 60
+        }
+    else:
+        payload = {
+            "yql": f"select * from snippet where (({{targetHits:{yql_target_hits}}}nearestNeighbor(text_denseembed_quantized,qde)) or ({{defaultIndex: \"text\"}}userInput(@query_no_prefix)))",
+            "query_no_prefix": query,
+            "ranking": ranking_profile,
+            "hits": topk,
+            "queryProfile": "query-prefix",
+            denseembed_key: denseembed_val,
+            'timeout': timeout
+        }
     headers = {"Content-Type": "application/json", "Authorization": f"{VESPA_INDEX_TOKEN}"}
     print(payload)
-    response = requests.post(VESPA_INDEX_URL, json=payload, headers=headers)
+    vespa_url = VESPA_INDEX_URL if version == "v2" else "https://openscholar-vespa.semanticscholar.org/search/"
+    response = requests.post(vespa_url, json=payload, headers=headers)
     if response.status_code != 200:
         print(response.status_code)
         raise Exception(f"Failed to retrieve papers from the S2 index. {response.text}")
