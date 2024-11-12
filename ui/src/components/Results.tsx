@@ -96,8 +96,8 @@ export const Results: React.FC<PropType> = (props) => {
     <>
       {/* {isLoading && <LinearProgress style={{ marginBottom: '-4px' }} />} */}
       <Box sx={{display: 'flex', justifyContent:'space-between', alignItems: 'baseline'}}>
-        <h2 style={{ flexGrow: 1 }}>{status?.query ?? ''}</h2>
-        <Button color='secondary' onClick={handleDeleteTask}>Remove from history</Button>
+          <h2 style={{ flexGrow: 1 }}>{status?.query ?? ''}</h2>
+          <Button color='secondary' onClick={handleDeleteTask}>Remove from history</Button>
       </Box>
       {(taskRunning || status?.httpStatus !== 200) && <Progress {...progressProps} isRunning={taskRunning} />}
 
