@@ -16,7 +16,6 @@ from tool.models import Citation, GeneratedIteration, TaskResult, ToolRequest
 from tool.retrieval import fetch_s2howable_flag, retrieve_contriever, retrieve_s2_index
 from tool.use_search_apis import (
     batch_paper_data_SS_ID,
-    get_paper_data,
     search_paper_via_query,
 )
 from tool.utils import extract_citations, remove_citations
@@ -308,31 +307,13 @@ class OpenScholar:
             self.task_mgr.write_state(task_state)
 
     def retrieve(self, query: str, task_id: str) -> List[Dict[str, Any]]:
-        results = self.retrieval_fn(query, self.n_retrieval)
-        status_str = f'{len(results["passages"])} snippets retrieved successfully'
+        snippets_list = self.retrieval_fn(query, self.n_retrieval)
+        status_str = f'{len(snippets_list)} snippets retrieved successfully'
         self.update_task_state(task_id, status_str)
         print(f"retrieval done - {status_str}")
-        paper_titles = {}
-        paper_data = {
-            pes2o_id: get_paper_data(pes2o_id) for pes2o_id in results["pes2o IDs"]
-        }
-        for paper_id in paper_data:
-            if "title" in paper_data[paper_id]:
-                paper_titles[paper_id] = paper_data[paper_id]["title"]
 
-        snippets_list = [
-            {
-                "corpus_id": cid,
-                "text": remove_citations(snippet),
-                "score": score,
-                "title": paper_titles[cid] if cid in paper_titles else "",
-            }
-            for cid, snippet, score in zip(
-                results["pes2o IDs"],
-                results["passages"],
-                results["scores"],
-            )
-        ]
+        for snippet in snippets_list:
+            snippet["text"] = remove_citations(snippet["text"])
 
         snippets_list = [
             snippet for snippet in snippets_list if len(snippet["text"]) > 100
