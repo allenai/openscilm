@@ -8,17 +8,7 @@ export const BACKEND_DEFAULT_INIT = {
   },
   method: 'POST'
 }
-
-export type StatusType = StatusTypeDone | StatusTypeInProgress
-
-export interface StatusTypeDone {
-  task_id: string;
-  query: string;
-  task_result: TaskResultType;
-  httpStatus: number;
-}
-
-export interface StatusTypeInProgress {
+export interface StatusType {
   task_id: string;
   query: string;
   task_result: TaskResultType | null;
@@ -150,11 +140,12 @@ export const updateStatus = async (taskId: string) => {
   return {...output, httpStatus: response.status};
 }
 
-export const createTask = async (query: string) => {
+export const createTask = async (query: string, optin: boolean) => {
   const response = await fetch(BACKEND_ENDPOINT, {
     ...BACKEND_DEFAULT_INIT,
     body: JSON.stringify({
       query,
+      opt_in: optin,
       feedback_toggle: true
     })
   })

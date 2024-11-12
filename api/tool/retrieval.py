@@ -3,12 +3,12 @@ from typing import Dict, Any, List
 
 import requests
 
-VESPA_INDEX_URL = "https://openscholar-vespa.semanticscholar.org/search/"
+VESPA_INDEX_URL = "https://openscholar-vespa.semanticscholar.org/search_pub/"
 VESPA_INDEX_TOKEN = os.getenv("VESPA_INDEX_TOKEN")
 timeout = 60
-ranking_profile = "rank-by-bm25-gist-sparseembed-linear"
+ranking_profile = "rank-by-bm25-denseembed-linear"
 yql_target_hits = 10000
-gist_key, gist_val = "input.query(qg)", "embed(gist, @query)"
+denseembed_key, denseembed_val = "input.query(qde)", "embed(denseembed, @query_with_prefix)"
 sparseembed_key, sparseembed_val = "input.query(qse)", "embed(sparseembed, @query)"
 
 CONTRIEVER_RETRIEVAL_API = "http://tricycle.cs.washington.edu:5001/search"
@@ -49,12 +49,12 @@ def retrieve_s2_index(query: str, topk: int) -> Dict[str, list]:
     Retrieve topk papers from the S2 index using a query string.
     """
     payload = {
-        "yql": f"select * from snippet where (({{targetHits:{yql_target_hits}}}nearestNeighbor(text_gist,qg)) or ({{defaultIndex: \"text\"}}userInput(@query)))",
-        "query": query,
+        "yql": f"select * from snippet where (({{targetHits:{yql_target_hits}}}nearestNeighbor(text_denseembed_quantized,qde)) or ({{defaultIndex: \"text\"}}userInput(@query_no_prefix)))",
+        "query_no_prefix": query,
         "ranking": ranking_profile,
         "hits": topk,
-        gist_key: gist_val,
-        sparseembed_key: sparseembed_val,
+        "queryProfile": "query-prefix",
+        denseembed_key: denseembed_val,
         'timeout': timeout
     }
     headers = {"Content-Type": "application/json", "Authorization": f"{VESPA_INDEX_TOKEN}"}

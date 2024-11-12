@@ -21,6 +21,7 @@ services:
       - MODAL_TOKEN_SECRET=${MODAL_TOKEN_SECRET}
       - RETRIEVAL_SERVICE=vespa
       - ASYNC_STATE_DIR=/skiff_files/apps/open-scholar/async-state
+      - GOOGLE_APPLICATION_CREDENTIALS=/secret/GCS_SVC_ACCOUNT_KEY
     ports:
       - 8000:8000
     env_file:
