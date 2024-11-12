@@ -4,7 +4,7 @@
 import React from 'react';
 import { v4 as uuidV4 } from 'uuid';
 import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
-import { Divider, Link, Popover, Typography } from '@mui/material';
+import { Box, Divider, Link, Popover, Typography } from '@mui/material';
 import styled from 'styled-components';
 
 import { EvidenceCardContent } from './EvidenceCardContent';
@@ -56,14 +56,13 @@ export const EvidenceCard = (props: EvidenceCardProps): React.ReactNode => {
         id={id}
         open={open}
         anchorEl={anchorEl}
-        style={{ width: '500px', maxWidth: '95%' }}
         onClose={handleClose}
         anchorOrigin={{
           vertical: 'bottom',
           horizontal: 'left',
         }}
       >
-        <CardContainer>
+        <Box sx={{ maxWidth: '600px', maxHeight: '300px', overflow: 'auto', padding: {xs: '12px 16px 8px 16px', md: '16px 24px 8px 24px' }, backgroundColor: '#08232b', color:'#FAF2E9'}}>
           <Typography sx={{ mb: 0, mt: 0.5, fontWeight: 'bold' }} variant="h6">
             <Link href={`https://semanticscholar.org/p/${props.corpusId}`} target='_blank' rel="noreferrer">
               {rest.fullTitle}
@@ -76,7 +75,7 @@ export const EvidenceCard = (props: EvidenceCardProps): React.ReactNode => {
           )}
           <Divider />
           {open && <EvidenceCardContent {...rest} />}
-        </CardContainer>
+        </Box>
       </Popover>
     </Container>
   );
@@ -88,10 +87,7 @@ const Container = styled.div`
 `;
 
 const CardContainer = styled.div`
-  padding: 14px;
-  width: 100%;
-  max-height: 300px;
-  overflow: auto;
+  padding: px;
 `;
 
 const StyledFormatQuoteIcon = styled(FormatQuoteIcon)`

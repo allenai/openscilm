@@ -45,15 +45,6 @@ const DarkBackground = styled('div')`
     display: flex;
     flex-direction: column;
 `;
-
-const AppHeader = styled('div')`
-    border-bottom: 1px solid rgba(250, 242, 233, 0.1);
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 32px;
-`;
 export const App = () => {
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const [isClosing, setIsClosing] = React.useState(false);
@@ -89,7 +80,7 @@ export const App = () => {
                             marginLeft: { xs: '0px', sm: '240px' },
                         }}
                     >
-                        <AppHeader>
+                        <Box sx={{ borderBottom: '1px solid rgba(250, 242, 233, 0.1)', width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: { xs: '12px 16px', sm: '16px 32px' } }}>
                             <Routes>
                                 {ROUTES.map(({ label, path }) => {
                                     const sidebarToggle = (
@@ -104,7 +95,12 @@ export const App = () => {
                                         </IconButton>
                                     )
                                     if (label === 'Home') {
-                                        return <Route key={path} path={path} element={sidebarToggle} />
+                                        
+                                        return (<Route key={path} path={path} element={
+                                            <Box>
+                                                {sidebarToggle}
+                                            </Box>    
+                                        } />)
                                     }
                                     return (<Route key={path} path={path} element={
                                         <Box sx={{ display: 'flex', gap: '16px' }}>
@@ -117,10 +113,10 @@ export const App = () => {
                                 })}
                             </Routes>
                             <Box sx={{ display: 'flex', gap: '16px' }}>
-                                <Link href="/about">About</Link>
+                                <Link href="/about" variant="body2">About</Link>
                                 {/* <Link href="#">Blog Post</Link> */}
                             </Box>
-                        </AppHeader>
+                        </Box>
                         <Routes>
                             {ROUTES.map(({ path, Component }) => (
                                 <Route key={path} path={path} element={<Component />} />

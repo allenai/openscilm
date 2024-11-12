@@ -57,7 +57,7 @@ export const Sidebar: React.FC<PropType> = (props) => {
   }, [history, setHistory]);
 
   const drawer = (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '8px' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: {xs:'90vh', sm:'100%'}, padding: '8px' }}>
 
       <Box sx={{ padding: `8px` }}>
         <Button href="/" variant="contained" sx={{ display: 'flex', justifyContent: 'flex-start' }} startIcon={<AddIcon />} color="secondary" size="medium">
@@ -155,7 +155,7 @@ export const Sidebar: React.FC<PropType> = (props) => {
         sx={{
           flexShrink: 0,
           display: { xs: 'block', sm: 'none' },
-          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: {xs: '80vw', sm: '240px'} },
         }}
       >
         {drawer}
@@ -165,7 +165,7 @@ export const Sidebar: React.FC<PropType> = (props) => {
         sx={{
           display: { xs: 'none', sm: 'block' },
           flexShrink: 0,
-          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: {xs: '80vw', sm: '240px'} },
         }}
         open
       >

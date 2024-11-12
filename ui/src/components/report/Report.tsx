@@ -1,7 +1,7 @@
 import reactToText from 'react-to-text';
 
 import React from 'react';
-import { Link, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Box, Link, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import styled from 'styled-components';
 import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
 import { InlinePaperChipWidgetWithEvidence } from '../widgets/InlinePaperChipWidgetWithEvidence';
@@ -104,32 +104,24 @@ ${Object.values(section.corpusId2Details ?? {}).map((details) => {
   }
 
   return (
-        <SectionContainer>
-          {previousSection && (
+    <Box sx={{ padding: {xs: '16px', sm: '32px'}, background: '#FAF2E9', borderRadius: '4px', color: '#0A3235' }}>
+      {previousSection && (
 
-            <ToggleButtonGroup
-              color="primary"
-              value={showDiff ? 'show' : 'hide'}
-              exclusive
-              onChange={() => setShowDiff(x => !x)}
-              aria-label="text alignment"
-              style={{ marginBottom: '16px' }}
-              sx={{ display: { xs: 'none', sm: 'block' } }}
-            >
-              <ToggleButton size='small' value={'show'} aria-label="left aligned" >
-                Compare with previous iteration
-              </ToggleButton>
-            </ToggleButtonGroup>
-          )}
-          {content}
-        </SectionContainer>
+        <ToggleButtonGroup
+          color="primary"
+          value={showDiff ? 'show' : 'hide'}
+          exclusive
+          onChange={() => setShowDiff(x => !x)}
+          aria-label="text alignment"
+          style={{ marginBottom: '16px' }}
+          sx={{ display: { xs: 'none', sm: 'block' } }}
+        >
+          <ToggleButton size='small' value={'show'} aria-label="left aligned" >
+            Compare with draft
+          </ToggleButton>
+        </ToggleButtonGroup>
+      )}
+      {content}
+    </Box>
   );
 };
-
-
-const SectionContainer = styled('div')`
-  padding: 32px 32px;
-  background: #FAF2E9;
-  border-radius: 4px;
-  color: #0A3235;
-`;
