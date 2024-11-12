@@ -114,6 +114,7 @@ ${Object.values(section.corpusId2Details ?? {}).map((details) => {
               onChange={() => setShowDiff(x => !x)}
               aria-label="text alignment"
               style={{ marginBottom: '16px' }}
+              sx={{ display: { xs: 'none', sm: 'block' } }}
             >
               <ToggleButton size='small' value={'show'} aria-label="left aligned" >
                 Compare with previous iteration

@@ -64,13 +64,13 @@ export const EvidenceCard = (props: EvidenceCardProps): React.ReactNode => {
         }}
       >
         <CardContainer>
-          <Typography sx={{ mb: 0.5, mt: 0.5 }} variant="h6">
+          <Typography sx={{ mb: 0, mt: 0.5, fontWeight: 'bold' }} variant="h6">
             <Link href={`https://semanticscholar.org/p/${props.corpusId}`} target='_blank' rel="noreferrer">
               {rest.fullTitle}
             </Link>
           </Typography>
           {paperDetails && (
-            <Typography sx={{ mb: 1.5, mt: 0.5 }} variant="body1">
+            <Typography sx={{ mb: 1.5, mt: 0 }} variant="body2">
               {PaperMetadata(paperDetails)}
             </Typography>
           )}

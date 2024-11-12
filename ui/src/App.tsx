@@ -3,7 +3,9 @@ import {
     styled,
     Box,
     Link,
+    IconButton,
 } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 import { Route, Routes } from 'react-router-dom';
 import { About } from './pages/About';
 import { Home } from './pages/Home';
@@ -53,24 +55,65 @@ const AppHeader = styled('div')`
     padding: 16px 32px;
 `;
 export const App = () => {
+    const [mobileOpen, setMobileOpen] = React.useState(false);
+    const [isClosing, setIsClosing] = React.useState(false);
+
+    const handleDrawerTransitionEnd = () => {
+        setIsClosing(false);
+    };
+    const handleDrawerClose = () => {
+        setIsClosing(true);
+        setMobileOpen(false);
+    };
+
+    const handleDrawerToggle = () => {
+        if (!isClosing) {
+            setMobileOpen(!mobileOpen);
+        }
+    };
 
     return (
         <CookiesProvider defaultSetOptions={{ path: '/' }}>
 
             <DarkBackground>
                 <Box sx={{ display: 'flex', flexGrow: 1, height: '100%' }}>
-                    <Sidebar />
-                    <Box component="main" sx={{ width: `100%` }}>
+                    <Sidebar 
+                        mobileOpen={mobileOpen}
+                        handleDrawerTransitionEnd={handleDrawerTransitionEnd}
+                        handleDrawerClose={handleDrawerClose}
+                        drawerWidth={240}
+                    />
+                    <Box
+                        component="main" 
+                        sx={{
+                            width: { xs: '100%', sm: 'calc(100% - 240px)' },
+                            marginLeft: { xs: '0px', sm: '240px' },
+                        }}
+                    >
                         <AppHeader>
                             <Routes>
                                 {ROUTES.map(({ label, path }) => {
+                                    const sidebarToggle = (
+                                        <IconButton
+                                            color="inherit"
+                                            aria-label="open drawer"
+                                            edge="start"
+                                            onClick={handleDrawerToggle}
+                                            sx={{ mr: 2, display: { sm: 'none' } }}
+                                        >
+                                            <MenuIcon />
+                                        </IconButton>
+                                    )
                                     if (label === 'Home') {
-                                        return <Route key={path} path={path} element={<span></span>} />
+                                        return <Route key={path} path={path} element={sidebarToggle} />
                                     }
                                     return (<Route key={path} path={path} element={
-                                        <Link href="/" sx={{ height: '24px' }}>
-                                            {Logo}
-                                        </Link>
+                                        <>
+                                            {sidebarToggle}
+                                            <Link href="/" sx={{ height: '24px' }}>
+                                                {Logo}
+                                            </Link>
+                                        </>
                                     } />)
                                 })}
                             </Routes>
