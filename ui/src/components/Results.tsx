@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { Box, Typography } from '@mui/material';
 import { StatusType, updateStatus } from '../api/utils';
 import { useQueryHistory } from './shared';
 import { useNavigate } from 'react-router-dom';
@@ -77,6 +78,10 @@ export const Results: React.FC<PropType> = (props) => {
 
   return (
     <>
+      {/* {isLoading && <LinearProgress style={{ marginBottom: '-4px' }} />} */}
+      <Box sx={{display: 'flex', justifyContent:'space-between', alignItems: 'baseline'}}>
+          <Typography variant="h3" sx={{ marginBottom: '16px' }}>{status?.query ?? ''}</Typography>
+      </Box>
       {(taskRunning || status?.httpStatus !== 200) && <Progress {...progressProps} isRunning={taskRunning} />}
 
       {sections.length > 0 && (

@@ -83,8 +83,7 @@ export const App = () => {
                         handleDrawerClose={handleDrawerClose}
                         drawerWidth={240}
                     />
-                    <Box
-                        component="main" 
+                    <Box component="main" 
                         sx={{
                             width: { xs: '100%', sm: 'calc(100% - 240px)' },
                             marginLeft: { xs: '0px', sm: '240px' },
@@ -99,7 +98,7 @@ export const App = () => {
                                             aria-label="open drawer"
                                             edge="start"
                                             onClick={handleDrawerToggle}
-                                            sx={{ mr: 2, display: { sm: 'none' } }}
+                                            sx={{ mr: 2, display: { sm: 'none' }, padding:'0', margin:'0' }}
                                         >
                                             <MenuIcon />
                                         </IconButton>
@@ -108,12 +107,12 @@ export const App = () => {
                                         return <Route key={path} path={path} element={sidebarToggle} />
                                     }
                                     return (<Route key={path} path={path} element={
-                                        <>
+                                        <Box sx={{ display: 'flex', gap: '16px' }}>
                                             {sidebarToggle}
                                             <Link href="/" sx={{ height: '24px' }}>
                                                 {Logo}
                                             </Link>
-                                        </>
+                                        </Box>
                                     } />)
                                 })}
                             </Routes>
