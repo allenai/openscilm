@@ -18,3 +18,4 @@ ui/*.log
 
 # skiff files?
 async-state/**
+open_access/**
