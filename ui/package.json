@@ -41,7 +41,7 @@
     "sentence-splitter": "^5.0.0",
     "styled-components": "^6.1.13",
     "use-http": "^1.0.27",
-    "uuid": "^10.0.0"
+    "uuid": "^11.0.3"
   },
   "devDependencies": {
     "@allenai/eslint-config-varnish": "^2.0.0",

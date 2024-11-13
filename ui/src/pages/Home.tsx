@@ -19,12 +19,12 @@ export const Home = () => {
 
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
-  const handleSubmit = useCallback(async (query: string, optin: boolean = false) => {
+  const handleSubmit = useCallback(async (query: string, userId: string, optin: boolean = false) => {
     console.log(query)
     setIsLoading(true);
     setIsLoading(false);
 
-    const newStatus = await createTask(query, optin);
+    const newStatus = await createTask(query, optin, userId);
     console.log(newStatus, newStatus.task_id);
     if (newStatus.task_id) {
       navigate(`/query/${newStatus.task_id}`, { replace: true });

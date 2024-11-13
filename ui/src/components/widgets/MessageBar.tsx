@@ -10,9 +10,11 @@ import PendingIcon from '@mui/icons-material/Pending';
 import SendIcon from '@mui/icons-material/Send';
 import { OptOut } from './OptOut';
 import { useCookies } from 'react-cookie';
+import { v4 as uuidv4 } from 'uuid';
+
 
 type MessageBarProps = {
-  onSend: (text: string, optin: boolean) => Promise<any> | void;
+  onSend: (text: string, userId: string, optin: boolean) => Promise<any> | void;
   isPending?: boolean;
   placeholder?: string;
 };
@@ -33,15 +35,20 @@ const MessageBar = ({
   const isEmpty = (text ?? '').trim().length === 0;
   const [consentModalOpen, setConsentModalOpen] = useState(false);
 
-  const [cookies, setCookie] = useCookies(['consented']);
-  if (!cookies.consented) {
-    setCookie('consented', { status: 'unset' }, { path: '/' });
+  const [cookiesConsent, setCookieConsent] = useCookies(['consented']);
+  const [cookiesUserId, setCookieUserId] = useCookies(['userid']);
+  if (!cookiesConsent.consented) {
+    setCookieConsent('consented', { status: 'unset' }, { path: '/' });
   }
-  const cookieConsent: ConsentType = cookies?.consented?.status ?? 'unset'
-  console.log(cookieConsent)
+  if (!cookiesUserId.userid) {
+    setCookieUserId('userid', { userId: uuidv4() }, { path: '/' });
+  }
+  const cookieConsent: ConsentType = cookiesConsent?.consented?.status ?? 'unset'
+  const cookieUserId: string = cookiesUserId?.userid?.userId ?? 'unknown'
+  console.log(cookieUserId)
   const [consent, setConsent] = useState(cookieConsent);
   useEffect(() => {
-    setCookie('consented', { status: consent }, { path: '/' });
+    setCookieConsent('consented', { status: consent }, { path: '/' });
   }, [consent])
 
   const handleOnSend = useCallback(
@@ -55,7 +62,7 @@ const MessageBar = ({
         console.log('Opening consent modal???');
         setConsentModalOpen(true);
       } else {
-        onSend(text, consent === 'yes');
+        onSend(text, cookieUserId, consent === 'yes');
         setText('')
       }
     },
