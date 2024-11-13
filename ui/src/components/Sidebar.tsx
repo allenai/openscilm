@@ -1,23 +1,32 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import AddIcon from '@mui/icons-material/Add';
 import Drawer from '@mui/material/Drawer';
-import Toolbar from '@mui/material/Toolbar';
+import DeleteIcon from '@mui/icons-material/Delete';
 import List from '@mui/material/List';
-import Divider from '@mui/material/Divider';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
+import Link from '@mui/material/Link';
+import Typography from '@mui/material/Typography';
 import { useQueryHistory } from './shared';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ListSubheader } from '@mui/material';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useCallback } from 'react';
+import { IconButton } from '@mui/material';
 
-const drawerWidth = 240;
+interface PropType {
+  mobileOpen: boolean;
+  handleDrawerTransitionEnd: () => void;
+  handleDrawerClose: () => void;
+  drawerWidth: number;
+}
 
-export default function Sidebar() {
+export const Sidebar: React.FC<PropType> = (props) => {
+  const { mobileOpen, handleDrawerTransitionEnd, handleDrawerClose, drawerWidth } = props;
   const { history, setHistory } = useQueryHistory();
   const location = useLocation();
   const navigate = useNavigate();
+
 
   const sortedHistory = Object.values(history).sort((a, b) => b.timestamp - a.timestamp)
 
@@ -32,78 +41,137 @@ export default function Sidebar() {
     }
   }, [setHistory]);
 
-  return (
-    <Drawer
-      variant="permanent"
-      sx={{
-        width: drawerWidth,
-        flexShrink: 0,
-        [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
-      }}
-    >
-      <Toolbar />
-      <Box sx={{ overflow: 'auto', paddingTop: '40px' }}>
-        <List
-          subheader={
-            <ListSubheader component="div" id="nested-list-subheader">
-              OpenScholar
-            </ListSubheader>
-          }>
-          <ListItem disablePadding>
-            <ListItemButton
-              selected={location.pathname === '/'}
-              onClick={() => {
-                navigate(`/`, { replace: true });
-              }}
-            >
-              <ListItemText primary={'Ask a New Question'} />
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton
-              selected={location.pathname.includes('/about')}
-              onClick={() => {
-                navigate(`/about`, { replace: true });
-              }}
-            >
-              <ListItemText primary={'About OpenScholar'} />
-            </ListItemButton>
-          </ListItem>
-          {Object.keys(history).length > 3 && (<>
-            <ListItem disablePadding>
+  const handleDeleteTask = useCallback((event: React.MouseEvent, taskId: string) => {
+    event.preventDefault()
+    event.stopPropagation()
+    if (confirm('Are you sure you want to delete this? This cannot be undone.')) {
+      const newHistory = { ...history };
+      try {
+        delete newHistory[taskId];
+        setHistory(newHistory);
+        navigate('/');
+      } catch (e) {
+        console.error('delete task failed', e);
+      }
+    }
+  }, [history, setHistory]);
+
+  const drawer = (
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: {xs:'90vh', sm:'100%'}, padding: '8px' }}>
+
+      <Box sx={{ padding: `8px` }}>
+        <Button href="/" variant="contained" sx={{ display: 'flex', justifyContent: 'flex-start' }} startIcon={<AddIcon />} color="secondary" size="medium">
+          New Question
+        </Button>
+      </Box>
+
+      <Typography variant="h6" sx={{ margin: '16px 8px 0 8px' }}>Recent Questions</Typography>
+      <List
+        sx={{
+          overflow: 'auto',
+          flexGrow: '1'
+        }}
+      >
+        {sortedHistory.map((item) => {
+          const selected = location.pathname.includes(item.taskId)
+          return (
+            <ListItem key={item.taskId} disablePadding>
               <ListItemButton
-                selected={location.pathname.includes('/about')}
-                onClick={handleDeleteAllTasks}
+                selected={selected}
+                sx={{ padding: '2px 8px', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', gap: '4px' }}
+                onClick={() => {
+                  navigate(`/query/${item.taskId}`, { replace: true });
+                }}
               >
-                <ListItemText style={{color: 'hotpink'}} primary={'Clear Recent Questions'} />
+                <Typography sx={{
+                  fontSize: '14px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  lineHeight: `36px`,
+                  fontWeight: selected ? 'bold' : 'unset' }}>{item.query}</Typography>
+                {selected && (
+                  <IconButton aria-label='delete' size='small' onClick={(event) => handleDeleteTask(event, item.taskId)} sx={{ padding: '4px' }}>
+                    <DeleteIcon fontSize='small' />
+                  </IconButton>
+                )}
               </ListItemButton>
             </ListItem>
-          </>)
-          }
-        </List>
-        <Divider />
-        <List
-          subheader={
-            <ListSubheader component="div" id="nested-list-subheader">
-              Recent Questions
-            </ListSubheader>
-          }>
-          {sortedHistory.map((item) => {
-            return (
-              <ListItem key={item.taskId} disablePadding>
-                <ListItemButton
-                  selected={location.pathname.includes(item.taskId)}
-                  onClick={() => {
-                    navigate(`/query/${item.taskId}`, { replace: true });
-                  }}
-                >
-                  <ListItemText primary={item.query} />
-                </ListItemButton>
-              </ListItem>
-            )
-          })}
-        </List>
+          )
+        })}
+      </List>
+
+      <Box sx={{ padding: '8px' }}>
+        {/* <Box sx={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingBottom: '8px' }}>
+          <Link href="https://www.semanticscholar.org" target="_blank">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 557.7 100">
+              <path fill="#0a3235" d="M179.4,40.5c-.1.2-.2.4-.4.5-.2.1-.4.2-.6.2-.3,0-.6-.1-.8-.3-.3-.2-.7-.5-1.2-.7-.5-.3-1.1-.6-1.7-.8-.7-.2-1.5-.3-2.3-.3-.8,0-1.5,0-2.2.3-.6.2-1.1.5-1.6.9-.4.4-.8.8-1,1.3-.2.5-.3,1.1-.3,1.7,0,.7.2,1.4.6,1.9.4.5,1,1,1.6,1.3.7.4,1.4.7,2.2,1l2.5.8c.9.3,1.7.6,2.5,1,.8.4,1.5.8,2.2,1.4.7.6,1.2,1.3,1.6,2.1.4.9.6,2,.6,3,0,1.2-.2,2.4-.6,3.6-.4,1.1-1.1,2.1-1.9,2.9-.9.9-1.9,1.6-3.1,2-1.3.5-2.7.7-4.1.7-1.8,0-3.5-.3-5.2-1-.8-.3-1.5-.7-2.2-1.2-.7-.5-1.3-1-1.8-1.6l1.2-2c.1-.2.3-.3.4-.4.2-.1.4-.2.6-.2.4,0,.7.2,1,.5.4.3.8.6,1.4,1,.6.4,1.3.7,2,1,.9.3,1.8.5,2.8.4.8,0,1.6-.1,2.4-.3.7-.2,1.3-.5,1.8-1,.5-.4.9-1,1.1-1.6.3-.7.4-1.3.4-2,0-.7-.2-1.5-.6-2.1-.4-.6-1-1.1-1.6-1.5-.7-.4-1.4-.7-2.2-.9l-2.5-.8c-.9-.3-1.7-.6-2.5-1-.8-.3-1.5-.8-2.2-1.4-.7-.6-1.2-1.4-1.6-2.2-.4-1-.6-2.1-.6-3.3,0-2.1.8-4.1,2.4-5.6.8-.8,1.8-1.4,2.9-1.8,1.2-.5,2.5-.7,3.9-.7,1.5,0,3,.2,4.5.8,1.3.5,2.5,1.3,3.6,2.2l-1,2.1Z" />
+              <path fill="#0a3235" d="M203.7,61.2v3.5h-17.9v-28.9h17.9v3.5h-13.6v9.2h11v3.4h-11v9.4h13.7Z" />
+              <path fill="#0a3235" d="M238.2,35.8v28.9h-3.7v-21.6c0-.3,0-.7,0-1.1l-9.6,17.7c-.3.6-.9,1-1.6,1h-.6c-.7,0-1.3-.4-1.5-1l-9.8-17.7c0,.7.1,1.4.1,2.1v20.6h-3.8v-28.9h3.2c.3,0,.6,0,.9.1.3.1.5.3.6.6l9.7,17.3c.2.3.4.7.5,1.1s.3.8.5,1.2c.3-.8.6-1.5,1-2.3l9.5-17.3c.1-.3.3-.5.6-.6.3,0,.6-.1.9-.1h3.2Z" />
+              <path fill="#0a3235" d="M268.7,64.7h-3.3c-.3,0-.7,0-.9-.3-.2-.2-.4-.4-.5-.7l-2.6-6.7h-12.8l-2.6,6.7c-.1.3-.3.5-.5.7-.3.2-.6.3-.9.3h-3.3l11.5-28.9h4.3l11.5,28.9ZM260.2,53.9l-4.3-11.2c-.4-1-.7-1.9-.9-2.9-.1.6-.3,1.1-.4,1.6s-.3.9-.4,1.3l-4.3,11.2h10.4Z" />
+              <path fill="#0a3235" d="M295.5,35.8v28.9h-2.2c-.3,0-.6,0-.8-.2-.3-.2-.5-.4-.7-.6l-16.3-21.1c0,.4,0,.7,0,1.1s0,.7,0,1v19.8h-3.8v-28.9h2.2c.3,0,.6,0,.9.1.3.1.5.3.6.6l16.4,21.2c0-.4,0-.8,0-1.1v-20.7h3.8Z" />
+              <path fill="#0a3235" d="M321.6,39.3h-9.2v25.3h-4.3v-25.3h-9.2v-3.6h22.7v3.6Z" />
+              <path fill="#0a3235" d="M329.3,64.7h-4.3v-28.9h4.3v28.9Z" />
+              <path fill="#0a3235" d="M356.2,58.5c.2,0,.5.1.6.3l1.7,1.9c-1.2,1.4-2.7,2.5-4.3,3.2-1.9.8-4,1.2-6.1,1.1-2,0-3.9-.3-5.7-1.1-1.6-.7-3.1-1.7-4.4-3-1.2-1.3-2.2-2.9-2.8-4.7-.7-1.9-1-4-1-6,0-2,.3-4.1,1-6,.6-1.7,1.6-3.3,2.9-4.7,1.3-1.3,2.8-2.3,4.5-3,1.8-.7,3.8-1.1,5.8-1.1,1.9,0,3.7.3,5.5,1,1.5.6,3,1.5,4.2,2.7l-1.4,2c0,.1-.2.3-.4.4-.2,0-.4.1-.5.1-.3,0-.6-.2-.9-.4-.4-.3-.9-.6-1.4-.9-.7-.4-1.4-.6-2.1-.9-1-.3-2-.4-3.1-.4-1.4,0-2.7.2-4,.8-1.2.5-2.2,1.2-3.1,2.2-.9,1-1.6,2.2-2,3.5-.5,1.5-.7,3.1-.7,4.7,0,1.6.2,3.2.8,4.7.4,1.3,1.1,2.5,2,3.5.9.9,1.9,1.7,3.1,2.2,1.2.5,2.5.7,3.8.7.8,0,1.5,0,2.2-.2.6,0,1.2-.2,1.8-.5.6-.2,1.1-.5,1.6-.8.5-.3,1-.7,1.5-1.1.1,0,.2-.2.4-.2.1,0,.3-.1.5-.1Z" />
+              <path fill="#0a3235" d="M388.7,41.3c-.2.3-.4.5-.7.7-.3.2-.5.3-.9.2-.4,0-.7-.1-1-.3l-1.1-.6c-.5-.3-1-.5-1.5-.7-.6-.2-1.3-.3-2-.3-1,0-2,.2-2.9.8-.6.6-1,1.4-.9,2.2,0,.5.2,1.1.6,1.5.4.4.9.8,1.5,1,.7.3,1.4.6,2.1.8.8.2,1.6.5,2.4.8.8.3,1.6.6,2.4,1,.8.4,1.5.9,2.1,1.5.6.6,1.1,1.4,1.5,2.2.4,1,.6,2.1.6,3.1,0,1.3-.2,2.6-.7,3.8-.5,1.2-1.2,2.2-2.1,3.1-.9.9-2.1,1.6-3.3,2.1-1.4.5-2.9.8-4.5.8-.9,0-1.9,0-2.8-.3-.9-.2-1.9-.5-2.7-.8-.9-.3-1.7-.7-2.5-1.2-.7-.4-1.4-1-2-1.6l2-3.2c.2-.2.4-.4.6-.6.3-.2.6-.2.9-.2.4,0,.9.1,1.2.4l1.4.8c.6.3,1.2.6,1.8.8.8.3,1.6.4,2.4.4,1,0,2-.2,2.9-.8.7-.7,1.1-1.6,1-2.6,0-.6-.2-1.2-.6-1.7-.4-.5-.9-.8-1.5-1.1-.7-.3-1.4-.6-2.1-.8-.8-.2-1.6-.5-2.4-.7-.8-.3-1.6-.6-2.4-1-.8-.4-1.5-.9-2.1-1.5-.6-.7-1.1-1.5-1.5-2.3-.4-1.1-.6-2.3-.6-3.5,0-1.1.3-2.2.7-3.2.5-1.1,1.1-2,2-2.8.9-.9,2-1.5,3.2-2,1.4-.5,2.8-.8,4.3-.7.9,0,1.8,0,2.6.2,1.6.3,3.2.8,4.6,1.6.6.4,1.2.8,1.8,1.3l-1.8,3.2Z" />
+              <path fill="#0a3235" d="M414,57.1c.4,0,.7.1,1,.4l2.7,2.8c-1.2,1.5-2.7,2.7-4.4,3.5-2,.8-4.2,1.2-6.3,1.2-2.1,0-4.1-.4-6-1.1-1.7-.7-3.2-1.8-4.5-3.1-1.2-1.4-2.2-3-2.8-4.7-.7-1.9-1-4-1-6,0-2,.3-4.1,1.1-6,.7-1.8,1.7-3.4,3-4.8,1.3-1.3,2.9-2.4,4.6-3.1,1.9-.8,3.9-1.2,5.9-1.2,1,0,2.1,0,3.1.3.9.2,1.8.5,2.7.8,1.6.6,3,1.6,4.2,2.8l-2.3,3.1c-.2.2-.3.4-.5.5-.2.2-.5.3-.8.2-.2,0-.5,0-.7-.2-.2-.1-.5-.3-.7-.4l-.8-.5c-.3-.2-.7-.4-1-.5-.5-.2-.9-.3-1.4-.4-.6-.1-1.2-.2-1.9-.2-1.1,0-2.1.2-3.1.6-.9.4-1.8,1-2.4,1.8-.7.9-1.3,1.9-1.6,2.9-.4,1.3-.6,2.6-.6,4,0,1.4.2,2.7.6,4,.4,1.1.9,2.1,1.7,3,.7.8,1.5,1.4,2.5,1.8.9.4,2,.6,3,.6.6,0,1.1,0,1.7,0,.5,0,1-.2,1.4-.3.4-.1.9-.3,1.2-.6.4-.3.8-.6,1.2-.9.2-.1.3-.3.5-.3.2-.1.4-.2.6-.2Z" />
+              <path fill="#0a3235" d="M445.6,35.3v29.4h-6.9v-12.4h-11.9v12.4h-6.8v-29.4h6.9v12.3h11.9v-12.3h6.8Z" />
+              <path fill="#0a3235" d="M479.8,50c0,2-.4,4-1.1,5.9-.7,1.8-1.8,3.4-3.1,4.8-1.4,1.4-3,2.5-4.8,3.2-4,1.5-8.5,1.5-12.5,0-3.6-1.4-6.5-4.3-7.9-7.9-1.5-3.8-1.5-8,0-11.8.7-1.8,1.8-3.4,3.1-4.8,1.4-1.4,3-2.4,4.8-3.2,4-1.5,8.5-1.5,12.5,0,1.8.7,3.4,1.8,4.8,3.2,1.3,1.4,2.4,3,3.1,4.8.7,1.9,1.1,3.9,1.1,5.9ZM472.8,50c0-1.3-.2-2.7-.6-3.9-.3-1.1-.9-2.1-1.6-3-.7-.8-1.6-1.4-2.6-1.8-1.1-.4-2.3-.7-3.5-.7-1.2,0-2.4.2-3.5.7-1,.4-1.9,1-2.6,1.8-.7.9-1.3,1.9-1.6,3-.8,2.6-.8,5.3,0,7.9.3,1.1.9,2.1,1.6,3,.7.8,1.6,1.4,2.6,1.8,1.1.4,2.3.7,3.5.6,1.2,0,2.4-.2,3.5-.6,1-.4,1.9-1,2.6-1.8.7-.9,1.3-1.9,1.6-3,.4-1.3.6-2.6.6-4h0Z" />
+              <path fill="#0a3235" d="M501.1,59.2v5.4h-17.7v-29.4h6.8v23.9h10.9Z" />
+              <path fill="#0a3235" d="M531.7,64.7h-5.3c-.5,0-1-.1-1.4-.4-.4-.3-.6-.6-.8-1l-1.7-5.1h-11.2l-1.7,5.1c-.2.4-.4.7-.8,1-.4.3-.9.5-1.4.5h-5.3l11.4-29.4h7l11.3,29.4ZM520.9,53.5l-2.7-8c-.2-.5-.4-1.1-.7-1.8s-.5-1.4-.7-2.2c-.2.8-.4,1.6-.7,2.3s-.4,1.3-.6,1.8l-2.7,8h8Z" />
+              <path fill="#0a3235" d="M557.7,64.7h-6.2c-1,0-2-.4-2.5-1.3l-4.9-8.5c-.2-.3-.5-.6-.8-.8-.4-.2-.8-.3-1.2-.2h-1.7v10.9h-6.8v-29.4h9.5c1.8,0,3.7.2,5.4.7,1.3.3,2.6,1,3.7,1.8.9.7,1.6,1.7,2.1,2.8.4,1.1.7,2.3.7,3.4,0,.9-.1,1.8-.4,2.7-.5,1.7-1.6,3.2-3,4.3-.8.6-1.6,1-2.5,1.4.4.2.9.5,1.2.8.4.4.7.8,1,1.2l6.3,10.2ZM543.2,49.1c.8,0,1.6,0,2.4-.3.6-.2,1.1-.5,1.6-1,.4-.4.7-.9.9-1.5.2-.6.3-1.2.3-1.8,0-1.1-.4-2.2-1.3-3-1.1-.8-2.5-1.2-3.9-1.1h-2.7v8.7h2.7Z" />
+              <path fill="#0a3235" d="M138.6,30.4c-4.9,3.1-8.3,4.8-12.3,7.2-24,14.5-47.1,30.7-65,51.9l-8.6,10.5-26.5-42c5.9,4.7,20.6,17.9,26.6,20.8l19.4-14.5c13.6-9.6,51.7-30.3,66.4-33.9Z" />
+              <path fill="#0a3235" d="M38.6,61.9l1.9,1.5c-5.8-15.8-15.2-30-27.4-41.6H0c15.3,10.8,28.4,24.4,38.6,40Z" />
+              <path fill="#0a3235" d="M42.9,65.7l1.6,1.3c-.8-19.7-8.2-39.8-22.1-57.1h-12.4c17.9,16.5,28.8,36.4,32.9,55.8Z" />
+              <path fill="#0a3235" d="M46.5,68.5c2,1.6,4,3.1,5.6,4.2,4.4-21.9.5-44.6-10.9-63.8l58.4-.8c4.4,9.6,6.9,20,7.5,30.6,1.7-.9,3.4-1.7,5.1-2.5C111.5,25.4,108.5,13.6,102.6,0H22.9c17.3,20.5,25.2,45.3,23.6,68.5Z" />
+            </svg>
+          </Link>
+
+          <Link href="https://www.washington.edu" target="_blank">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 252.99 17.03">
+              <path fill="#332a86" d="M244.74,11.74V2.34l6.53,10.48h.64V1.36l1.08-1.08h-3.28l1.08,1.08v7.97l-5.66-9.06h-2.6l1.06,1.08v10.38l-1.06,1.08h3.28l-1.08-1.08ZM235.05,12.14c-2.51,0-3.38-3-3.38-5.59s.87-5.59,3.38-5.59,3.4,3,3.4,5.59-.87,5.59-3.4,5.59M230.03,6.55c0,3.19,1.81,6.55,5.02,6.55s5.04-3.36,5.04-6.55-1.81-6.55-5.04-6.55-5.02,3.36-5.02,6.55M224.36,11.82V1.21h2.38l1.34,1.34V.28h-8.83v2.28l1.36-1.34h2.36v10.61l-.98,1h3.36l-1-1ZM215.07,7.12v4.04c-.3.3-.89.89-2.06.89-2.79,0-4.19-2.81-4.19-5.51s1.77-5.51,4.19-5.51c.64,0,1.11.15,1.53.6l1.38,1.36V.83c-.74-.38-1.49-.72-2.91-.72-3.42,0-5.83,3.06-5.83,6.44s2.4,6.44,5.83,6.44c1.94,0,2.76-.47,3.45-.91v-4.96l.98-1h-3.36l1,1ZM196.46,11.74V2.34l6.6,10.49h.57V1.36l1.08-1.08h-3.28l1.08,1.08v7.97l-5.66-9.06h-2.59l1.06,1.08v10.38l-1.06,1.08h3.28l-1.08-1.08ZM187.47.28l1,1v10.55l-1,1h3.38l-1-1V1.28l1-1h-3.38ZM176.32,6.53h5.27v5.3l-1,1h3.38l-1-1V1.28l1-1h-3.38l1,1v4.32h-5.27V1.28l1-1h-3.36l.98,1v10.55l-.98,1h3.36l-1-1v-5.3ZM170.67,9.34c0-1.23-.58-2-1.17-2.4l-2.55-1.85c-.91-.66-1.38-1.51-1.38-2.15,0-1.32,1.13-1.79,1.81-1.79.36,0,.62.15.81.15l1.11,1.19,1.17-1.74-2.49-.47c-.17-.04-.28-.06-.6-.06-2.19,0-3.19,1.87-3.19,3.08,0,.96.49,2.04,1.62,2.87l2.57,1.85c.7.49.89,1.21.89,1.83,0,1.06-.66,2.21-2.08,2.21-.34,0-.64-.06-.87-.17l-1.19-1.4-1.08,1.96,2.4.47s.41.08.75.08c1.51,0,3.49-1.28,3.49-3.66M156.63,3.06l1.72,5.19h-3.51l1.79-5.19ZM153.61,11.84l.91-2.66h4.15l.87,2.66-.98.98h3.55l-1-1.02-3.91-11.53h-.64l-3.98,11.53-1.02,1.02h3.02l-.98-.98ZM140.27,12.82l2.87-9.08,2.79,9.08h.64l3.64-11.55,1.02-1h-3.02l.98.98-2.66,8.68-2.57-8.68.98-.98h-3.55l1,1,.25.83-2.4,7.83-2.57-8.68.98-.98h-3.55l1.02,1,3.53,11.55h.64ZM121.67,5.3l-.48.46.05.18h1.47c-.23,1.59-.44,2.97-.78,5.19-.48,3.3-.88,4.47-1.22,4.75-.11.11-.28.16-.44.16-.21,0-.55-.16-.78-.26-.21-.11-.39.02-.49.12-.14.16-.3.41-.3.6,0,.35.46.53.76.53.34,0,1.18-.28,1.94-1.22.6-.74,1.41-2.45,2.1-6.45.12-.74.27-1.48.57-3.43l1.8-.18.39-.46h-2.08c.53-3.27.97-4.26,1.73-4.26.53,0,.97.21,1.36.58.12.12.32.12.49-.02.14-.12.35-.41.35-.65.02-.35-.46-.74-1.06-.74-1.03,0-2.1.6-2.84,1.48-.69.83-1.15,2.17-1.4,3.6h-1.15ZM113.72,9.93c0-2.61,1.32-4.03,1.87-4.26.16-.07.41-.14.58-.14.88,0,1.4.67,1.4,2.03.04,2.3-1.17,4.38-1.91,4.63-.14.05-.37.12-.55.12-.99,0-1.4-1.06-1.4-2.38M116.74,4.88c-.46,0-1.18.21-1.91.64-1.22.72-2.54,2.37-2.54,4.84,0,1.24.58,2.62,2.23,2.62.78,0,1.89-.51,2.63-1.18,1.17-1.06,1.85-2.88,1.85-4.45,0-1.47-.78-2.46-2.26-2.46M96.27,1.28l3.17,5.72v4.83l-1,1h3.38l-1-1v-4.83l3.23-5.7,1.04-1.02h-3.1l.98.98-2.64,4.7-2.51-4.7.98-.98h-3.55l1.02,1ZM89.66,11.82V1.21h2.38l1.34,1.34V.28h-8.83v2.28l1.36-1.34h2.36v10.61l-.98,1h3.36l-1-1ZM78.28.28l1,1v10.55l-1,1h3.38l-1-1V1.28l1-1h-3.38ZM74.65,9.34c0-1.23-.58-2-1.17-2.4l-2.55-1.85c-.91-.66-1.38-1.51-1.38-2.15,0-1.32,1.13-1.79,1.81-1.79.36,0,.62.15.81.15l1.11,1.19,1.17-1.74-2.49-.47c-.17-.04-.28-.06-.6-.06-2.19,0-3.19,1.87-3.19,3.08,0,.96.49,2.04,1.62,2.87l2.57,1.85c.7.49.89,1.21.89,1.83,0,1.06-.66,2.21-2.08,2.21-.34,0-.64-.06-.87-.17l-1.19-1.4-1.08,1.96,2.4.47s.4.08.74.08c1.51,0,3.49-1.28,3.49-3.66M58.52,1.21h1.53c1.34,0,2.4,1.15,2.4,2.51s-1.09,2.32-2.4,2.32h-1.53V1.21ZM58.52,11.82v-4.85h1.89l3.04,5.85h2.08l-.98-1-2.81-5.15c1.4-.42,2.36-1.74,2.36-2.93,0-2.13-1.98-3.47-4.06-3.47h-3.89l.98,1v10.55l-.98,1h3.36l-1-1ZM52.89,12.82v-2.3l-1.34,1.36h-3.81v-5.27h2.83l1,1v-2.93l-1,1h-2.83V1.21h3.81l1.34,1.34V.28h-7.51l.98,1v10.55l-.98,1h7.51ZM36.62.28h-3.55l1.02,1,3.53,11.55h.64l3.64-11.55,1.02-1h-3.02l.98.98-2.66,8.68-2.57-8.68.98-.98ZM26.88.28l1,1v10.55l-1,1h3.38l-1-1V1.28l1-1h-3.38ZM15.21,11.74V2.34l6.73,10.48h.44V1.36l1.08-1.08h-3.28l1.08,1.08v7.97L15.61.28h-2.59l1.06,1.08v10.38l-1.06,1.08h3.28l-1.08-1.08ZM1.09,9.46c0,2.06,1.74,3.64,3.89,3.64s4.06-1.51,4.06-3.64V1.36l1.06-1.08h-3.27l1.08,1.08v8.1c0,1.45-1.15,2.6-2.59,2.6s-2.76-1.13-2.76-2.6V1.36L3.64.28H0l1.09,1.08v8.1Z" />
+            </svg>
+          </Link>
+        </Box> */}
+
+        <Link href="https://allenai.org/privacy-policy" target="_blank" variant="body2">Privacy Policy</Link>&nbsp;&nbsp;•&nbsp;&nbsp;<Link href="https://allenai.org/terms" target="_blank" variant="body2">Terms of Use</Link>
+        {/* <Link href="https://allenai.org" target="_blank">Ai2</Link> */}
       </Box>
-    </Drawer>
+    </Box>
+
+  )
+
+
+  return (
+    <>
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onTransitionEnd={handleDrawerTransitionEnd}
+        onClose={handleDrawerClose}
+        ModalProps={{
+          keepMounted: true, // Better open performance on mobile.
+        }}
+        sx={{
+          flexShrink: 0,
+          display: { xs: 'block', sm: 'none' },
+          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: {xs: '80vw', sm: '240px'} },
+        }}
+      >
+        {drawer}
+      </Drawer>
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: 'none', sm: 'block' },
+          flexShrink: 0,
+          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: {xs: '80vw', sm: '240px'} },
+        }}
+        open
+      >
+        {drawer}
+      </Drawer>
+    </>
   );
 }
+export default Sidebar;

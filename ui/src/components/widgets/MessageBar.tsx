@@ -125,6 +125,8 @@ const Textarea = styled(TextareaAutosize)`
   resize: none;
   color: #ffffff;
   background: none;
+  font-family: 'manrope', arial, sans-serif;
+  font-size: 16px;
 
   &:focus {
     border: none;

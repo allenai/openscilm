@@ -44,30 +44,15 @@ export const OptOut: React.FC<Props> = (props) => {
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button autoFocus color='secondary' onClick={handleOk}>Ok to use my queries 😉</Button>
-        <Button onClick={handleCancel}>
-          Opt-out 😭
-        </Button>
+        <Button autoFocus color='secondary' onClick={handleOk}>Ok to use my queries</Button>
+        <Button onClick={handleCancel}>Opt-out</Button>
       </DialogActions>
     </Dialog>
   )
 
   return (
-    <div style={{display: 'flex', justifyContent:' space-between', alignItems: 'center'}}>
+    <>
       {consentPopover}
-      <div>
-        <a href="https://allenai.org" target="_blank" style={{ color: '#FAF2E9' }}>
-        Ai2
-        </a>
-        &nbsp;&nbsp;|&nbsp;&nbsp;
-        <a href="https://allenai.org/privacy-policy" target="_blank" style={{ color: '#FAF2E9' }}>
-          Privacy Policy
-        </a>
-        &nbsp;&nbsp;|&nbsp;&nbsp;
-        <a href="https://allenai.org/terms" target="_blank" style={{ color: '#FAF2E9' }}>
-          Terms of Use
-        </a>
-      </div> 
-    </div>
+    </>
   );
 }

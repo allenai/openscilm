@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardMedia, CircularProgress, Typography } from '@mui/material';
+import { Card, CardContent, CardMedia, CircularProgress, Link, Typography } from '@mui/material';
 
 import TimeAgo from 'javascript-time-ago'
 
@@ -13,6 +13,7 @@ export interface PropType {
   authors: AuthorType[];
   year: number;
   venue: string;
+  title: string;
   maxAuthors?: number;
 }
 
@@ -25,10 +26,10 @@ export const PaperMetadata: React.FC<PropType> = (props) => {
     <div style={{ display: 'inline-block' }}>
       {authors.map((author, index) => (
         <>
-          <a key={author.authorId} href={`https://www.semanticscholar.org/author/${author.authorId}`}>{author.name}</a>
+          <Link color='secondary' key={author.authorId} href={`https://www.semanticscholar.org/author/${author.authorId}`}>{author.name}</Link>
           {index < authors.length - 1 ? ', ' : ''}
         </>
-      ))}{truncated ? 'et al' : ''}. ${year}. {venue}.
+      ))}{truncated ? 'et al' : ''}. {venue}. {year}.
     </div>
   );
 };

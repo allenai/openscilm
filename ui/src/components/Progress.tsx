@@ -2,13 +2,13 @@ import React from 'react';
 import { Card, CardContent, CardMedia, CircularProgress, Typography } from '@mui/material';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
+
 import TimeAgo from 'javascript-time-ago'
 
 import en from 'javascript-time-ago/locale/en'
 TimeAgo.addDefaultLocale(en)
 
 import { useTimeAgo } from 'react-time-ago'
-
 
 
 export interface ProgressPropType {
@@ -20,12 +20,12 @@ export interface ProgressPropType {
 }
 
 export const Progress: React.FC<ProgressPropType> = (props) => {
+  
   const { estimatedTime, startTime, status, httpStatus, isRunning } = props;
-
   const timeAgo = useTimeAgo({ date: startTime * 1000, locale: 'en-US', updateInterval: 1, timeStyle: 'twitter' });
 
   return (
-    <Card sx={{ width: 500, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <Card sx={{ width: 500, maxWidth: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <CardContent>
         <Typography variant="h5" component="div">
           {status}
@@ -38,7 +38,7 @@ export const Progress: React.FC<ProgressPropType> = (props) => {
         component='div'
         sx={{ width: 60, minWidth: 60 }}
       >
-        {isRunning ? (
+        {isRunning || startTime === -2 ? (
           <CircularProgress />
         ) : (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>

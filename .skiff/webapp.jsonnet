@@ -457,6 +457,10 @@ function(
                                     value: '/skiff_files/apps/open-scholar/async-state'
                                 },
                                 {
+                                    name: 'OPEN_ACCESS_FILE',
+                                    value: '/skiff_files/apps/open-scholar/open_access/oa_corpus_ids.csv'
+                                },
+                                {
                                     name: "OPENAI_API_KEY",
                                     valueFrom: {
                                         secretKeyRef: {
