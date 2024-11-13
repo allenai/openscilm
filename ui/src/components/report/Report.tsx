@@ -61,7 +61,6 @@ export const Report: React.FC<{ section: ReportSection, previousSection?: Report
             }
 
             if (corpusId && paperTitleStr && id) {
-              console.log('X1', section.corpusId2Details?.[corpusId])
               return (
                 <InlinePaperChipWidgetWithEvidence
                   {...rest}

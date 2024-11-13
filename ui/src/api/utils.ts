@@ -71,7 +71,6 @@ export const convertIterationToSection = async (iteration: IterationType): Promi
   const id2RefText: { [id: string]: string } = {}
   const counter: { [text: string]: number } = {}
   const firstKeyByValue: { [value: string]: string} = {}
-  console.log('DETAILS', details)
   const corpusId2Details: { [corpusId: number]: PaperDetailsType } = {}
   details.forEach(detail => {
     corpusId2Details[detail.corpusId] = detail
@@ -99,7 +98,6 @@ export const convertIterationToSection = async (iteration: IterationType): Promi
       console.error('parsing paper details error', e)
     }
   })
-  console.log('iteraction pre', iteration)
   const citations: ReportCitation[] = iteration.citations.map(citation => ({
       id: citation.id,
       corpusId: citation.corpus_id,
@@ -112,8 +110,6 @@ export const convertIterationToSection = async (iteration: IterationType): Promi
     const tag = reportCitationToTag(citation);
     text = text.replaceAll(citation.id, tag);
   });
-  console.log('iteraction post', iteration)
-  console.log(text);
   return {
     id: 'id',
     text,

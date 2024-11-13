@@ -26,35 +26,27 @@ export const Sidebar: React.FC<PropType> = (props) => {
   const { history, setHistory } = useQueryHistory();
   const location = useLocation();
   const navigate = useNavigate();
+  console.log('sidebar history', history)
 
 
   const sortedHistory = Object.values(history).sort((a, b) => b.timestamp - a.timestamp)
-
-  const handleDeleteAllTasks = useCallback(() => {
-    if (confirm('Are you sure you want to delete ALL answers? This cannot be undone.')) {
-      try {
-        setHistory({});
-        navigate('/');
-      } catch (e) {
-        console.error('delete all tasks had failed', e);
-      }
-    }
-  }, [setHistory]);
 
   const handleDeleteTask = useCallback((event: React.MouseEvent, taskId: string) => {
     event.preventDefault()
     event.stopPropagation()
     if (confirm('Are you sure you want to delete this? This cannot be undone.')) {
       const newHistory = { ...history };
+      navigate('/');
       try {
         delete newHistory[taskId];
+        console.log('deleted history', newHistory)
         setHistory(newHistory);
         navigate('/');
       } catch (e) {
         console.error('delete task failed', e);
       }
     }
-  }, [history, setHistory]);
+  }, [history, setHistory, navigate]);
 
   const drawer = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: {xs:'90vh', sm:'100%'}, padding: '8px' }}>

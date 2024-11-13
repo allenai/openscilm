@@ -3,7 +3,6 @@ import { Box, Typography } from '@mui/material';
 import { StatusType, updateStatus } from '../api/utils';
 import { Progress, ProgressPropType } from './Progress';
 import { Sections } from './Sections';
-import { useQueryHistory } from './shared';
 
 const DEFAULT_INTERVAL = 3000;
 
@@ -31,6 +30,8 @@ export const Results: React.FC<PropType> = (props) => {
       const newStatus = await updateStatus(taskId);
       console.log('setStatus', newStatus)
       setStatus(newStatus);
+      const taskRunning = 'task_status' in (newStatus ?? {})
+
 
       if (newStatus?.httpStatus !== 200) {
         console.log('A')
@@ -42,19 +43,27 @@ export const Results: React.FC<PropType> = (props) => {
         })
       } else {
         try {
-          console.log('B')
-          const startTime = parseFloat(newStatus?.task_status.split(':').at(0) ?? '0')
-          const statusText = newStatus?.task_status.split(':').at(-1) ?? 'Loading...'
+          console.log('B', newStatus)
+          const startTime = parseFloat(newStatus?.task_status?.split(':')?.at(0) ?? '0')
+          const statusText = newStatus?.task_status?.split(':')?.at(-1) ?? 'Loading...'
           setProgressProps({
             estimatedTime: newStatus?.estimated_time?.split(':')?.at(-1) ?? 'Loading...',
             startTime,
             status: statusText,
             httpStatus: newStatus?.httpStatus ?? 200
           })
+          // if (!taskRunning && !history[taskId] && newStatus?.query) {
+          //   console.log('adding back,', newStatus.query, !taskRunning, !history[taskId], newStatus?.query)
+          //   setHistory({
+          //     ...history,
+          //     [taskId]: {
+          //       query: newStatus.query, taskId: taskId, timestamp: Date.now()
+          //     }
+          //   });
+          // }
         } catch (e) {
           console.error('error parsing status', e);
         }
-        const taskRunning = 'task_status' in (newStatus ?? {})
         if (taskRunning) {
           const timeoutId = window.setTimeout(inner, interval);
           timeoutIds.push(timeoutId);
@@ -69,29 +78,16 @@ export const Results: React.FC<PropType> = (props) => {
 
   const taskRunning = 'task_status' in (status ?? {})
   const sections = status?.task_result?.sections ?? [];
-  const {history, setHistory} = useQueryHistory();
-
-  useEffect(() => {
-    if (!history[taskId] && status?.query) {
-        console.log('Add back sections', sections)
-        setHistory({
-          ...history,
-          [taskId]: {
-            query: status.query, taskId: taskId, timestamp: Date.now()
-          }
-        });
-      }
-  }, [sections, history, setHistory, taskId, status?.query]);
 
   return (
     <>
-      <Box sx={{display: 'flex', justifyContent:'space-between', alignItems: 'baseline'}}>
-          <Typography variant="h3" sx={{ marginBottom: '16px' }}>{status?.query ?? ''}</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <Typography variant="h3" sx={{ marginBottom: '16px' }}>{status?.query ?? ''}</Typography>
       </Box>
       {(taskRunning || status?.httpStatus !== 200) && <Progress {...progressProps} isRunning={taskRunning} />}
 
       {sections.length > 0 && (
-        <Sections sections={sections} isRunning={taskRunning}/>
+        <Sections sections={sections} isRunning={taskRunning} />
       )}
     </>
   );

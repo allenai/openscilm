@@ -25,10 +25,10 @@ export const PaperMetadata: React.FC<PropType> = (props) => {
   return (
     <div style={{ display: 'inline-block' }}>
       {authors.map((author, index) => (
-        <>
-          <Link color='secondary' key={author.authorId} href={`https://www.semanticscholar.org/author/${author.authorId}`}>{author.name}</Link>
+        <React.Fragment  key={author.authorId}>
+          <Link color='secondary' href={`https://www.semanticscholar.org/author/${author.authorId}`}>{author.name}</Link>
           {index < authors.length - 1 ? ', ' : ''}
-        </>
+        </React.Fragment>
       ))}{truncated ? 'et al' : ''}. {venue}. {year}.
     </div>
   );
