@@ -1,8 +1,7 @@
 import os
-
 import re
 from typing import Any, Dict
-from xml.etree.ElementTree import iselement
+import logging
 
 import jsonlines
 import requests
@@ -35,6 +34,7 @@ def query_s2_api(
     req_method = requests.get if method == "get" else requests.post
     response = req_method(url, headers=S2_HEADERS, params=params, json=payload)
     if response.status_code != 200:
+        logging.exception(f"S2 API request to end point {end_pt} failed with status code {response.status_code}")
         raise HTTPException(
             status_code=500,
             detail=f"S2 API request failed with status code {response.status_code}",
@@ -74,6 +74,6 @@ def push_to_gcs(text: str, bucket: str, file_path: str):
         bucket = storage_client.bucket(bucket)
         blob = bucket.blob(file_path)
         blob.upload_from_string(text)
-        print(f"Pushed event trace: {file_path} to GCS")
+        logging.info(f"Pushed event trace: {file_path} to GCS")
     except Exception as e:
-        print(f"Error pushing {file_path} to GCS: {e}")
+        logging.info(f"Error pushing {file_path} to GCS: {e}")
