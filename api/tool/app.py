@@ -23,6 +23,13 @@ from tool.open_scholar import OpenScholar
 from tool.retrieval import get_vespa_index
 from tool.utils import query_s2_api
 
+# If LOG_FORMAT is "google:json" emit log message as JSON in a format Google Cloud can parse.
+fmt = os.getenv("LOG_FORMAT")
+handlers = [glog.Handler()] if fmt == "google:json" else [logging.StreamHandler()]
+level = os.environ.get("LOG_LEVEL", default=logging.INFO)
+
+logging.basicConfig(level=level, handlers=handlers)
+
 logger = logging.getLogger(__name__)
 
 ASYNC_STATE_DIR = os.getenv("ASYNC_STATE_DIR", "/async-state")
@@ -88,7 +95,7 @@ def _estimate_task_length(tool_request: ToolRequest) -> str:
     return (
         "1 minute"
         if not tool_request.feedback_toggle
-        else f"{1+open_scholar.n_feedback} minutes"
+        else f"{1 + open_scholar.n_feedback} minutes"
     )
 
 
@@ -98,12 +105,6 @@ def _estimate_task_length(tool_request: ToolRequest) -> str:
 
 
 def create_app() -> FastAPI:
-    # If LOG_FORMAT is "google:json" emit log message as JSON in a format Google Cloud can parse.
-    fmt = os.getenv("LOG_FORMAT")
-    handlers = [glog.Handler()] if fmt == "google:json" else []
-    level = os.environ.get("LOG_LEVEL", default=logging.INFO)
-    logging.basicConfig(level=level, handlers=handlers)
-
     app = FastAPI(root_path="/api")
 
     @app.get("/")
@@ -123,7 +124,7 @@ def create_app() -> FastAPI:
 
     @app.post("/query_open_scholar")
     def use_tool(
-        tool_request: ToolRequest,
+            tool_request: ToolRequest,
     ) -> Union[AsyncToolResponse, ToolResponse]:
 
         # Caller is asking for a status update of long-running request
@@ -199,7 +200,7 @@ def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:
 
 
 def _handle_async_task_check_in(
-    task_id: str,
+        task_id: str,
 ) -> Union[ToolResponse | AsyncToolResponse]:
     """
     For tasks that will take a while to complete, we issue a task id
