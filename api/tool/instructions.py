@@ -97,7 +97,7 @@ On the other hand, non-parametric knowledge is retrieved from an external source
 example_feedback = """
 Feedback: Only concrete examples used in the answer are QA results. We should include more results from non QA tasks. Question: What tasks retrieval-augmented LMs have been applied to?\n
 Feedback: Only one limitation discussed in the answer is efficiency. Question: What are the disadvantages of retrieval-augmented LMs?\n
-Feedback: The original answer can be improved by adding more logical structure e.g., grouping similar disussions together and add paragraph headers.\n
+Feedback: The original answer can be improved by adding more logical structure e.g., grouping similar discussions together and add paragraph headers.\n
 """
 example_question_peft = "Discuss various parameter-efficient fine-tuning (PEFT) techniques for large language models, highlighting their strengths and weaknesses."
 example_passages_peft = """
@@ -117,7 +117,7 @@ example_rating_peft = """
 
 # Prompts
 # Generation
-# promts_w_references = ("Answer the following question related to the recent research. Your answer should be detailed and informative, and is likely to be more than one paragraph. "
+# prompts_w_references = ("Answer the following question related to the recent research. Your answer should be detailed and informative, and is likely to be more than one paragraph. "
 #                        "Your answer should be horistic, based on multiple evidences and references, rather than a short sentence only based on single referenec."
 #                        "Make the answer well-structured, informative so that real-world scientist can get comprehensive overview of the area based on your answer."
 #                        "All of citation-worthy statements need to be supported by one of the references we provide as 'References' and appropriate citation numbers should be added at the last of the sentences. "
@@ -130,23 +130,23 @@ example_rating_peft = """
 #                        "\nQuestion: {example_question}"
 #                        "\n[Response_Start]{example_answer}[Response_End]\nNow, please answer this question\n##\n")
 
-promts_w_references = (
+prompts_w_references = (
     "Provide a detailed, informative answer to the following research-related question. Your answer should be more than one paragraph, offering a comprehensive overview. "
     "Base your answer on multiple pieces of evidence and references, rather than relying on a single reference for a short response. Aim to give a holistic view of the topic. "
     "Ensure the answer is well-structured, coherent and informative so that real-world scientists can gain a clear understanding of the subject. Rather than simply summarizing multiple papers one by one, try to organize your answers based on similarities and differences between papers. "
     "Make sure to add citations to all citation-worthy statements using the provided references (References), by indicating the citation numbers of the corresponding passages. "
     "More specifically, add the citation number at the end of each relevant sentence e.g., 'This work shows the effectiveness of problem X [1].' when the passage [1] in References provides full support for the statement. "
-    "You do not need to add the author names, title or publication year as in the ordinal paper writing, and just mention the citaiton numbers with your generation. "
+    "You do not need to add the author names, title or publication year as in the ordinal paper writing, and just mention the citations numbers with your generation. "
     "Not all references may be relevant, so only cite those that directly support the statement. "
     #    "You only need to indicate the reference number, and you do not need to add Reference list by yourself. "
-    "If multiple references support a statement, cite them together (e.g., [1][2]). Yet, for each citation-worthy statement, you only need to add at least one citation, so if multiple eviences support the statement, just add the most relevant citation to the sentence. "
+    "If multiple references support a statement, cite them together (e.g., [1][2]). Yet, for each citation-worthy statement, you only need to add at least one citation, so if multiple evinces support the statement, just add the most relevant citation to the sentence. "
     "Your answer should be marked as [Response_Start] and [Response_End].\n"
     "Here's an example:\n##\n"
     "References: \n{example_passages}"
     "\nQuestion: {example_question}"
     "\n[Response_Start]{example_answer}[Response_End]\nNow, please answer this question\n##\n"
 )
-generation_demonstration_prompts = promts_w_references.format_map(
+generation_demonstration_prompts = prompts_w_references.format_map(
     {
         "example_passages": example_passages_rag,
         "example_question": example_question_rag,
@@ -208,7 +208,7 @@ example_passages_summarization = """
 """
 
 example_rating_summarization = """
-[Response_Start][0] Rating: 5 Explanation: This paper seems to introduce a dataset that sounds really similar to the proposed dataset and the authors definitely need to discuss how their proposed dataaset is related to this paper. Therefore, the rating is 5.\n
+[Response_Start][0] Rating: 5 Explanation: This paper seems to introduce a dataset that sounds really similar to the proposed dataset and the authors definitely need to discuss how their proposed dataset is related to this paper. Therefore, the rating is 5.\n
 [1] Rating: 4 Explanation: This paper introduces a large-scale machine reading comprehension dataset. Although this dataset is not a conversational QA dataset proposed by the original abstract and the set up may be more simple than conversational QA, still this dataset could be useful to cite when the authors discuss the history and different datasets in relavent areas.\n
 [2] Rating: 5 Explanation: This paper presents a task of generating and answering yes/no questions for rule focused text (such as traffic laws) by interacting with a user through dialog. This paper also considers a conversational QA situation and is highly relavant to the abstract.\n
 [3] Rating: 2 Explanation: This paper introduces a new method for passage ranking to enhance information retrieval, using a fine-tuned pre-trained encoder model, namely BERT. While this method may or may not be used in the paper of the subject abstract, this method is mainly proposed for IR and is less relevant to the proposed conversational QA setup. Therefore, this paper may not provide useful information to be included in the related work section.\n 
@@ -231,7 +231,7 @@ example_passages_single_paper = """
 [4] Our analysis indicates that even the current state-of-the-art LMs struggle with less popular subjects or certain relationship types, and increasing the model size does not lead to further performance improvements. In light of this, we extend our analysis to non-parametric sources of knowledge, as outlined in Section 2. Specifically, we investigate the effectiveness of retrieval-augmented LMs Borgeaud et al. (2022); Lewis et al. (2020), which leverage non-parametric memories (i.e., retrieved text) to improve performance.
 [5] Figure 7 shows that augmenting LMs with non-parametric memories significantly outperforms unassisted vanilla LMs. A much smaller LM (e.g., GPT-Neo 2.7B) augmented by the Contriever retrieval results outperforms vanilla GPT-3. Large LMs such as GPT-3 also enjoy the benefits of non-parametric memories. Contriever gives 7\% accuracy gains on top of GPT-3 davinci-003. GenRead shows little-to-no performance improvement over vanilla parametric knowledge for smaller models, while the technique shows sizeable gains for GPT-3, especially davinci-003. In addition to its limited effectiveness with smaller LMs, GenRead has potentially prohibitive inference time costs, with GPT-NeoX 20B taking 70 seconds per query.
 """
-example_question_single_paper = "What is the authors' conclusion about the effectivenes of language model scaling on long-tail factual knowledge memorization?"
+example_question_single_paper = "What is the authors' conclusion about the effectiveness of language model scaling on long-tail factual knowledge memorization?"
 example_answer_single_paper = "The authors found that on their newly constructed dataset, Pop QA [1], performance on questions with lower popularity (long tail facts) remains relatively constant [3]. The authors concluded model scaling may not help long-tail factual memorization [4]."
 
 example_answer_single_paper_no_context = "The authors found that on their newly constructed dataset, Pop QA, performance on questions with lower popularity (long tail facts) remains relatively constant. The authors concluded model scaling may not help long-tail factual memorization."
@@ -290,11 +290,11 @@ References:
 [2] Title: Atlas: Few-shot Learning with Retrieval Augmented Language Models Text: In this work we present Atlas, a carefully designed and pre-trained retrieval augmented language model able to learn knowledge intensive tasks with very few training examples. We perform evaluations on a wide range of tasks, including MMLU, KILT and NaturalQuestions, and study the impact of the content of the document index, showing that it can easily be updated. Notably, Atlas reaches over 42% accuracy on Natural Questions using only 64 examples, outperforming a 540B parameters model by 3% despite having 50x fewer parameters.
 [3] Title: Language Models are Few-Shot Learners Text: Similarly, GPT-3 achieves 64.3% accuracy on TriviaQA in the zero-shot setting, 68.0% in the one-shot setting, and 71.2% in the few-shot setting, the last of which is state-of-the-art relative to fine-tuned models operating in the same closed-book setting.
 Question: What are the advantages of retrieval-augmented LMs?
-Answer: Retrieval-augmented LMs have been effective in various use cases, including reducing hallucinations [0] and are oftn more parameter-efficient than non retrieval-augmented LMs [2].
+Answer: Retrieval-augmented LMs have been effective in various use cases, including reducing hallucinations [0] and are often more parameter-efficient than non retrieval-augmented LMs [2].
 Feedback: 
 The answer provides only list advantages without providing any concrete examples. Please provide more examples of how retrieval-augmented LMs have been used in practice.
 Edited Answer:
-[Response_Start]Retrieval-augmented LMs have been effective in various use cases, including reducing hallucinations [0] and are oftn more parameter-efficient than non retrieval-augmented LMs [2]. For instance, Atlas [2] achieves 42% accuracy on Natural Questions using only 64 examples, outperforming a 540B parameters model by 3\% despite having 50x fewer parameters.[Response_End]
+[Response_Start]Retrieval-augmented LMs have been effective in various use cases, including reducing hallucinations [0] and are often more parameter-efficient than non retrieval-augmented LMs [2]. For instance, Atlas [2] achieves 42% accuracy on Natural Questions using only 64 examples, outperforming a 540B parameters model by 3\% despite having 50x fewer parameters.[Response_End]
 """
 editing_instance_prompt = (
     editing_feedback
@@ -305,7 +305,7 @@ posthoc_attributions = """
 We give you a statement extracted from an answer to a question related to the most recent scientific literature, and a set of evidence passages.
 If the statement is fully supported by any of the listed passages in References, insert the citation numbers to the statement.
 If none of the passages support the statement, do not insert any citation, and leave the original sentence as is.
-If multilpe passages provide sufficient support for the statement, you only need to insert one citation, rather than inserting all of them. Your answer should be marked as [Response_Start] and [Response_End].'\n
+If multiple passages provide sufficient support for the statement, you only need to insert one citation, rather than inserting all of them. Your answer should be marked as [Response_Start] and [Response_End].'\n
 Here's an example:\n
 Statement: On the other hand, non-parametric knowledge is retrieved from an external source, such as a large-scale collection of documents, during inference.
 References:
@@ -446,7 +446,7 @@ generation_instance_prompts_w_references_single_paper_zero_shot = (
 )
 
 
-promts_w_references_single_paper_no_context = (
+prompts_w_references_single_paper_no_context = (
     "Answer a question based on the following scientific paper. "
     "Your answer is likely to be one or more than one sentences."
     "Your answer should be marked as [Response_Start] and [Response_End]."
@@ -456,7 +456,7 @@ promts_w_references_single_paper_no_context = (
 )
 
 generation_demonstration_prompts_single_paper_no_context = (
-    promts_w_references_single_paper_no_context.format_map(
+    prompts_w_references_single_paper_no_context.format_map(
         {
             "example_question": example_question_single_paper,
             "example_answer": example_answer_single_paper_no_context,
@@ -470,7 +470,7 @@ generation_instance_prompts_w_references_single_paper_no_context = (
 ## Prompts for Single paper
 # Prompts
 # Generation
-promts_w_references_summarization = (
+prompts_w_references_summarization = (
     "Given an abstract of an academic paper and a set of passsages from relevant papers, generate a related work section summarizing relevant related work."
     "Not all of the passages are relevant, so please carefully read the passages and only use passages that are related."
     "All of citation-worthy statements need to be supported by one of the references we provide as 'References' and appropriate citation numbers should be added at the last of the sentences."
@@ -481,7 +481,7 @@ promts_w_references_summarization = (
     "\nAbstract: {example_question}"
     "\n[Response_Start]{example_answer}[Response_End]\nNow, please generate another related work given the following abstract.\n##\n"
 )
-generation_demonstration_summarization = promts_w_references_summarization.format_map(
+generation_demonstration_summarization = prompts_w_references_summarization.format_map(
     {
         "example_passages": example_passages_summarization,
         "example_question": example_question_summarization,
@@ -494,7 +494,7 @@ generation_instance_prompts_summarization = (
 )
 
 
-promts_w_references_summarization_zero_shot = "Given an abstract of an academic paper and a set of passages from relevant papers, generate a related work section summarizing relevant related work. All of citation-worthy statements need to be supported by one of the references we provide as 'References' and appropriate citation numbers should be added at the last of the sentences. References should be formatted as [0], [1], [2], ..., [n].\nReferences: {context}\nAbstract: {input}"
+prompts_w_references_summarization_zero_shot = "Given an abstract of an academic paper and a set of passages from relevant papers, generate a related work section summarizing relevant related work. All of citation-worthy statements need to be supported by one of the references we provide as 'References' and appropriate citation numbers should be added at the last of the sentences. References should be formatted as [0], [1], [2], ..., [n].\nReferences: {context}\nAbstract: {input}"
 
 keyword_extraction_prompt = """
 Suggest semantic scholar search APIs to retrieve relevant papers to answer the following question related to the most recent NLP research. The search queries must be short, and commma separated. Here's an example. I'll show one example and the test instance you should suggest the search queries. Your response should be marked with [Response_Start] and [Response_End].\n
