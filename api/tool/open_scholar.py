@@ -325,7 +325,7 @@ class OpenScholar:
         return snippets_list
 
     def rerank(
-            self, query: str, retrieved_ctxs: List[Dict[str, Any]]
+            self, query: str, retrieved_ctxs: List[Dict[str, Any]], filtering: bool = True
     ) -> List[Dict[str, Any]]:
         passages = []
 
@@ -345,7 +345,7 @@ class OpenScholar:
         passages_above_threshold = [
             score for score in rerank_scores if score > self.context_threshold
         ]
-        if len(passages_above_threshold) < 3:
+        if filtering is True and len(passages_above_threshold) < 3:
             logger.warning("There is no relevant information in the retrieved snippets.")
             raise Exception(
                 "There is no relevant information in the retrieved snippets. Please try a different query."
@@ -557,7 +557,7 @@ class OpenScholar:
                         # TODO: add dedup check
                         new_papers = self.check_paper_duplication(new_papers)
                         self.update_task_state(task_id, f"Feedback {(feedback_idx + 1)}- Re-ranking top passages")
-                        new_papers = self.rerank(feedback[1] + " " + query, new_papers)
+                        new_papers = self.rerank(feedback[1] + " " + query, new_papers, filtering=False)
 
                         event_trace.trace_retrieval_event(new_papers, feedback_idx + 1)
                         prev_citations = copy.deepcopy(citation_lists[-1])
