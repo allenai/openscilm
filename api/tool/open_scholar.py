@@ -202,7 +202,7 @@ class OpenScholar:
             ctxs: List[Dict[str, Any]],
             previous_response: str,
             feedback: str,
-            max_tokens: int = 3000,
+            max_tokens: int = 2000,
     ):
         input_query = tool.instructions.editing_instance_prompt.format_map(
             {
@@ -235,7 +235,7 @@ class OpenScholar:
             previous_response: str,
             feedback: str,
             passage_start_index,
-            max_tokens=3000,
+            max_tokens=2000,
     ):
         processed_passages = ""
         for doc_idx, doc in enumerate(ctxs[: self.top_n]):
