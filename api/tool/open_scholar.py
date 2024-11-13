@@ -459,11 +459,6 @@ class OpenScholar:
                 cand["used"] = True
             else:
                 cand["used"] = False
-        for used_ctx_id in used_ctxs_ids:
-            if used_ctx_id >= len(retrieved_candidates):
-                initial_response = initial_response.replace(
-                    "[{}]".format(used_ctx_id), ""
-                )
 
         responses.append(
             get_response(
@@ -511,11 +506,6 @@ class OpenScholar:
                         citation_lists.append(copy.deepcopy(edited_answer))
                         used_ctxs_ids = extract_citations(citation_lists[-1])
 
-                        for used_ctx_id in used_ctxs_ids:
-                            if used_ctx_id >= len(citation_lists[-1]):
-                                initial_response = edited_answer.replace(
-                                    "[{}]".format(used_ctx_id), ""
-                                )
                         previous_response = edited_answer
 
                         for cand_idx, cand in enumerate(citation_lists[-1]):
@@ -589,11 +579,6 @@ class OpenScholar:
                                     text_to_citations[" ".join(cand["text"].split()[:20])] = cand_idx
 
                             used_ctxs_ids = extract_citations(edited_answer)
-                            for used_ctx_id in used_ctxs_ids:
-                                if used_ctx_id >= len(citation_lists[-1]):
-                                    edited_answer = edited_answer.replace(
-                                        "[{}]".format(used_ctx_id), ""
-                                    )
 
                             previous_response = edited_answer
 
