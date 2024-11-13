@@ -421,7 +421,7 @@ class OpenScholar:
                         ),
                         score=cite["score"] if "score" in cite else 0.0,
                     )
-                    for idx, cite in enumerate(iteration["citations"])
+                    for idx, cite in enumerate(iteration["citations"]) if cite["used"]
                 ],
             )
 
