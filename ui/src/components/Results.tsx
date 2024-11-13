@@ -3,6 +3,7 @@ import { Box, Typography } from '@mui/material';
 import { StatusType, updateStatus } from '../api/utils';
 import { Progress, ProgressPropType } from './Progress';
 import { Sections } from './Sections';
+import { useQueryHistory } from './shared';
 
 const DEFAULT_INTERVAL = 3000;
 
@@ -67,16 +68,23 @@ export const Results: React.FC<PropType> = (props) => {
   }, [taskId, interval]);
 
   const taskRunning = 'task_status' in (status ?? {})
-  // const section = status?.task_result?.sections.at(-1);
   const sections = status?.task_result?.sections ?? [];
-  const handleScrollToDisclaimer = useCallback(() => {
-    document.querySelector('.disclaimer')?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
-  console.log('progressProps', progressProps)
+  const {history, setHistory} = useQueryHistory();
+
+  useEffect(() => {
+    if (!history[taskId] && status?.query) {
+        console.log('Add back sections', sections)
+        setHistory({
+          ...history,
+          [taskId]: {
+            query: status.query, taskId: taskId, timestamp: Date.now()
+          }
+        });
+      }
+  }, [sections, history, setHistory, taskId, status?.query]);
 
   return (
     <>
-      {/* {isLoading && <LinearProgress style={{ marginBottom: '-4px' }} />} */}
       <Box sx={{display: 'flex', justifyContent:'space-between', alignItems: 'baseline'}}>
           <Typography variant="h3" sx={{ marginBottom: '16px' }}>{status?.query ?? ''}</Typography>
       </Box>
