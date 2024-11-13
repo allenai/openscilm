@@ -451,6 +451,11 @@ class OpenScholar:
 
         event_trace.trace_retrieval_event(retrieved_candidates, 0)
 
+        if not retrieved_candidates:
+            logger.warning(f"There is no relevant information in the retrieved snippets for query: {query}")
+            raise Exception(
+                "There is no relevant information in the retrieved snippets. Please try a different query."
+            )
         self.update_task_state(task_id, f"Re-ranking to obtain top {self.n_rerank} passages")
         retrieved_candidates = self.rerank(query, retrieved_candidates)
         event_trace.trace_rerank_event(retrieved_candidates, 0)
