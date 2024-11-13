@@ -6,14 +6,14 @@ import threading
 from time import time
 from typing import Any, Dict, List
 
+import tool.instructions
+
 from nora_lib.tasks.state import StateManager
 from openai import OpenAI
-
-import tool.instructions
 from tool.event_tracing import EventTrace
 from tool.modal_engine import ModalEngine
 from tool.models import Citation, GeneratedIteration, TaskResult, ToolRequest
-from tool.retrieval import fetch_s2howable_flag, retrieve_contriever, get_vespa_index
+from tool.retrieval import fetch_s2howable_flag, get_vespa_index, retrieve_contriever
 from tool.use_search_apis import search_paper_via_query
 from tool.utils import extract_citations, remove_citations
 
@@ -34,13 +34,13 @@ SNIPPET_LENGTH = int(os.getenv("SNIPPET_LENGTH", 300))
 
 class OpenScholar:
     def __init__(
-            self,
-            task_mgr: StateManager,
-            n_retrieval: int = 50,
-            n_rerank: int = 8,
-            n_feedback: int = 1,
-            context_threshold: float = 0.5,
-            llm_model: str = "akariasai/os_8b",
+        self,
+        task_mgr: StateManager,
+        n_retrieval: int = 50,
+        n_rerank: int = 8,
+        n_feedback: int = 1,
+        context_threshold: float = 0.5,
+        llm_model: str = "akariasai/os_8b",
     ):
         # TODO: Initialize retriever and re-ranker clients here
         self.n_retrieval = n_retrieval
@@ -107,10 +107,10 @@ class OpenScholar:
         return ctxs
 
     def generate_response(
-            self,
-            query: str,
-            retrieved_ctxs: List[Dict[str, Any]],
-            max_tokens: int = 2000,
+        self,
+        query: str,
+        retrieved_ctxs: List[Dict[str, Any]],
+        max_tokens: int = 2000,
     ):
         ctxs_text = self.process_passage(retrieved_ctxs)
         if len(ctxs_text.split()) > 4500:
@@ -162,16 +162,17 @@ class OpenScholar:
         papers_dicts = {
             " ".join(paper["text"].split(" ")[:20]): paper
             for paper in retrieved_papers
-            if paper["text"] is not None and len(paper["text"].split(" ")) > 20}
+            if paper["text"] is not None and len(paper["text"].split(" ")) > 20
+        }
         dedup_papers = list(papers_dicts.values())
 
         return dedup_papers
 
     def get_feedback(
-            self,
-            query: str,
-            ctxs: List[Dict[str, Any]],
-            initial_response: str,
+        self,
+        query: str,
+        ctxs: List[Dict[str, Any]],
+        initial_response: str,
     ):
         ctxs_text = self.process_passage(ctxs)
         input_query = tool.instructions.feedback_example_instance_prompt.format_map(
@@ -197,12 +198,12 @@ class OpenScholar:
         return feedbacks
 
     def edit_with_feedback(
-            self,
-            query: str,
-            ctxs: List[Dict[str, Any]],
-            previous_response: str,
-            feedback: str,
-            max_tokens: int = 2000,
+        self,
+        query: str,
+        ctxs: List[Dict[str, Any]],
+        previous_response: str,
+        feedback: str,
+        max_tokens: int = 2000,
     ):
         input_query = tool.instructions.editing_instance_prompt.format_map(
             {
@@ -229,13 +230,13 @@ class OpenScholar:
         return raw_output
 
     def edit_with_feedback_retrieval(
-            self,
-            query: str,
-            ctxs: List[Dict[str, Any]],
-            previous_response: str,
-            feedback: str,
-            passage_start_index,
-            max_tokens=2000,
+        self,
+        query: str,
+        ctxs: List[Dict[str, Any]],
+        previous_response: str,
+        feedback: str,
+        passage_start_index,
+        max_tokens=2000,
     ):
         processed_passages = ""
         for doc_idx, doc in enumerate(ctxs[: self.top_n]):
@@ -292,11 +293,11 @@ class OpenScholar:
 
     ############################ Code for API
     def update_task_state(
-            self,
-            task_id: str,
-            status: str,
-            estimated_time: str = None,
-            curr_response: List[GeneratedIteration] = None,
+        self,
+        task_id: str,
+        status: str,
+        estimated_time: str = None,
+        curr_response: List[GeneratedIteration] = None,
     ):
 
         if task_id:
@@ -310,7 +311,9 @@ class OpenScholar:
                 task_state.task_result = TaskResult(iterations=curr_response)
             self.task_mgr.write_state(task_state)
 
-    def retrieve(self, query: str, task_id: str, prefix: str = "") -> List[Dict[str, Any]]:
+    def retrieve(
+        self, query: str, task_id: str, prefix: str = ""
+    ) -> List[Dict[str, Any]]:
         snippets_list = self.retrieval_fn(query, self.n_retrieval)
         status_str = f"{prefix}{len(snippets_list)} passages retrieved successfully"
         self.update_task_state(task_id, status_str)
@@ -325,7 +328,7 @@ class OpenScholar:
         return snippets_list
 
     def rerank(
-            self, query: str, retrieved_ctxs: List[Dict[str, Any]], filtering: bool = True
+        self, query: str, retrieved_ctxs: List[Dict[str, Any]], filtering: bool = True
     ) -> List[Dict[str, Any]]:
         passages = []
 
@@ -346,7 +349,9 @@ class OpenScholar:
             score for score in rerank_scores if score > self.context_threshold
         ]
         if filtering is True and len(passages_above_threshold) < 3:
-            logger.warning("There is no relevant information in the retrieved snippets.")
+            logger.warning(
+                "There is no relevant information in the retrieved snippets."
+            )
             raise Exception(
                 "There is no relevant information in the retrieved snippets. Please try a different query."
             )
@@ -436,16 +441,17 @@ class OpenScholar:
         t = threading.Thread(target=self.llm_inference, args=("Just waking you up",))
         t.start()
 
-        self.update_task_state(task_id, f"Retrieving top {self.n_retrieval} relevant paper passages from our corpus")
+        self.update_task_state(
+            task_id,
+            f"Retrieving top {self.n_retrieval} relevant paper passages from our corpus",
+        )
         retrieved_candidates = self.retrieve(query, task_id)
 
         self.update_task_state(
             task_id, "Augmenting retrieved results with Semantic Scholar data"
         )
         retrieved_candidates += self.retrieve_additional_passages_ss(query)
-        self.update_task_state(
-            task_id, f"Total {len(retrieved_candidates)} passages"
-        )
+        self.update_task_state(task_id, f"Total {len(retrieved_candidates)} passages")
 
         retrieved_candidates = self.check_paper_duplication(retrieved_candidates)
         logger.info(f"{len(retrieved_candidates)} remain after de-duplication")
@@ -453,11 +459,15 @@ class OpenScholar:
         event_trace.trace_retrieval_event(retrieved_candidates, 0)
 
         if not retrieved_candidates:
-            logger.warning(f"There is no relevant information in the retrieved snippets for query: {query}")
+            logger.warning(
+                f"There is no relevant information in the retrieved snippets for query: {query}"
+            )
             raise Exception(
                 "There is no relevant information in the retrieved snippets. Please try a different query."
             )
-        self.update_task_state(task_id, f"Re-ranking to obtain top {self.n_rerank} passages")
+        self.update_task_state(
+            task_id, f"Re-ranking to obtain top {self.n_rerank} passages"
+        )
         retrieved_candidates = self.rerank(query, retrieved_candidates)
         event_trace.trace_rerank_event(retrieved_candidates, 0)
         citation_lists.append(retrieved_candidates)
@@ -468,7 +478,7 @@ class OpenScholar:
         self.update_task_state(task_id, "Generating the initial draft")
         initial_response = self.generate_response(query, retrieved_candidates)
         # filter out unused citations
-        used_ctxs_ids = extract_citations(initial_response)
+        used_ctxs_ids = list(set(extract_citations(initial_response)))
         for cand_idx, cand in enumerate(retrieved_candidates):
             if cand_idx in used_ctxs_ids:
                 cand["used"] = True
@@ -492,8 +502,11 @@ class OpenScholar:
 
         # iteratiive feedback loop
         if feedback_toggle:
-            self.update_task_state(task_id, "Generating feedback(s) on the initial draft.",
-                                   estimated_time=f"{self.n_feedback} minutes")
+            self.update_task_state(
+                task_id,
+                "Generating feedback(s) on the initial draft.",
+                estimated_time=f"{self.n_feedback} minutes",
+            )
             feedbacks = self.get_feedback(
                 query=query,
                 ctxs=retrieved_candidates,
@@ -503,7 +516,7 @@ class OpenScholar:
             for feedback_idx, feedback in enumerate(feedbacks):
                 self.update_task_state(
                     task_id,
-                    "Incorporating feedback {}.".format((feedback_idx+1)),
+                    "Incorporating feedback {}.".format((feedback_idx + 1)),
                     f"{(self.n_feedback - feedback_idx + 1)} minutes",
                 )
                 if len(feedback[1]) == 0:
@@ -515,22 +528,25 @@ class OpenScholar:
                             "Here is the revised answer:\n\n"
                         )[1]
                     if (
-                            len(edited_answer) > 0
-                            and len(edited_answer) / len(previous_response) > 0.9
-                            # and len(edited_answer.splitlines()) / len(previous_response.splitlines()) > 0.5
+                        len(edited_answer) > 0
+                        and len(edited_answer) / len(previous_response) > 0.9
+                        # and len(edited_answer.splitlines()) / len(previous_response.splitlines()) > 0.5
                     ):
-                        citation_lists.append(copy.deepcopy(edited_answer))
-                        used_ctxs_ids = extract_citations(citation_lists[-1])
+                        initial_citations = copy.deepcopy(citation_lists[0])
+                        citation_lists.append(initial_citations)
+                        used_ctxs_ids = extract_citations(edited_answer)
 
                         previous_response = edited_answer
 
-                        for cand_idx, cand in enumerate(citation_lists[-1]):
+                        for cand_idx, cand in enumerate(initial_citations):
                             if cand_idx in used_ctxs_ids:
                                 cand["used"] = True
                             else:
                                 cand["used"] = False
 
-                        logger.info(f"after feedback, the number of citations are: {len(citation_lists[-1])}")
+                        logger.info(
+                            f"after feedback, the number of citations are: {len(citation_lists[-1])}"
+                        )
                         logger.info("new responses added")
                         responses.append(
                             get_response(
@@ -550,7 +566,11 @@ class OpenScholar:
                 else:
                     new_papers = []
                     # FIXME: Fix API endpoint
-                    new_papers = self.retrieve(feedback[1] + " " + query, task_id, f"Feedback {(feedback_idx + 1)}- ")
+                    new_papers = self.retrieve(
+                        feedback[1] + " " + query,
+                        task_id,
+                        f"Feedback {(feedback_idx + 1)}- ",
+                    )
                     if self.ss_retriever is True:
                         new_keywords = self.retrieve_keywords(feedback[1])
                         paper_list = {}
@@ -562,14 +582,22 @@ class OpenScholar:
                     if len(new_papers) > 0:
                         # TODO: add dedup check
                         new_papers = self.check_paper_duplication(new_papers)
-                        self.update_task_state(task_id, f"Feedback {(feedback_idx + 1)}- Re-ranking top passages")
-                        new_papers = self.rerank(feedback[1] + " " + query, new_papers, filtering=False)
+                        self.update_task_state(
+                            task_id,
+                            f"Feedback {(feedback_idx + 1)}- Re-ranking top passages",
+                        )
+                        new_papers = self.rerank(
+                            feedback[1] + " " + query, new_papers, filtering=False
+                        )
 
                         event_trace.trace_retrieval_event(new_papers, feedback_idx + 1)
                         prev_citations = copy.deepcopy(citation_lists[-1])
                         passages_start_index = len(prev_citations)
 
-                        self.update_task_state(task_id, f"Feedback {(feedback_idx + 1)}- Updating the draft")
+                        self.update_task_state(
+                            task_id,
+                            f"Feedback {(feedback_idx + 1)}- Updating the draft",
+                        )
                         edited_answer = self.edit_with_feedback_retrieval(
                             query=query,
                             ctxs=new_papers,
@@ -585,14 +613,22 @@ class OpenScholar:
                             logger.info("merging citations")
                             text_to_citations = {}
                             for cand_idx, cand in enumerate(prev_citations):
-                                if " ".join(cand["text"].split()[:20]) in text_to_citations:
-                                    print("merged citations")
-                                    print(cand_idx)
-                                    print(text_to_citations[" ".join(cand["text"].split()[:20])])
-                                    edited_answer.replace("[{}]".format(cand_idx), "[{}]".format(
-                                        text_to_citations[" ".join(cand["text"].split()[:20])]))
+                                if (
+                                    " ".join(cand["text"].split()[:20])
+                                    in text_to_citations
+                                ):
+                                    edited_answer.replace(
+                                        "[{}]".format(cand_idx),
+                                        "[{}]".format(
+                                            text_to_citations[
+                                                " ".join(cand["text"].split()[:20])
+                                            ]
+                                        ),
+                                    )
                                 else:
-                                    text_to_citations[" ".join(cand["text"].split()[:20])] = cand_idx
+                                    text_to_citations[
+                                        " ".join(cand["text"].split()[:20])
+                                    ] = cand_idx
 
                             used_ctxs_ids = extract_citations(edited_answer)
 
