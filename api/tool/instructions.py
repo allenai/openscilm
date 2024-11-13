@@ -400,7 +400,7 @@ Feedback: The answer provides solid empirical results on hallucination reduction
 References:
 [20] Title: Fine-Tuning or Retrieval? Comparing Knowledge Injection in LLMs Text: Fine-Tuning vs. RAG: In MMLU and current events tasks, RAG consistently outperformed fine-tuning. RAG incorporates relevant context, unlike fine-tuning, which can lead to catastrophic forgetting. The performance of models like Orca2, fine-tuned via reinforcement learning, further demonstrates the advantages of RAG.
 Edited Answer:
-[Response_Start]Retrieval-augmented LMs have been effective in various use cases, including reducing hallucinations [0] and enabling efficient adaptations to new data, such as temporal shifts [1]. Empirical results suggest they reduce hallucinations by 30% [2]. Regarding efficient adaptations, studies show that RAG significantly outperforms fine-tuning in tasks like MMLU, offering better adaptation to new data without retraining the model [20].[Response_End]
+[Response_Start]Retrieval-augmented LMs have been effective in various use cases, including reducing hallucinations [0] and enabling efficient adaptations to new data, such as temporal shifts [1]. Empirical results suggest they reduce hallucinations by 30% [2].\n\n Regarding efficient adaptations, studies show that RAG significantly outperforms fine-tuning in tasks like MMLU, offering better adaptation to new data without retraining the model [20].[Response_End]
 """
 # editing_with_retrieval_instance_prompt = \
 #     editing_feedback_with_retrieval +  "##\nQuestion: {question}\n\Answer:\n{answer}\nFeedback:\n{feedback}\nReferences:\n{retrieved_passages}\n"
