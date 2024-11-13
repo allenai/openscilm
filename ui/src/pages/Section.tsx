@@ -9,7 +9,7 @@ export const Section = () => {
   const { taskId } = useParams();
 
   return (
-    <Box sx={{ padding: {xs: '16px', sm: '32px'}, width: '100%' }}>
+    <Box sx={{ padding: {xs: '16px', sm: '32px'}, width: '100%', maxWidth: '1200px' }}>
       {taskId && <Results taskId={taskId} key={taskId} />}
     </Box>
   );
