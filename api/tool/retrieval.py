@@ -55,11 +55,11 @@ class VespaIndex:
         """
         payload = self.get_yql_query(query, topk)
         headers = {"Content-Type": "application/json", "Authorization": f"{VESPA_INDEX_TOKEN}"}
-        logger.info(payload)
+        print("Vespa query:", payload)
         response = requests.post(self.index_url, json=payload, headers=headers)
         if response.status_code != 200:
             logger.info(response.status_code)
-            msg = f"Failed to retrieve papers from the S2 index. {response.text}"
+            msg = f"Failed to retrieve papers from the S2 index. Received {response.status_code} from retrieval api."
             logger.exception(msg)
             raise Exception(msg)
         else:

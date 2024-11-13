@@ -298,11 +298,12 @@ class OpenScholar:
             estimated_time: str = None,
             curr_response: List[GeneratedIteration] = None,
     ):
-        status = f"{time()}:{status}"
+
         if task_id:
+            logger.info(status)
+            status = f"{time()}:{status}"
             task_state = self.task_mgr.read_state(task_id)
             task_state.task_status = status
-            logger.info(status)
             if estimated_time:
                 task_state.estimated_time = estimated_time
             if curr_response:
@@ -313,7 +314,6 @@ class OpenScholar:
         snippets_list = self.retrieval_fn(query, self.n_retrieval)
         status_str = f"{prefix}{len(snippets_list)} passages retrieved successfully"
         self.update_task_state(task_id, status_str)
-        logger.info(f"{prefix}Retrieval complete - {status_str}")
 
         for snippet in snippets_list:
             snippet["text"] = remove_citations(snippet["text"])
@@ -355,6 +355,7 @@ class OpenScholar:
         sorted_ctxs = sorted(
             retrieved_ctxs, key=lambda x: x["rerank_score"], reverse=True
         )[: self.n_rerank]
+        logging.info(f"Done reranking: {len(sorted_ctxs)} passages remain")
         return sorted_ctxs
 
     def retrieve_additional_passages_ss(self, query: str):

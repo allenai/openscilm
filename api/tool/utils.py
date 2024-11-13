@@ -55,7 +55,6 @@ def remove_citations(text):
 
 
 def extract_citations(text):
-    print(text)
     # Regular expression to match [number] or [number_1, number_2, number_3]
     citation_pattern = r"\[(\d+(?:,\s*\d+)*)\]"
     # Find all matches in the text
