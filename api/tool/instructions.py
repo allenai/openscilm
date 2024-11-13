@@ -290,11 +290,11 @@ References:
 [2] Title: Atlas: Few-shot Learning with Retrieval Augmented Language Models Text: In this work we present Atlas, a carefully designed and pre-trained retrieval augmented language model able to learn knowledge intensive tasks with very few training examples. We perform evaluations on a wide range of tasks, including MMLU, KILT and NaturalQuestions, and study the impact of the content of the document index, showing that it can easily be updated. Notably, Atlas reaches over 42% accuracy on Natural Questions using only 64 examples, outperforming a 540B parameters model by 3% despite having 50x fewer parameters.
 [3] Title: Language Models are Few-Shot Learners Text: Similarly, GPT-3 achieves 64.3% accuracy on TriviaQA in the zero-shot setting, 68.0% in the one-shot setting, and 71.2% in the few-shot setting, the last of which is state-of-the-art relative to fine-tuned models operating in the same closed-book setting.
 Question: What are the advantages of retrieval-augmented LMs?
-Answer: Retrieval-augmented LMs have been effective in various use cases, including reducing hallucinations [0] and are oftn more parameter-efficient than non retrieval-augmented LMs [2].
+Answer: Retrieval-augmented LMs have been effective in various use cases, including reducing hallucinations [0] and are oftn more parameter-efficient than non retrieval-augmented LMs [2].\n
 Feedback: 
 The answer provides only list advantages without providing any concrete examples. Please provide more examples of how retrieval-augmented LMs have been used in practice.
 Edited Answer:
-[Response_Start]Retrieval-augmented LMs have been effective in various use cases, including reducing hallucinations [0] and are oftn more parameter-efficient than non retrieval-augmented LMs [2]. For instance, Atlas [2] achieves 42% accuracy on Natural Questions using only 64 examples, outperforming a 540B parameters model by 3\% despite having 50x fewer parameters.[Response_End]
+[Response_Start]Retrieval-augmented LMs have been effective in various use cases, including reducing hallucinations [0] and are often more parameter-efficient than non retrieval-augmented LMs [2].\n\n For instance, Atlas [2] achieves 42% accuracy on Natural Questions using only 64 examples, outperforming a 540B parameters model by 3\% despite having 50x fewer parameters.[Response_End]
 """
 editing_instance_prompt = (
     editing_feedback

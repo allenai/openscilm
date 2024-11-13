@@ -505,7 +505,8 @@ class OpenScholar:
                         )[1]
                     if (
                         len(edited_answer) > 0
-                        and len(edited_answer) / len(previous_response) > 0.9 and len(edited_answer.splitlines()) / len(previous_response.splitlines()) > 0.5
+                        and len(edited_answer) / len(previous_response) > 0.9
+                            # and len(edited_answer.splitlines()) / len(previous_response.splitlines()) > 0.5
                     ):
                         citation_lists.append(copy.deepcopy(edited_answer))
                         used_ctxs_ids = extract_citations(citation_lists[-1])
@@ -571,7 +572,8 @@ class OpenScholar:
                             passage_start_index=passages_start_index,
                         )
 
-                        if (len(edited_answer) / len(previous_response)) > 0.9 and len(edited_answer.splitlines()) / len(previous_response.splitlines()) > 0.5:
+                        if (len(edited_answer) / len(previous_response)) > 0.9:
+                            # and len(edited_answer.splitlines()) / len(previous_response.splitlines()) > 0.5:
                             prev_citations += new_papers[: self.top_n]
                             # merge citations
                             print("merging citations")
