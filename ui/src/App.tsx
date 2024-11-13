@@ -113,7 +113,9 @@ export const App = () => {
                                 })}
                             </Routes>
                             <Box sx={{ display: 'flex', gap: '16px' }}>
-                                <Link href="/about" variant="body2">About</Link>
+                                <Link href="/about" variant="body2" sx={{ lineHeight: '24px' }}>
+                                    About
+                                </Link>
                                 {/* <Link href="#">Blog Post</Link> */}
                             </Box>
                         </Box>
