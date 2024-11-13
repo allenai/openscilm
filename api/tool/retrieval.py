@@ -4,6 +4,9 @@ from typing import Dict, Any, List
 import requests
 from tool.use_search_apis import get_paper_data
 import csv
+import logging
+
+logger = logging.getLogger(__name__)
 
 VESPA_BASE_URL = "https://openscholar-vespa.semanticscholar.org/"
 VESPA_INDEX_TOKEN = os.getenv("VESPA_INDEX_TOKEN")
@@ -22,14 +25,14 @@ class VespaIndex:
         if corpus_id_filter_file:
             # read csv from corpus_id_filter_file and save it in a set next
             self.corpus_id_filter = set()
-            print("Loading open access corpus ids...")
+            logger.info("Loading open access corpus ids...")
             with open(corpus_id_filter_file, 'r') as f:
                 reader = csv.reader(f)
                 for idx, row in enumerate(reader):
                     if idx == 0:
                         continue
                     self.corpus_id_filter.add(row[0])
-            print(f"Loaded {len(self.corpus_id_filter)} open access corpus ids")
+            logger.info(f"Loaded {len(self.corpus_id_filter)} open access corpus ids")
         else:
             self.corpus_id_filter = None
         self.hit_mul_factor = hit_mult_factor
@@ -52,11 +55,13 @@ class VespaIndex:
         """
         payload = self.get_yql_query(query, topk)
         headers = {"Content-Type": "application/json", "Authorization": f"{VESPA_INDEX_TOKEN}"}
-        print(payload)
+        logger.info(payload)
         response = requests.post(self.index_url, json=payload, headers=headers)
         if response.status_code != 200:
-            print(response.status_code)
-            raise Exception(f"Failed to retrieve papers from the S2 index. {response.text}")
+            logger.info(response.status_code)
+            msg = f"Failed to retrieve papers from the S2 index. {response.text}"
+            logger.exception(msg)
+            raise Exception(msg)
         else:
             results = response.json()
             unsorted_snippets = []
@@ -69,10 +74,10 @@ class VespaIndex:
                         )
                     )
             if filter_open_access and self.corpus_id_filter:
-                print(f"{len(unsorted_snippets)} retrieved from the index initially")
+                logger.info(f"{len(unsorted_snippets)} retrieved from the index initially")
                 unsorted_snippets = [snippet for snippet in unsorted_snippets if
                                      snippet["corpus_id"] in self.corpus_id_filter]
-                print(f"{len(unsorted_snippets)} retained after filtering for open access")
+                logger.info(f"{len(unsorted_snippets)} retained after filtering for open access")
 
             sorted_snippets = sorted(
                 unsorted_snippets, key=lambda s: s["score"], reverse=True
@@ -84,7 +89,7 @@ class VespaIndex:
 
 
 def get_vespa_index(version="v1"):
-    print(f"Loading vespa index version: {version}")
+    logger.info(f"Loading vespa index version: {version}")
     if version == "v1":
         return VespaIndex(
             end_pt="search",
@@ -125,10 +130,10 @@ def fetch_s2howable_flag(corpus_id: int) -> bool:
         if res.status_code == 200:
             return res.json()["s2howable"]
         else:
-            print(f"Received status code {res.status_code} from s2ub for corpus_id: {corpus_id}")
+            logger.exception(f"Received status code {res.status_code} from s2ub for corpus_id: {corpus_id}")
             raise Exception(f"Failed to fetch s2howable flag for corpus_id: {corpus_id}")
     except Exception as e:
-        print(f"Exception while calling s2ub: {e}")
+        logger.exception(f"Exception while calling s2ub: {e}")
         return False
 
 
@@ -160,7 +165,7 @@ def retrieve_contriever(query: str, topk: int) -> List[Dict[str, Any]]:
     headers = {"Content-Type": "application/json"}
     response = requests.post(CONTRIEVER_RETRIEVAL_API, json=json_data, headers=headers)
     if response.status_code != 200:
-        print(f"Error in retrieving snippets from url: {CONTRIEVER_RETRIEVAL_API}")
+        logger.exception(f"Error in retrieving snippets from url: {CONTRIEVER_RETRIEVAL_API}")
         raise Exception(
             f"Failed to retrieve snippets. Status code: {response.status_code}"
         )

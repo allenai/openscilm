@@ -1,21 +1,23 @@
 import copy
+import logging
 import os
 import re
 import threading
 from time import time
 from typing import Any, Dict, List
 
-import tool.instructions
-
 from nora_lib.tasks.state import StateManager
 from openai import OpenAI
 
+import tool.instructions
 from tool.event_tracing import EventTrace
 from tool.modal_engine import ModalEngine
 from tool.models import Citation, GeneratedIteration, TaskResult, ToolRequest
 from tool.retrieval import fetch_s2howable_flag, retrieve_contriever, get_vespa_index
-from tool.use_search_apis import batch_paper_data_SS_ID, search_paper_via_query
+from tool.use_search_apis import search_paper_via_query
 from tool.utils import extract_citations, remove_citations
+
+logger = logging.getLogger(__name__)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 RUNPOD_ID = os.getenv("RUNPOD_ID")
@@ -48,8 +50,10 @@ class OpenScholar:
         self.top_n = n_rerank
         self.context_threshold = context_threshold
         # FIXME: replace this with reranker API
+        model_name = "akariasai-ranker-large"
+        logger.info(f"using model {model_name} for reranking")
         self.reranker_engine = ModalEngine(
-            "akariasai-ranker-large", "inference_api", gen_options=dict()
+            model_name, "inference_api", gen_options=dict()
         )
         self.min_citation = None
         self.norm_cite = False
@@ -61,6 +65,7 @@ class OpenScholar:
             else retrieve_contriever
         )
         self.llm_model = llm_model
+        logger.info(f"using model {self.llm_model} for inference")
 
     ############################ OpenScholar Functions
 
@@ -118,7 +123,6 @@ class OpenScholar:
             )
         )
 
-        print(len(input_query.split()))
         outputs = self.llm_inference(
             input_query, temperature=0.7, max_tokens=max_tokens
         )
@@ -298,17 +302,18 @@ class OpenScholar:
         if task_id:
             task_state = self.task_mgr.read_state(task_id)
             task_state.task_status = status
+            logger.info(status)
             if estimated_time:
                 task_state.estimated_time = estimated_time
             if curr_response:
                 task_state.task_result = TaskResult(iterations=curr_response)
             self.task_mgr.write_state(task_state)
 
-    def retrieve(self, query: str, task_id: str) -> List[Dict[str, Any]]:
+    def retrieve(self, query: str, task_id: str, prefix: str = "") -> List[Dict[str, Any]]:
         snippets_list = self.retrieval_fn(query, self.n_retrieval)
-        status_str = f"{len(snippets_list)} snippets retrieved successfully"
+        status_str = f"{prefix}{len(snippets_list)} passages retrieved successfully"
         self.update_task_state(task_id, status_str)
-        print(f"retrieval done - {status_str}")
+        logger.info(f"{prefix}Retrieval complete - {status_str}")
 
         for snippet in snippets_list:
             snippet["text"] = remove_citations(snippet["text"])
@@ -332,6 +337,7 @@ class OpenScholar:
                 passages.append(doc["title"] + " " + doc["text"])
             else:
                 passages.append(doc["text"])
+        logger.info("Invoking the reranker deployed on Modal")
         rerank_scores = self.reranker_engine.generate(
             (query, passages), streaming=False
         )
@@ -340,7 +346,7 @@ class OpenScholar:
             score for score in rerank_scores if score > self.context_threshold
         ]
         if len(passages_above_threshold) < 3:
-            print("There is no relevant information in the retrieved snippets.")
+            logger.warning("There is no relevant information in the retrieved snippets.")
             raise Exception(
                 "There is no relevant information in the retrieved snippets. Please try a different query."
             )
@@ -414,6 +420,7 @@ class OpenScholar:
             )
 
         query, feedback_toggle = req.query, req.feedback_toggle
+        logger.info(f"Received query: {query} with feedback toggle: {feedback_toggle}")
         event_trace = EventTrace(
             task_id,
             self.llm_model,
@@ -424,25 +431,27 @@ class OpenScholar:
         )
         responses = []
         citation_lists = []
+        logger.info("Waking the modal deployment for a warm start")
         t = threading.Thread(target=self.llm_inference, args=("Just waking you up",))
         t.start()
 
-        self.update_task_state(task_id, "retrieving relevant snippets from 40M papers")
+        self.update_task_state(task_id, f"Retrieving top {self.n_retrieval} relevant paper passages from our corpus")
         retrieved_candidates = self.retrieve(query, task_id)
 
         self.update_task_state(
-            task_id, "fetching additonal passages from semantic scholar."
+            task_id, "Augmenting retrieved results with Semantic Scholar data"
         )
         retrieved_candidates += self.retrieve_additional_passages_ss(query)
-        print("retrieved new ppaers")
-        print(len(retrieved_candidates))
+        self.update_task_state(
+            task_id, f"Total {len(retrieved_candidates)} passages"
+        )
 
-        print("removed duplicated passages")
         retrieved_candidates = self.check_paper_duplication(retrieved_candidates)
+        logger.info(f"{len(retrieved_candidates)} remain after de-duplication")
 
         event_trace.trace_retrieval_event(retrieved_candidates, 0)
 
-        self.update_task_state(task_id, "reranking top passages")
+        self.update_task_state(task_id, f"Re-ranking to obtain top {self.n_rerank} passages")
         retrieved_candidates = self.rerank(query, retrieved_candidates)
         event_trace.trace_rerank_event(retrieved_candidates, 0)
         citation_lists.append(retrieved_candidates)
@@ -450,7 +459,7 @@ class OpenScholar:
         self.update_task_state(task_id, "Waiting for model cold start...")
         t.join()
         # generate response
-        self.update_task_state(task_id, "Generating the intial draft")
+        self.update_task_state(task_id, "Generating the initial draft")
         initial_response = self.generate_response(query, retrieved_candidates)
         # filter out unused citations
         used_ctxs_ids = extract_citations(initial_response)
@@ -477,7 +486,8 @@ class OpenScholar:
 
         # iteratiive feedback loop
         if feedback_toggle:
-            self.update_task_state(task_id, "Generating feedback on the initial draft.")
+            self.update_task_state(task_id, "Generating feedback(s) on the initial draft.",
+                                   estimated_time=f"{self.n_feedback} minutes")
             feedbacks = self.get_feedback(
                 query=query,
                 ctxs=retrieved_candidates,
@@ -487,7 +497,7 @@ class OpenScholar:
             for feedback_idx, feedback in enumerate(feedbacks):
                 self.update_task_state(
                     task_id,
-                    "Incorporating feedback {}.".format(feedback_idx),
+                    "Incorporating feedback {}.".format((feedback_idx+1)),
                     f"{(self.n_feedback - feedback_idx + 1)} minutes",
                 )
                 if len(feedback[1]) == 0:
@@ -514,9 +524,8 @@ class OpenScholar:
                             else:
                                 cand["used"] = False
 
-                        print("after feedback, the number of citations are: ")
-                        print(len(citation_lists[-1]))
-                        print("new responses added")
+                        logger.info(f"after feedback, the number of citations are: {len(citation_lists[-1])}")
+                        logger.info("new responses added")
                         responses.append(
                             get_response(
                                 {
@@ -535,7 +544,7 @@ class OpenScholar:
                 else:
                     new_papers = []
                     # FIXME: Fix API endpoint
-                    new_papers = self.retrieve(feedback[1] + " " + query, task_id)
+                    new_papers = self.retrieve(feedback[1] + " " + query, task_id, f"Feedback {(feedback_idx + 1)}- ")
                     if self.ss_retriever is True:
                         new_keywords = self.retrieve_keywords(feedback[1])
                         paper_list = {}
@@ -547,13 +556,14 @@ class OpenScholar:
                     if len(new_papers) > 0:
                         # TODO: add dedup check
                         new_papers = self.check_paper_duplication(new_papers)
-                        self.update_task_state(task_id, "reranking top passages")
+                        self.update_task_state(task_id, f"Feedback {(feedback_idx + 1)}- Re-ranking top passages")
                         new_papers = self.rerank(feedback[1] + " " + query, new_papers)
 
                         event_trace.trace_retrieval_event(new_papers, feedback_idx + 1)
                         prev_citations = copy.deepcopy(citation_lists[-1])
                         passages_start_index = len(prev_citations)
 
+                        self.update_task_state(task_id, f"Feedback {(feedback_idx + 1)}- Updating the draft")
                         edited_answer = self.edit_with_feedback_retrieval(
                             query=query,
                             ctxs=new_papers,
@@ -566,7 +576,7 @@ class OpenScholar:
                                 edited_answer.splitlines()) / len(previous_response.splitlines()) > 0.5:
                             prev_citations += new_papers[: self.top_n]
                             # merge citations
-                            print("merging citations")
+                            logger.info("merging citations")
                             text_to_citations = {}
                             for cand_idx, cand in enumerate(prev_citations):
                                 if " ".join(cand["text"].split()[:20]) in text_to_citations:
@@ -605,7 +615,7 @@ class OpenScholar:
                             print("skipping as edited answers got too short")
                 self.update_task_state(
                     task_id,
-                    f"Feedback {feedback_idx} incorporated successfully",
+                    f"Feedback {(feedback_idx + 1)}- Incorporated successfully",
                     curr_response=responses,
                 )
         event_trace.push_trace_to_gcs()
