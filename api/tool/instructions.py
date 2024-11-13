@@ -281,7 +281,8 @@ We provide a question related to recent scientific literature, an answer from a 
 Please incorporate the feedback to improve the answer. Only modify the parts that require enhancement as noted in the feedback, keeping the other sentences unchanged.
 Do not omit any crucial information from the original answer unless the feedback specifies that certain sentences are incorrect and should be removed.
 If you add new paragraphs or discussions, ensure that you are not introducing repetitive content or duplicating ideas already included in the original response.
-Use existing references presented under References to support the new discussions, referring to their citation numbers.
+Use existing references presented under References to support the new discussions, referring to their citation numbers. 
+Do not remove new lines or paragraphs in the original answer, unless the feedback specifies that certain sentences are incorrect and should be removed, or the paragrph organizations should be changed. 
 Your answer should be marked as [Response_Start] and [Response_End].\n
 References:
 [0] Title: Attributed Question Answering: Evaluation and Modeling for Attributed Large Language Models Text: Roberts et al. (2020) shows that T5 (Raffel et al., 2020) can perform a new task formulation, closedbook QA. Concretely, T5 can produce answers to questions without access to any corpus at inference time, instead producing answers based on its model parameters, tuned to remember information digested in pretraining.\n
@@ -390,9 +391,9 @@ We provide you with a question related to recent scientific literature, an answe
 
 Your task is to incorporate the feedback to improve the answer by including new results or details from the retrieved passages (References:). When adding new information, avoid copying entire passages; instead, summarize the key information from the suggested papers to address the feedback. 
 For instance, instead of copying the text from the original data, 'We found the empirical results X' to support the discussions without evidence in the original answer, say 'Former work found that X'. 
-Only modify the parts mentioned in the feedback, keeping the rest of the answer intact.
+Only modify the parts mentioned in the feedback, keeping the rest of the answer intact. 
+Do not remove new lines or paragraphs in the original answer, unless the feedback specifies that certain sentences are incorrect and should be removed, or the paragrph organizations should be changed. 
 Your improved answer should be marked with [Response_Start] and [Response_End].
-
 Question: What are the advantages of retrieval-augmented LMs?
 Answer: Retrieval-augmented LMs have been effective in various use cases, including reducing hallucinations [0] and enabling efficient adaptations to new data, such as temporal shifts [1]. Empirical results suggest they reduce hallucinations by 30% [2].
 Feedback: The answer provides solid empirical results on hallucination reduction but lacks data on efficient adaptations. Please include empirical results for that aspect as well.

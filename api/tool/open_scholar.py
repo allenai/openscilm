@@ -13,7 +13,7 @@ from openai import OpenAI
 from tool.event_tracing import EventTrace
 from tool.modal_engine import ModalEngine
 from tool.models import Citation, GeneratedIteration, TaskResult, ToolRequest
-from tool.retrieval import fetch_s2howable_flag, retrieve_contriever, retrieve_s2_index
+from tool.retrieval import fetch_s2howable_flag, retrieve_contriever, get_vespa_index
 from tool.use_search_apis import batch_paper_data_SS_ID, search_paper_via_query
 from tool.utils import extract_citations, remove_citations
 
@@ -32,13 +32,13 @@ SNIPPET_LENGTH = int(os.getenv("SNIPPET_LENGTH", 300))
 
 class OpenScholar:
     def __init__(
-        self,
-        task_mgr: StateManager,
-        n_retrieval: int = 100,
-        n_rerank: int = 8,
-        n_feedback: int = 1,
-        context_threshold: float = 0.5,
-        llm_model: str = "akariasai/os_8b",
+            self,
+            task_mgr: StateManager,
+            n_retrieval: int = 50,
+            n_rerank: int = 8,
+            n_feedback: int = 1,
+            context_threshold: float = 0.5,
+            llm_model: str = "akariasai/os_8b",
     ):
         # TODO: Initialize retriever and re-ranker clients here
         self.n_retrieval = n_retrieval
@@ -56,7 +56,7 @@ class OpenScholar:
         self.ss_retriever = False
         self.use_contexts = True
         self.retrieval_fn = (
-            retrieve_s2_index
+            get_vespa_index("v1").retrieve_s2_index
             if os.getenv("RETRIEVAL_SERVICE", "contriever").lower() == "vespa"
             else retrieve_contriever
         )
@@ -102,10 +102,10 @@ class OpenScholar:
         return ctxs
 
     def generate_response(
-        self,
-        query: str,
-        retrieved_ctxs: List[Dict[str, Any]],
-        max_tokens: int = 2000,
+            self,
+            query: str,
+            retrieved_ctxs: List[Dict[str, Any]],
+            max_tokens: int = 2000,
     ):
         ctxs_text = self.process_passage(retrieved_ctxs)
         if len(ctxs_text.split()) > 4500:
@@ -156,21 +156,18 @@ class OpenScholar:
 
     def check_paper_duplication(self, retrieved_papers: List[Dict[str, Any]]):
         papers_dicts = {
-            paper["text"][:100] + paper["title"]: paper
+            " ".join(paper["text"].split(" ")[:20]): paper
             for paper in retrieved_papers
-            if paper is not None
-            and type(paper["text"]) is str
-            and "title" in paper["title"]
-        }
+            if paper["text"] is not None and len(paper["text"].split(" ")) > 20}
         dedup_papers = list(papers_dicts.values())
 
         return dedup_papers
 
     def get_feedback(
-        self,
-        query: str,
-        ctxs: List[Dict[str, Any]],
-        initial_response: str,
+            self,
+            query: str,
+            ctxs: List[Dict[str, Any]],
+            initial_response: str,
     ):
         ctxs_text = self.process_passage(ctxs)
         input_query = tool.instructions.feedback_example_instance_prompt.format_map(
@@ -196,12 +193,12 @@ class OpenScholar:
         return feedbacks
 
     def edit_with_feedback(
-        self,
-        query: str,
-        ctxs: List[Dict[str, Any]],
-        previous_response: str,
-        feedback: str,
-        max_tokens: int = 3000,
+            self,
+            query: str,
+            ctxs: List[Dict[str, Any]],
+            previous_response: str,
+            feedback: str,
+            max_tokens: int = 3000,
     ):
         input_query = tool.instructions.editing_instance_prompt.format_map(
             {
@@ -228,13 +225,13 @@ class OpenScholar:
         return raw_output
 
     def edit_with_feedback_retrieval(
-        self,
-        query: str,
-        ctxs: List[Dict[str, Any]],
-        previous_response: str,
-        feedback: str,
-        passage_start_index,
-        max_tokens=3000,
+            self,
+            query: str,
+            ctxs: List[Dict[str, Any]],
+            previous_response: str,
+            feedback: str,
+            passage_start_index,
+            max_tokens=3000,
     ):
         processed_passages = ""
         for doc_idx, doc in enumerate(ctxs[: self.top_n]):
@@ -291,11 +288,11 @@ class OpenScholar:
 
     ############################ Code for API
     def update_task_state(
-        self,
-        task_id: str,
-        status: str,
-        estimated_time: str = None,
-        curr_response: List[GeneratedIteration] = None,
+            self,
+            task_id: str,
+            status: str,
+            estimated_time: str = None,
+            curr_response: List[GeneratedIteration] = None,
     ):
         status = f"{time()}:{status}"
         if task_id:
@@ -323,7 +320,7 @@ class OpenScholar:
         return snippets_list
 
     def rerank(
-        self, query: str, retrieved_ctxs: List[Dict[str, Any]]
+            self, query: str, retrieved_ctxs: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         passages = []
 
@@ -440,6 +437,9 @@ class OpenScholar:
         print("retrieved new ppaers")
         print(len(retrieved_candidates))
 
+        print("removed duplicated passages")
+        retrieved_candidates = self.check_paper_duplication(retrieved_candidates)
+
         event_trace.trace_retrieval_event(retrieved_candidates, 0)
 
         self.update_task_state(task_id, "reranking top passages")
@@ -447,7 +447,6 @@ class OpenScholar:
         event_trace.trace_rerank_event(retrieved_candidates, 0)
         citation_lists.append(retrieved_candidates)
 
-        print(len(citation_lists[0]))
         self.update_task_state(task_id, "Waiting for model cold start...")
         t.join()
         # generate response
@@ -505,8 +504,9 @@ class OpenScholar:
                             "Here is the revised answer:\n\n"
                         )[1]
                     if (
-                        len(edited_answer) > 0
-                        and len(edited_answer) / len(previous_response) > 0.9
+                            len(edited_answer) > 0
+                            and len(edited_answer) / len(previous_response) > 0.9 and len(
+                        edited_answer.splitlines()) / len(previous_response.splitlines()) > 0.5
                     ):
                         citation_lists.append(copy.deepcopy(edited_answer))
                         used_ctxs_ids = extract_citations(citation_lists[-1])
@@ -523,6 +523,10 @@ class OpenScholar:
                                 cand["used"] = True
                             else:
                                 cand["used"] = False
+
+                        print("after feedback, the number of citations are: ")
+                        print(len(citation_lists[-1]))
+                        print("new responses added")
                         responses.append(
                             get_response(
                                 {
@@ -541,7 +545,7 @@ class OpenScholar:
                 else:
                     new_papers = []
                     # FIXME: Fix API endpoint
-                    new_papers = self.retrieve(feedback[1], task_id)
+                    new_papers = self.retrieve(feedback[1] + " " + query, task_id)
                     if self.ss_retriever is True:
                         new_keywords = self.retrieve_keywords(feedback[1])
                         paper_list = {}
@@ -552,7 +556,10 @@ class OpenScholar:
                             new_papers += ss_retrieved_papers
                     if len(new_papers) > 0:
                         # TODO: add dedup check
-                        # new_papers = self.check_paper_duplication(new_papers)
+                        new_papers = self.check_paper_duplication(new_papers)
+                        self.update_task_state(task_id, "reranking top passages")
+                        new_papers = self.rerank(feedback[1] + " " + query, new_papers)
+
                         event_trace.trace_retrieval_event(new_papers, feedback_idx + 1)
                         prev_citations = copy.deepcopy(citation_lists[-1])
                         passages_start_index = len(prev_citations)
@@ -565,12 +572,26 @@ class OpenScholar:
                             passage_start_index=passages_start_index,
                         )
 
-                        if (len(edited_answer) / len(previous_response)) > 0.9:
+                        if (len(edited_answer) / len(previous_response)) > 0.9 and len(
+                                edited_answer.splitlines()) / len(previous_response.splitlines()) > 0.5:
                             prev_citations += new_papers[: self.top_n]
+                            # merge citations
+                            print("merging citations")
+                            text_to_citations = {}
+                            for cand_idx, cand in enumerate(prev_citations):
+                                if " ".join(cand["text"].split()[:20]) in text_to_citations:
+                                    print("merged citations")
+                                    print(cand_idx)
+                                    print(text_to_citations[" ".join(cand["text"].split()[:20])])
+                                    edited_answer.replace("[{}]".format(cand_idx), "[{}]".format(
+                                        text_to_citations[" ".join(cand["text"].split()[:20])]))
+                                else:
+                                    text_to_citations[" ".join(cand["text"].split()[:20])] = cand_idx
+
                             used_ctxs_ids = extract_citations(edited_answer)
                             for used_ctx_id in used_ctxs_ids:
                                 if used_ctx_id >= len(citation_lists[-1]):
-                                    initial_response = edited_answer.replace(
+                                    edited_answer = edited_answer.replace(
                                         "[{}]".format(used_ctx_id), ""
                                     )
 

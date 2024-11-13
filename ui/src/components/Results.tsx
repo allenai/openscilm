@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { StatusType, updateStatus } from '../api/utils';
-import { useQueryHistory } from './shared';
-import { useNavigate } from 'react-router-dom';
 import { Progress, ProgressPropType } from './Progress';
 import { Sections } from './Sections';
 
