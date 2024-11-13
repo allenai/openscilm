@@ -23,6 +23,7 @@ class ToolRequest(BaseModel):
                                                                         " iterations on the generated output"))
     opt_in: Optional[bool] = Field(default=True, description=(
         "Flag to indicate whether to include the query and response in public release"))
+    user_id: Optional[str] = Field(default=None, description="The user id of the user who posed the query")
 
 
 class Citation(BaseModel):

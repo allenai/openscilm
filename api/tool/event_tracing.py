@@ -11,6 +11,7 @@ class EventTrace:
     def __init__(self, task_id: str, llm_model: str, n_retrieval: int, n_rerank: int, n_feedback: int,
                  req: ToolRequest):
         self.query = req.query
+        self.user_id = req.user_id
         self.task_id = task_id
         self.llm_model = llm_model
         self.timestamp = datetime.now().isoformat()
