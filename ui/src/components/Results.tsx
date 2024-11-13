@@ -3,6 +3,7 @@ import { Box, Typography } from '@mui/material';
 import { StatusType, updateStatus } from '../api/utils';
 import { Progress, ProgressPropType } from './Progress';
 import { Sections } from './Sections';
+import { useQueryHistory } from './shared';
 
 const DEFAULT_INTERVAL = 3000;
 
@@ -15,6 +16,7 @@ export const Results: React.FC<PropType> = (props) => {
   const { taskId, interval = DEFAULT_INTERVAL } = props;
 
   const [status, setStatus] = useState<StatusType | undefined>();
+  const { history, setHistory } = useQueryHistory();
 
   const [progressProps, setProgressProps] = useState<Omit<ProgressPropType, 'isRunning'>>({
     estimatedTime: 'Loading...',
@@ -52,15 +54,6 @@ export const Results: React.FC<PropType> = (props) => {
             status: statusText,
             httpStatus: newStatus?.httpStatus ?? 200
           })
-          // if (!taskRunning && !history[taskId] && newStatus?.query) {
-          //   console.log('adding back,', newStatus.query, !taskRunning, !history[taskId], newStatus?.query)
-          //   setHistory({
-          //     ...history,
-          //     [taskId]: {
-          //       query: newStatus.query, taskId: taskId, timestamp: Date.now()
-          //     }
-          //   });
-          // }
         } catch (e) {
           console.error('error parsing status', e);
         }
@@ -77,6 +70,18 @@ export const Results: React.FC<PropType> = (props) => {
   }, [taskId, interval]);
 
   const taskRunning = 'task_status' in (status ?? {})
+  useEffect(() => {
+    if (!taskRunning && !history[taskId] && status?.query && status?.httpStatus === 200) {
+      setHistory({
+        ...history,
+        [taskId]: {
+          query: status.query, taskId: taskId, timestamp: Date.now()
+        }
+      });
+    } else {
+      console.log('not adding back', taskRunning, history[taskId], status?.query, status?.httpStatus)
+    }
+  }, [taskRunning, history, taskId, status?.query, status?.httpStatus, setHistory])
   const sections = status?.task_result?.sections ?? [];
 
   return (
