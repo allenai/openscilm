@@ -9,7 +9,6 @@ import {
 } from '@mui/material';
 import MessageBar from '../components/widgets/MessageBar';
 import { useNavigate } from "react-router-dom";
-import { CircularProgress } from '@mui/material';
 
 import { createTask } from '../api/utils';
 import { useQueryHistory } from '../components/shared';
@@ -26,12 +25,8 @@ export const Home = () => {
 
   const {history, setHistory} = useQueryHistory();
 
-  const [isLoading, setIsLoading] = React.useState<boolean>(false);
-
   const handleSubmit = useCallback(async (query: string, userId: string, optin: boolean = false) => {
     console.log(query)
-    setIsLoading(true);
-    setIsLoading(false);
 
     const newStatus = await createTask(query, optin, userId);
     console.log(newStatus, newStatus.task_id);
@@ -72,7 +67,7 @@ export const Home = () => {
                 <path fill="#EF529B" d="M62.9,40.5l-2.8-7.4h-15l-2.8,7.4h-4.9l11.5-31h7.2l11.5,31h-4.9ZM46.6,29.2h12.1l-6.1-16.4-6.1,16.4Z"/>
               </svg>
             </Box>
-            <Typography variant="body2">Synthesizing millions of open sourced computer science papers. <br /> A joint project between <Link href="https://www.semanticscholar.org" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>Semantic Scholar</Link> and the <Link href="https://www.washington.edu" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>University of Washington</Link></Typography>
+            <Typography variant="body2">Synthesizing millions of open sourced computer science papers. A joint project between <Link href="https://www.semanticscholar.org" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>Semantic Scholar</Link> and the <Link href="https://www.washington.edu" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>University of Washington</Link>. OpenScholar can make mistakes. Check important info.</Typography>
           </Box>
           
           <Box sx={{display: 'flex', flexDirection: 'column', gap:'8px'}}>
@@ -92,10 +87,6 @@ export const Home = () => {
               ))}
             </Grid>
           </Box>
-
-          <div>
-            {isLoading && <CircularProgress />}
-          </div>
         </Box>
       </Box>
     </>
