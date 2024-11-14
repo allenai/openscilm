@@ -1,10 +1,6 @@
 import React from 'react';
-import { Card, CardContent, CardMedia, CircularProgress, Link, Typography } from '@mui/material';
+import { Link } from '@mui/material';
 
-import TimeAgo from 'javascript-time-ago'
-
-import en from 'javascript-time-ago/locale/en'
-TimeAgo.addDefaultLocale(en)
 
 import { AuthorType } from '../api/utils';
 
