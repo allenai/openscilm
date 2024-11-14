@@ -436,7 +436,7 @@ class OpenScholar:
                     "We cannot answer questions about people. Please try again with a different query"
                 )
         except Exception as e:
-            self.update_task_state(task_id, f"Query validation failed: {e}")
+            logger.info(f"{task_id}: Query validation failed, {e}")
             if queue:
                 queue.put(e)
         queue.put(True)
