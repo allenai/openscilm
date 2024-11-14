@@ -188,6 +188,7 @@ def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:
         state.task_result = task_result
         state.task_status = task_status
         state.extra_state = extra_state
+        state.estimated_time = "--"
         task_state_manager.write_state(state)
 
     async_context.Process(

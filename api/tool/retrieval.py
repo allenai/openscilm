@@ -1,10 +1,11 @@
 import os
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Set
 
 import requests
-from tool.use_search_apis import get_paper_data
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import csv
 import logging
+from tool.utils import query_s2_api
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,8 @@ VESPA_INDEX_TOKEN = os.getenv("VESPA_INDEX_TOKEN")
 
 class VespaIndex:
     def __init__(self, end_pt: str, query_id: str, ranking_profile: str, nn_arg: str, embed_dict: Dict[str, str],
-                 yql_target_hits=10000, timeout=60, corpus_id_filter_file: str = None, hit_mult_factor: float = 1.0):
+                 yql_target_hits=10000, timeout=60, corpus_id_filter_file: str = None, hit_mult_factor: float = 1.0,
+                 check_showable=True):
         self.index_url = f"{VESPA_BASE_URL}/{end_pt}/"
         self.query_id = query_id
         self.nn_arg = nn_arg
@@ -35,6 +37,7 @@ class VespaIndex:
             logger.info(f"Loaded {len(self.corpus_id_filter)} open access corpus ids")
         else:
             self.corpus_id_filter = None
+        self.check_showable = check_showable
         self.hit_mul_factor = hit_mult_factor
 
     def get_yql_query(self, query: str, topk: int) -> Dict[str, Any]:
@@ -55,7 +58,7 @@ class VespaIndex:
         """
         payload = self.get_yql_query(query, topk)
         headers = {"Content-Type": "application/json", "Authorization": f"{VESPA_INDEX_TOKEN}"}
-        logger.info(f"Vespa query:{payload}")
+        logger.info(f"Vespa Snippet query:{payload}")
         response = requests.post(self.index_url, json=payload, headers=headers)
         if response.status_code != 200:
             logger.info(response.status_code)
@@ -73,19 +76,52 @@ class VespaIndex:
                             child_dict=child
                         )
                     )
+
             if filter_open_access and self.corpus_id_filter:
                 logger.info(f"{len(unsorted_snippets)} retrieved from the index initially")
                 unsorted_snippets = [snippet for snippet in unsorted_snippets if
                                      snippet["corpus_id"] in self.corpus_id_filter]
                 logger.info(f"{len(unsorted_snippets)} retained after filtering for open access")
 
+            if self.check_showable:
+                logger.info("Checking s2howable flag for the papers")
+                s2howable_papers = fetch_s2howable_papers([snippet["corpus_id"] for snippet in unsorted_snippets])
+                unsorted_snippets = [snippet for snippet in unsorted_snippets if
+                                     snippet["corpus_id"] in s2howable_papers]
+                logger.info(f"{len(unsorted_snippets)} retained after filtering for s2howable")
+
             sorted_snippets = sorted(
                 unsorted_snippets, key=lambda s: s["score"], reverse=True
             )[:topk]
-            paper_titles = get_paper_titles([snippet["corpus_id"] for snippet in sorted_snippets])
+            logger.info("Trying to retrieve paper titles from vespa")
+            paper_titles = self.get_paper_titles_vespa([snippet["corpus_id"] for snippet in sorted_snippets])
             for snippet in sorted_snippets:
                 snippet["title"] = paper_titles[snippet["corpus_id"]] if snippet["corpus_id"] in paper_titles else ""
             return sorted_snippets
+
+    def get_paper_titles_vespa(self, corpus_ids: List[str]):
+        corpus_ids_param = ", ".join([f"{cid}" for cid in corpus_ids])
+        payload = {
+            "yql": "select paper_corpus_id,text from snippet where paper_corpus_id in (@paper_corpus_ids) and snippet_kind contains \"title\"",
+            "ranking": "unranked", "hits": 400, "ranking.sorting": "+paper_corpus_id +snippet_idx",
+            "offset": 0, "paper_corpus_ids": f"{corpus_ids_param}",
+            "timeout": 60, "presentation.timing": True}
+        logger.info(f"Vespa paper title query:{payload}")
+        headers = {"Content-Type": "application/json", "Authorization": f"{VESPA_INDEX_TOKEN}"}
+        response = requests.post(self.index_url, json=payload, headers=headers)
+        if response.status_code != 200:
+            logger.info(response.status_code)
+            msg = f"Failed to retrieve papers from the S2 index. Received {response.status_code} from retrieval api."
+            logger.warning(msg)
+            logger.info("Trying to retrieve titles from s2 api now")
+            return get_paper_titles(corpus_ids)
+        else:
+            results = response.json()
+            paper_titles = {
+                hit["fields"]["paper_corpus_id"]: hit["fields"]["text"]
+                for hit in results["root"]["children"]
+            }
+            return paper_titles
 
 
 def get_vespa_index(version="v1"):
@@ -101,7 +137,7 @@ def get_vespa_index(version="v1"):
                 "input.query(qse)": "embed(sparseembed, @query)"
             },
             corpus_id_filter_file=f'{os.getenv("OPEN_ACCESS_FILE", "./open_access/oa_corpus_ids.csv")}',
-            hit_mult_factor=1.5
+            hit_mult_factor=2.0
         )
     else:
         return VespaIndex(
@@ -122,29 +158,47 @@ S2UB_S2HOWABLE_API = "https://s2ub.prod.s2.allenai.org/service/s2howable/v1/show
 S2HOWABLE_S2UB_TOKEN = os.getenv("S2HOWABLE_S2UB_TOKEN")
 
 
-def fetch_s2howable_flag(corpus_id: int) -> bool:
+def fetch_showable_flag(corpus_id: str):
     headers = {"Authorization": f"Bearer {S2HOWABLE_S2UB_TOKEN}"}
     try:
         url = f"{S2UB_S2HOWABLE_API}/{corpus_id}"
         res = requests.get(url, headers=headers)
         if res.status_code == 200:
-            return res.json()["s2howable"]
+            return res.json()["s2howable"], corpus_id
         else:
             logger.exception(f"Received status code {res.status_code} from s2ub for corpus_id: {corpus_id}")
             raise Exception(f"Failed to fetch s2howable flag for corpus_id: {corpus_id}")
     except Exception as e:
         logger.exception(f"Exception while calling s2ub: {e}")
-        return False
+        return False, corpus_id
 
 
-def get_paper_titles(corpus_ids: List[int]):
-    paper_titles = {}
-    paper_data = {
-        pes2o_id: get_paper_data(pes2o_id) for pes2o_id in corpus_ids
+def fetch_s2howable_papers(corpus_ids: List[str], num_works=10) -> Set[str]:
+    s2howable_papers = set()
+    with ThreadPoolExecutor(max_workers=num_works) as executor:
+        futures = {
+            executor.submit(fetch_showable_flag, cid): cid
+            for cid in corpus_ids
+        }
+        for future in as_completed(futures):
+            iss2howable, corpus_id = future.result()
+            if iss2howable:
+                s2howable_papers.add(corpus_id)
+    return s2howable_papers
+
+
+def get_paper_titles(corpus_ids: List[str]):
+    paper_data = query_s2_api(
+        end_pt="paper/batch",
+        params={
+            "fields": "title,corpusId"
+        },
+        payload={"ids": ["CorpusId:{0}".format(cid) for cid in corpus_ids]},
+        method="post",
+    )
+    paper_titles = {
+        pdata["corpusId"]: pdata["title"] for pdata in paper_data if pdata and "title" in pdata and "corpusId" in pdata
     }
-    for paper_id in paper_data:
-        if "title" in paper_data[paper_id]:
-            paper_titles[paper_id] = paper_data[paper_id]["title"]
     return paper_titles
 
 
