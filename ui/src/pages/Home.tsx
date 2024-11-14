@@ -14,9 +14,9 @@ import { createTask } from '../api/utils';
 import { useQueryHistory } from '../components/shared';
 
 const SUGGESTIONS: { link: string, shortName: string }[] = [
-  {link: 'https://open-scholar.allen.ai/query/303bed4a-3988-42a4-a60f-d321a698b66e', shortName: 'Compare two papers'},
-  {link: 'https://open-scholar.allen.ai/query/9cc9b2f9-52d4-4660-9845-4e1272d178a4', shortName: 'SWE-bench leaderboard'},
-  {link: 'https://open-scholar.allen.ai/query/28cd2f86-22fa-4168-9220-340daf0c8ec6', shortName: 'Scaling retrieval-augmented LMs'}
+  {link: 'https://openscholar.allen.ai/query/303bed4a-3988-42a4-a60f-d321a698b66e', shortName: 'Compare two papers'},
+  {link: 'https://openscholar.allen.ai/query/9cc9b2f9-52d4-4660-9845-4e1272d178a4', shortName: 'SWE-bench leaderboard'},
+  {link: 'https://openscholar.allen.ai/query/28cd2f86-22fa-4168-9220-340daf0c8ec6', shortName: 'Scaling retrieval-augmented LMs'}
 ]
 
 export const Home = () => {
