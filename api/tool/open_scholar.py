@@ -418,7 +418,7 @@ class OpenScholar:
             # Perform case-insensitive match
             return bool(re.match(pattern, question.lower(), re.IGNORECASE))
 
-        self.update_task_state(task_id, "Validating the query")
+        # self.update_task_state(task_id, "Validating the query")
         logger.info(
             f"{task_id}: Checking query for malicious content with wildguard..."
         )
@@ -481,6 +481,7 @@ class OpenScholar:
                 ],
             )
 
+        self.update_task_state(task_id, "Processing user query")
         queue = Queue()
         process = Process(target=self.validate, args=(req.query, task_id, queue))
         process.start()

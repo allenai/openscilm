@@ -3,6 +3,7 @@ import multiprocessing
 import os
 import re
 import uuid
+from json import JSONDecodeError
 from typing import Union
 
 from fastapi import FastAPI, HTTPException
@@ -22,6 +23,7 @@ from tool.models import (
 from tool.open_scholar import OpenScholar
 from tool.retrieval import get_vespa_index
 from tool.utils import query_s2_api
+from time import time
 
 # If LOG_FORMAT is "google:json" emit log message as JSON in a format Google Cloud can parse.
 fmt = os.getenv("LOG_FORMAT")
@@ -33,6 +35,8 @@ logging.basicConfig(level=level, handlers=handlers)
 logger = logging.getLogger(__name__)
 
 ASYNC_STATE_DIR = os.getenv("ASYNC_STATE_DIR", "/async-state")
+
+TIMEOUT = 240
 
 if not os.path.exists(ASYNC_STATE_DIR):
     os.makedirs(ASYNC_STATE_DIR)
@@ -148,7 +152,7 @@ def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:
         estimated_time=estimated_time,
         task_status=TASK_STATUSES["STARTED"],
         task_result=None,
-        extra_state={},
+        extra_state={"start": time()},
     )
     task_state_manager.write_state(task_state)
 
@@ -157,6 +161,7 @@ def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:
         try:
             task_result = _do_task(tool_request, task_id)
             task_status = TASK_STATUSES["COMPLETED"]
+            extra_state["end"] = time()
         except Exception as e:
             task_result = None
             task_status = TASK_STATUSES["FAILED"]
@@ -165,7 +170,7 @@ def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:
         state = task_state_manager.read_state(task_id)
         state.task_result = task_result
         state.task_status = task_status
-        state.extra_state = extra_state
+        state.extra_state.update(extra_state)
         state.estimated_time = "--"
         task_state_manager.write_state(state)
 
@@ -196,11 +201,13 @@ def _handle_async_task_check_in(
         raise HTTPException(
             status_code=404, detail=f"Referenced task {task_id} does not exist."
         )
+    except JSONDecodeError as e:
+        logger.warning(f"{task_id} state file is corrupted, should be updated on next poll: {e}")
 
     # Retrieve data, which is just on local disk for now
     if task_state.task_status == TASK_STATUSES["FAILED"]:
         msg = f"Referenced task failed."
-        if task_state.extra_state:
+        if task_state.extra_state and "error" in task_state.extra_state:
             msg += f" Error: {task_state.extra_state['error']}"
             logger.exception(msg)
         raise HTTPException(status_code=500, detail=f"{msg}")
@@ -213,12 +220,24 @@ def _handle_async_task_check_in(
                 status_code=500,
                 detail=msg,
             )
-
+        if "start" in task_state.extra_state and "end" in task_state.extra_state:
+            logger.info(f"{task_id}: completed in {task_state.extra_state['end'] - task_state.extra_state['start']} seconds.")
         return ToolResponse(
             task_id=task_state.task_id,
             query=task_state.query,
             task_result=task_state.task_result,
         )
+
+    if task_state.task_status not in {TASK_STATUSES["COMPLETED"], TASK_STATUSES["FAILED"]} and "start" in task_state.extra_state:
+        elapsed = time() - task_state.extra_state["start"]
+        if elapsed > TIMEOUT:
+            task_state.task_status = TASK_STATUSES["FAILED"]
+            task_state.extra_state["error"] = f"Task timed out after {TIMEOUT} seconds"
+            task_state_manager.write_state(task_state)
+            logger.info(f"{task_id}: timed out after {time() - task_state.extra_state['start']} seconds.")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Task timed out after {TIMEOUT} seconds.")
 
     return AsyncToolResponse(
         task_id=task_state.task_id,

@@ -22,7 +22,7 @@ export interface ProgressPropType {
 export const Progress: React.FC<ProgressPropType> = (props) => {
   
   const { estimatedTime, startTime, status, httpStatus, isRunning } = props;
-  const timeAgo = useTimeAgo({ date: startTime * 1000, locale: 'en-US', updateInterval: 1, timeStyle: 'twitter' });
+  const timeAgo = useTimeAgo({ date: Math.max(1, startTime) * 1000, locale: 'en-US', updateInterval: 1, timeStyle: 'twitter' });
 
   return (
     <Card sx={{ width: 500, maxWidth: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
