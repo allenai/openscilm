@@ -9,7 +9,6 @@ import {
 } from '@mui/material';
 import MessageBar from '../components/widgets/MessageBar';
 import { useNavigate } from "react-router-dom";
-import { CircularProgress } from '@mui/material';
 
 import { createTask } from '../api/utils';
 import { useQueryHistory } from '../components/shared';
@@ -26,12 +25,8 @@ export const Home = () => {
 
   const {history, setHistory} = useQueryHistory();
 
-  const [isLoading, setIsLoading] = React.useState<boolean>(false);
-
   const handleSubmit = useCallback(async (query: string, userId: string, optin: boolean = false) => {
     console.log(query)
-    setIsLoading(true);
-    setIsLoading(false);
 
     const newStatus = await createTask(query, optin, userId);
     console.log(newStatus, newStatus.task_id);
@@ -93,9 +88,6 @@ export const Home = () => {
             </Grid>
           </Box>
 
-          <div>
-            {isLoading && <CircularProgress />}
-          </div>
         </Box>
       </Box>
     </>
