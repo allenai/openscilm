@@ -477,7 +477,7 @@ class OpenScholar:
                     for idx, cite in enumerate(iteration["citations"]) if cite["used"]
                 ],
             )
-
+        self.update_task_state(task_id, "Processing user query")
         queue = Queue()
         process = Process(target=self.validate, args=(req.query, task_id, queue))
         process.start()
