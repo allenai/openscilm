@@ -3,6 +3,7 @@ import multiprocessing
 import os
 import re
 import uuid
+from json import JSONDecodeError
 from typing import Union
 
 from fastapi import FastAPI, HTTPException
@@ -160,6 +161,7 @@ def _start_async_task(task_id: str, tool_request: ToolRequest) -> str:
         try:
             task_result = _do_task(tool_request, task_id)
             task_status = TASK_STATUSES["COMPLETED"]
+            extra_state["end"] = time()
         except Exception as e:
             task_result = None
             task_status = TASK_STATUSES["FAILED"]
@@ -199,6 +201,8 @@ def _handle_async_task_check_in(
         raise HTTPException(
             status_code=404, detail=f"Referenced task {task_id} does not exist."
         )
+    except JSONDecodeError as e:
+        logger.warning(f"{task_id} state file is corrupted, should be updated on next poll: {e}")
 
     # Retrieve data, which is just on local disk for now
     if task_state.task_status == TASK_STATUSES["FAILED"]:
@@ -216,22 +220,24 @@ def _handle_async_task_check_in(
                 status_code=500,
                 detail=msg,
             )
-        logger.info(f"{task_id}: completed in {time() - task_state.extra_state['start']} seconds.")
+        if "start" in task_state.extra_state and "end" in task_state.extra_state:
+            logger.info(f"{task_id}: completed in {task_state.extra_state['end'] - task_state.extra_state['start']} seconds.")
         return ToolResponse(
             task_id=task_state.task_id,
             query=task_state.query,
             task_result=task_state.task_result,
         )
 
-    elapsed = time() - task_state.extra_state["start"]
-    if elapsed > TIMEOUT:
-        task_state.task_status = TASK_STATUSES["FAILED"]
-        task_state.extra_state["error"] = f"Task timed out after {TIMEOUT} seconds"
-        task_state_manager.write_state(task_state)
-        logger.info(f"{task_id}: timed out after {time() - task_state.extra_state['start']} seconds.")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Task timed out after {TIMEOUT} seconds.")
+    if task_state.task_status not in {TASK_STATUSES["COMPLETED"], TASK_STATUSES["FAILED"]} and "start" in task_state.extra_state:
+        elapsed = time() - task_state.extra_state["start"]
+        if elapsed > TIMEOUT:
+            task_state.task_status = TASK_STATUSES["FAILED"]
+            task_state.extra_state["error"] = f"Task timed out after {TIMEOUT} seconds"
+            task_state_manager.write_state(task_state)
+            logger.info(f"{task_id}: timed out after {time() - task_state.extra_state['start']} seconds.")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Task timed out after {TIMEOUT} seconds.")
 
     return AsyncToolResponse(
         task_id=task_state.task_id,

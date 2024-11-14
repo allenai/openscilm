@@ -416,7 +416,7 @@ class OpenScholar:
             # Perform case-insensitive match
             return bool(re.match(pattern, question.lower(), re.IGNORECASE))
 
-        self.update_task_state(task_id, "Validating the query")
+        # self.update_task_state(task_id, "Validating the query")
         logger.info(f"{task_id}: Checking query for malicious content with wildguard...")
         try:
             wildguard_out = self.wildguard_engine.generate(
