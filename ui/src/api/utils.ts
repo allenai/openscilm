@@ -44,7 +44,6 @@ export interface PaperDetailsType {
   corpusId: number;
   authors: AuthorType[];
   venue: string
-
 }
 
 export const fetchPapersDetails = async (corpusIds: number[], fields: string[] = ['title', 'authors', 'year', 'corpusId', 'venue']) => {
