@@ -2,7 +2,10 @@ import React, { useCallback } from 'react';
 import {  
   Box,
   Typography,
-  Link
+  Link,
+  styled,
+  alpha,
+  Grid
 } from '@mui/material';
 import MessageBar from '../components/widgets/MessageBar';
 import { useNavigate } from "react-router-dom";
@@ -10,6 +13,12 @@ import { CircularProgress } from '@mui/material';
 
 import { createTask } from '../api/utils';
 import { useQueryHistory } from '../components/shared';
+
+const SUGGESTIONS: { link: string, shortName: string }[] = [
+  {link: 'https://open-scholar.allen.ai/query/303bed4a-3988-42a4-a60f-d321a698b66e', shortName: 'Compare two papers'},
+  {link: 'https://open-scholar.allen.ai/query/9cc9b2f9-52d4-4660-9845-4e1272d178a4', shortName: 'SWE-bench leaderboard'},
+  {link: 'https://open-scholar.allen.ai/query/28cd2f86-22fa-4168-9220-340daf0c8ec6', shortName: 'Scaling retrieval-augmented LMs'}
+]
 
 export const Home = () => {
 
@@ -81,9 +90,24 @@ export const Home = () => {
             </Box> */}
           </Box>
 
+          <Typography variant="body2">Synthesizing millions of open sourced computer science papers. A joint project between <Link href="https://www.semanticscholar.org" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>Semantic Scholar</Link> and the <Link href="https://www.washington.edu" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>University of Washington</Link></Typography>
+
           <MessageBar onSend={handleSubmit} />
 
-          <Typography variant="body2">A joint project between <Link href="https://www.semanticscholar.org" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>Semantic Scholar</Link> and the <Link href="https://www.washington.edu" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>University of Washington</Link></Typography>
+          <Grid
+            container
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1}
+            sx={{ mt: '16px', alignItems: 'center' }}
+          >
+            {SUGGESTIONS.map((suggestion) => (
+              <Grid item key={suggestion.link}>
+                <SuggestedPrompt href={suggestion.link}>
+                  {suggestion.shortName}
+                </SuggestedPrompt>
+              </Grid>
+            ))}
+          </Grid>
 
           <div>
             {isLoading && <CircularProgress />}
@@ -93,3 +117,24 @@ export const Home = () => {
     </>
   );
 };
+
+const SuggestedPrompt = styled('a')`
+  border: 1px solid ${({ theme }) => alpha(theme.color['off-white'].hex, 0.1)};
+  border-radius: 6px;
+  color: ${({ theme }) => theme.color.N1.hex};
+  display: flex;
+  font-size: ${({ theme }) => theme.font.size.md};
+  gap: ${({ theme }) => theme.spacing(1)};
+  line-height: ${({ theme }) => theme.spacing(3)};
+  margin-bottom: ${({ theme }) => theme.spacing(0.5)};
+  padding: ${({ theme }) => theme.spacing(1, 1.5)};
+  text-decoration: none !important;
+
+  :hover {
+    color: ${({ theme }) => theme.color.N5.hex};
+  }
+
+  & .MuiSvgIcon-root {
+    color: ${({ theme }) => theme.color['green-100'].hex};
+  }
+`;
