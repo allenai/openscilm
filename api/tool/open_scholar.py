@@ -120,7 +120,7 @@ class OpenScholar:
         if len(ctxs_text.split()) > 4500:
             ctxs_text = ctxs_text.split()
             ctxs_text = " ".join(ctxs_text[:4000])
-
+        logger.info(f"Context length: {len(ctxs_text)}")
         input_query = (
             tool.instructions.generation_instance_prompts_w_references.format_map(
                 {"context": ctxs_text, "input": query}
@@ -138,6 +138,7 @@ class OpenScholar:
         #     )
         #     outputs = self.model.generate([input_query], sampling_params)
         #     outputs = [it.outputs[0].text for it in outputs][0]
+        logger.info(f"Generated response: {outputs[:100]}...{len(outputs)}")
         raw_output = (
             [
                 t.split("[Response_End]")[0]
@@ -524,6 +525,9 @@ class OpenScholar:
         # generate response
         self.update_task_state(task_id, "Generating the initial draft")
         initial_response = self.generate_response(query, retrieved_candidates)
+        if len(initial_response) < 10:
+            logger.warning(f"Initial response is too short: {initial_response}, retrying")
+            initial_response = self.generate_response(query, retrieved_candidates)
         # filter out unused citations
         used_ctxs_ids = list(set(extract_citations(initial_response)))
         for cand_idx, cand in enumerate(retrieved_candidates):
