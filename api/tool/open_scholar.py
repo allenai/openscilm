@@ -477,7 +477,6 @@ class OpenScholar:
         # generate response
         self.update_task_state(task_id, "Generating the initial draft")
         initial_response = self.generate_response(query, retrieved_candidates)
-        logger.info(f"Initial response: {initial_response[:100]}")
         # filter out unused citations
         used_ctxs_ids = list(set(extract_citations(initial_response)))
         for cand_idx, cand in enumerate(retrieved_candidates):
@@ -495,6 +494,7 @@ class OpenScholar:
                 }
             )
         )
+        logger.info(f"{task_id}: Initial response: {initial_response[:100]}..., Citations: {len(responses[-1].citations)}")
         event_trace.trace_summary_event(responses[0].model_dump(), 0)
 
         self.update_task_state(
