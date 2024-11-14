@@ -220,7 +220,7 @@ def _handle_async_task_check_in(
 
     # Retrieve data, which is just on local disk for now
     if task_state.task_status == TASK_STATUSES["FAILED"]:
-        msg = f"Referenced task {task_id} failed."
+        msg = f"Referenced task failed."
         if task_state.extra_state:
             msg += f" Error: {task_state.extra_state['error']}"
             logger.exception(msg)
@@ -228,7 +228,7 @@ def _handle_async_task_check_in(
 
     if task_state.task_status == TASK_STATUSES["COMPLETED"]:
         if not task_state.task_result:
-            msg = f"Task {task_id} marked completed but has no result."
+            msg = f"Task marked completed but has no result."
             logger.error(msg)
             raise HTTPException(
                 status_code=500,

@@ -350,10 +350,10 @@ class OpenScholar:
         ]
         if filtering is True and len(passages_above_threshold) < 3:
             logger.warning(
-                "There is no relevant information in the retrieved snippets."
+                "No relevant information found for the query."
             )
             raise Exception(
-                "There is no relevant information in the retrieved snippets. Please try a different query."
+                "No relevant information found for your query. Please try a different one."
             )
         for doc, rerank_score in zip(retrieved_ctxs, rerank_scores):
             doc["rerank_score"] = rerank_score
