@@ -13,7 +13,7 @@ from openai import OpenAI
 from tool.event_tracing import EventTrace
 from tool.modal_engine import ModalEngine
 from tool.models import Citation, GeneratedIteration, TaskResult, ToolRequest
-from tool.retrieval import fetch_s2howable_flag, get_vespa_index, retrieve_contriever
+from tool.retrieval import get_vespa_index, retrieve_contriever
 from tool.use_search_apis import search_paper_via_query
 from tool.utils import extract_citations, remove_citations
 
@@ -314,6 +314,10 @@ class OpenScholar:
     def retrieve(
         self, query: str, task_id: str, prefix: str = ""
     ) -> List[Dict[str, Any]]:
+        self.update_task_state(
+            task_id,
+            f"{prefix}Retrieving top {self.n_retrieval} relevant paper passages from our corpus",
+        )
         snippets_list = self.retrieval_fn(query, self.n_retrieval)
         status_str = f"{prefix}{len(snippets_list)} passages retrieved successfully"
         self.update_task_state(task_id, status_str)
@@ -416,8 +420,6 @@ class OpenScholar:
                         corpus_id=cite["corpus_id"],
                         snippet=(
                             cite["text"]
-                            if fetch_s2howable_flag(cite["corpus_id"])
-                            else truncate_snippet(cite["text"])
                         ),
                         score=cite["score"] if "score" in cite else 0.0,
                     )
@@ -441,17 +443,13 @@ class OpenScholar:
         t = threading.Thread(target=self.llm_inference, args=("Just waking you up",))
         t.start()
 
-        self.update_task_state(
-            task_id,
-            f"Retrieving top {self.n_retrieval} relevant paper passages from our corpus",
-        )
         retrieved_candidates = self.retrieve(query, task_id)
 
-        self.update_task_state(
-            task_id, "Augmenting retrieved results with Semantic Scholar data"
-        )
-        retrieved_candidates += self.retrieve_additional_passages_ss(query)
-        self.update_task_state(task_id, f"Total {len(retrieved_candidates)} passages")
+        # self.update_task_state(
+        #     task_id, "Augmenting retrieved results with Semantic Scholar data"
+        # )
+        # retrieved_candidates += self.retrieve_additional_passages_ss(query)
+        # self.update_task_state(task_id, f"Total {len(retrieved_candidates)} passages")
 
         retrieved_candidates = self.check_paper_duplication(retrieved_candidates)
         logger.info(f"{task_id}: {len(retrieved_candidates)} remain after de-duplication")
