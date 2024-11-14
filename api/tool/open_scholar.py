@@ -232,6 +232,9 @@ class OpenScholar:
             if "[Response_End]" in outputs
             else outputs
         )
+
+        if "References:" in raw_output:
+            raw_output = raw_output.split("References:")[0]
         return raw_output
 
     def edit_with_feedback_retrieval(
@@ -277,6 +280,9 @@ class OpenScholar:
             if "[Response_End]" in outputs
             else outputs
         )
+
+        if "References:" in raw_output:
+            raw_output = raw_output.split("References:")[0]
         return raw_output
 
     def retrieve_keywords(self, input_query: str):
