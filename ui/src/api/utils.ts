@@ -47,6 +47,9 @@ export interface PaperDetailsType {
 }
 
 export const fetchPapersDetails = async (corpusIds: number[], fields: string[] = ['title', 'authors', 'year', 'corpusId', 'venue']) => {
+  if (corpusIds.length === 0) {
+    return [];
+  }
   const response = await fetch(
     '/api/paper_details',
     {
@@ -54,6 +57,9 @@ export const fetchPapersDetails = async (corpusIds: number[], fields: string[] =
       body: JSON.stringify({ corpus_ids: corpusIds, fields })
     }
   );
+  if (response.status !== 200) {
+    return []
+  }
   // return (await response.json() as unknown as {detail: PaperDetailsType[]}).detail;
   return await response.json() as unknown as PaperDetailsType[]
 }
