@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import threading
+from multiprocessing import Process, Queue
 from time import time
 from typing import Any, Dict, List
 
@@ -16,7 +17,6 @@ from tool.models import Citation, GeneratedIteration, TaskResult, ToolRequest
 from tool.retrieval import get_vespa_index, retrieve_contriever
 from tool.use_search_apis import search_paper_via_query
 from tool.utils import extract_citations, remove_citations
-from multiprocessing import Process, Queue
 
 logger = logging.getLogger(__name__)
 
@@ -32,16 +32,18 @@ LLM_BASE_URL = MODAL_OPENAI_BASE_URL
 LLM_KEY = MODAL_WEB_AUTH_KEY
 SNIPPET_LENGTH = int(os.getenv("SNIPPET_LENGTH", 300))
 
+filter_demo_pattern = r"\s*[^.!?]*\[20\]\."
+
 
 class OpenScholar:
     def __init__(
-            self,
-            task_mgr: StateManager,
-            n_retrieval: int = 50,
-            n_rerank: int = 8,
-            n_feedback: int = 1,
-            context_threshold: float = 0.5,
-            llm_model: str = "akariasai/os_8b",
+        self,
+        task_mgr: StateManager,
+        n_retrieval: int = 50,
+        n_rerank: int = 8,
+        n_feedback: int = 1,
+        context_threshold: float = 0.5,
+        llm_model: str = "akariasai/os_8b",
     ):
         # TODO: Initialize retriever and re-ranker clients here
         self.n_retrieval = n_retrieval
@@ -111,10 +113,10 @@ class OpenScholar:
         return ctxs
 
     def generate_response(
-            self,
-            query: str,
-            retrieved_ctxs: List[Dict[str, Any]],
-            max_tokens: int = 2000,
+        self,
+        query: str,
+        retrieved_ctxs: List[Dict[str, Any]],
+        max_tokens: int = 2000,
     ):
         ctxs_text = self.process_passage(retrieved_ctxs)
         if len(ctxs_text.split()) > 4500:
@@ -174,10 +176,10 @@ class OpenScholar:
         return dedup_papers
 
     def get_feedback(
-            self,
-            query: str,
-            ctxs: List[Dict[str, Any]],
-            initial_response: str,
+        self,
+        query: str,
+        ctxs: List[Dict[str, Any]],
+        initial_response: str,
     ):
         ctxs_text = self.process_passage(ctxs)
         input_query = tool.instructions.feedback_example_instance_prompt.format_map(
@@ -203,12 +205,12 @@ class OpenScholar:
         return feedbacks
 
     def edit_with_feedback(
-            self,
-            query: str,
-            ctxs: List[Dict[str, Any]],
-            previous_response: str,
-            feedback: str,
-            max_tokens: int = 2000,
+        self,
+        query: str,
+        ctxs: List[Dict[str, Any]],
+        previous_response: str,
+        feedback: str,
+        max_tokens: int = 2000,
     ):
         input_query = tool.instructions.editing_instance_prompt.format_map(
             {
@@ -238,13 +240,13 @@ class OpenScholar:
         return raw_output
 
     def edit_with_feedback_retrieval(
-            self,
-            query: str,
-            ctxs: List[Dict[str, Any]],
-            previous_response: str,
-            feedback: str,
-            passage_start_index,
-            max_tokens=2000,
+        self,
+        query: str,
+        ctxs: List[Dict[str, Any]],
+        previous_response: str,
+        feedback: str,
+        passage_start_index,
+        max_tokens=2000,
     ):
         processed_passages = ""
         for doc_idx, doc in enumerate(ctxs[: self.top_n]):
@@ -304,11 +306,11 @@ class OpenScholar:
 
     ############################ Code for API
     def update_task_state(
-            self,
-            task_id: str,
-            status: str,
-            estimated_time: str = None,
-            curr_response: List[GeneratedIteration] = None,
+        self,
+        task_id: str,
+        status: str,
+        estimated_time: str = None,
+        curr_response: List[GeneratedIteration] = None,
     ):
 
         if task_id:
@@ -323,7 +325,7 @@ class OpenScholar:
             self.task_mgr.write_state(task_state)
 
     def retrieve(
-            self, query: str, task_id: str, prefix: str = "", queue: Queue = None
+        self, query: str, task_id: str, prefix: str = "", queue: Queue = None
     ) -> List[Dict[str, Any]]:
         if queue and not queue.empty():
             val_res = queue.get()
@@ -341,7 +343,9 @@ class OpenScholar:
             if val_res is not True:
                 raise val_res
 
-        status_str = f"{prefix}Retrieved {len(snippets_list)} relevant passages successfully"
+        status_str = (
+            f"{prefix}Retrieved {len(snippets_list)} relevant passages successfully"
+        )
         self.update_task_state(task_id, status_str)
 
         for snippet in snippets_list:
@@ -354,7 +358,7 @@ class OpenScholar:
         return snippets_list
 
     def rerank(
-            self, query: str, retrieved_ctxs: List[Dict[str, Any]], filtering: bool = True
+        self, query: str, retrieved_ctxs: List[Dict[str, Any]], filtering: bool = True
     ) -> List[Dict[str, Any]]:
         passages = []
 
@@ -375,9 +379,7 @@ class OpenScholar:
             score for score in rerank_scores if score > self.context_threshold
         ]
         if filtering is True and len(passages_above_threshold) < 3:
-            logger.warning(
-                "No relevant information found for the query."
-            )
+            logger.warning("No relevant information found for the query.")
             raise Exception(
                 "No relevant information found for your query. Please try a different one."
             )
@@ -409,7 +411,7 @@ class OpenScholar:
             new_papers += list(paper_list.values())
         return new_papers
 
-    def validate(self, query: str, task_id: str, queue: Queue=None) -> None:
+    def validate(self, query: str, task_id: str, queue: Queue = None) -> None:
         def _starts_with_who_is(question: str):
             # Regular expression to match "Who is" at the beginning of the question
             pattern = r"^who is\b"
@@ -417,7 +419,9 @@ class OpenScholar:
             return bool(re.match(pattern, question.lower(), re.IGNORECASE))
 
         self.update_task_state(task_id, "Validating the query")
-        logger.info(f"{task_id}: Checking query for malicious content with wildguard...")
+        logger.info(
+            f"{task_id}: Checking query for malicious content with wildguard..."
+        )
         try:
             wildguard_out = self.wildguard_engine.generate(
                 (query,), streaming=True
@@ -425,8 +429,8 @@ class OpenScholar:
             if wildguard_out and "request_harmful" in wildguard_out:
                 if wildguard_out["request_harmful"] == "yes":
                     raise Exception(
-                    "The input query contains harmful content. Please try again with a different query"
-                )
+                        "The input query contains harmful content. Please try again with a different query"
+                    )
             if _starts_with_who_is(query):
                 raise Exception(
                     "We cannot answer questions about people. Please try again with a different query"
@@ -469,12 +473,11 @@ class OpenScholar:
                     Citation(
                         id=f"[{idx}]",
                         corpus_id=cite["corpus_id"],
-                        snippet=(
-                            cite["text"]
-                        ),
+                        snippet=(cite["text"]),
                         score=cite["score"] if "score" in cite else 0.0,
                     )
-                    for idx, cite in enumerate(iteration["citations"]) if cite["used"]
+                    for idx, cite in enumerate(iteration["citations"])
+                    if cite["used"]
                 ],
             )
 
@@ -483,7 +486,9 @@ class OpenScholar:
         process.start()
 
         query, feedback_toggle = req.query, req.feedback_toggle
-        logger.info(f"For {task_id}, received query: {query} with feedback toggle: {feedback_toggle}")
+        logger.info(
+            f"For {task_id}, received query: {query} with feedback toggle: {feedback_toggle}"
+        )
         event_trace = EventTrace(
             task_id,
             self.llm_model,
@@ -498,7 +503,6 @@ class OpenScholar:
         t = threading.Thread(target=self.llm_inference, args=("Just waking you up",))
         t.start()
 
-
         retrieved_candidates = self.retrieve(query, task_id, queue=queue)
 
         # self.update_task_state(
@@ -508,7 +512,9 @@ class OpenScholar:
         # self.update_task_state(task_id, f"Total {len(retrieved_candidates)} passages")
 
         retrieved_candidates = self.check_paper_duplication(retrieved_candidates)
-        logger.info(f"{task_id}: {len(retrieved_candidates)} remain after de-duplication")
+        logger.info(
+            f"{task_id}: {len(retrieved_candidates)} remain after de-duplication"
+        )
 
         event_trace.trace_retrieval_event(retrieved_candidates, 0)
 
@@ -532,7 +538,9 @@ class OpenScholar:
         self.update_task_state(task_id, "Generating the initial draft")
         initial_response = self.generate_response(query, retrieved_candidates)
         if len(initial_response) < 10:
-            logger.warning(f"Initial response is too short: {initial_response}, retrying")
+            logger.warning(
+                f"Initial response is too short: {initial_response}, retrying"
+            )
             initial_response = self.generate_response(query, retrieved_candidates)
         # filter out unused citations
         used_ctxs_ids = list(set(extract_citations(initial_response)))
@@ -552,7 +560,8 @@ class OpenScholar:
             )
         )
         logger.info(
-            f"{task_id}: Initial response: {initial_response[:100]}..., Citations: {len(responses[-1].citations)}")
+            f"{task_id}: Initial response: {initial_response[:100]}..., Citations: {len(responses[-1].citations)}"
+        )
         event_trace.trace_summary_event(responses[0].model_dump(), 0)
 
         self.update_task_state(
@@ -582,14 +591,15 @@ class OpenScholar:
                     edited_answer = self.edit_with_feedback(
                         query, retrieved_candidates, previous_response, feedback[0]
                     )
+                    edited_answer = re.sub(filter_demo_pattern, "", edited_answer)
                     if "Here is the revised answer:\n\n" in edited_answer:
                         edited_answer = edited_answer.split(
                             "Here is the revised answer:\n\n"
                         )[1]
                     if (
-                            len(edited_answer) > 0
-                            and len(edited_answer) / len(previous_response) > 0.9
-                            # and len(edited_answer.splitlines()) / len(previous_response.splitlines()) > 0.5
+                        len(edited_answer) > 0
+                        and len(edited_answer) / len(previous_response) > 0.9
+                        # and len(edited_answer.splitlines()) / len(previous_response.splitlines()) > 0.5
                     ):
                         initial_citations = copy.deepcopy(citation_lists[0])
                         citation_lists.append(initial_citations)
@@ -626,13 +636,12 @@ class OpenScholar:
                     new_papers = []
                     # FIXME: Fix API endpoint
                     new_papers = self.retrieve(
-                        feedback[1] + " " + query,
+                        feedback[1],
                         task_id,
                         f"Feedback {(feedback_idx + 1)}- ",
                     )
                     if self.ss_retriever is True:
                         new_keywords = self.retrieve_keywords(feedback[1])
-                        paper_list = {}
                         if len(new_keywords) > 0:
                             ss_retrieved_papers = self.retrieve_additional_passages_ss(
                                 feedback[1]
@@ -664,6 +673,7 @@ class OpenScholar:
                             feedback=feedback[0],
                             passage_start_index=passages_start_index,
                         )
+                        edited_answer = re.sub(filter_demo_pattern, "", edited_answer)
 
                         if (len(edited_answer) / len(previous_response)) > 0.9:
                             # and len(edited_answer.splitlines()) / len(previous_response.splitlines()) > 0.5:
@@ -673,8 +683,8 @@ class OpenScholar:
                             text_to_citations = {}
                             for cand_idx, cand in enumerate(prev_citations):
                                 if (
-                                        " ".join(cand["text"].split()[:20])
-                                        in text_to_citations
+                                    " ".join(cand["text"].split()[:20])
+                                    in text_to_citations
                                 ):
                                     edited_answer.replace(
                                         "[{}]".format(cand_idx),
