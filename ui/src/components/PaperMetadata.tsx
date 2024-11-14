@@ -25,7 +25,7 @@ export const PaperMetadata: React.FC<PropType> = (props) => {
           <Link color='secondary' href={`https://www.semanticscholar.org/author/${author.authorId}`}>{author.name}</Link>
           {index < authors.length - 1 ? ', ' : ''}
         </React.Fragment>
-      ))}{truncated ? 'et al' : ''}. {venue}. {year}.
+      ))}{truncated ? ' et al' : ''}. {venue}. {year}.
     </div>
   );
 };
