@@ -51,12 +51,9 @@ export const Home = () => {
   return (
     <>
       <Box sx={{ alignItems:'center', display: 'flex', flexGrow: '1', flexDirection: 'column', justifyContent: 'center', padding: {xs: '120px 16px 16px 16px', sm: '240px 32px 32px 32px'}, width: '100%'}}>
-        <Box sx={{maxWidth: '800px', width: '100%', display: 'flex', flexDirection: 'column', gap: '12px'}}>
-          
-          <Box sx={{display: `flex`, justifyContent: 'space-between', alignItems: 'baseline'}}>
-
-
-            <Box sx={{height: {xs:'32px', sm:'42px'}, width:{xs:'260px', sm:'340px'} }}>
+        <Box sx={{maxWidth: '800px', width: '100%', display: 'flex', flexDirection: 'column', gap: '24px'}}>
+          <Box sx={{display: 'flex', flexDirection: 'column', gap:'4px'}}>
+            <Box sx={{height: {xs:'32px', sm:'49px'}, width:{xs:'260px', sm:'400px'} }}>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 404.3 49.8">
                 <path fill="#EF529B" d="M12.3,21.5h-6.1v-5.9h4.9c.7,0,1.2-.5,1.2-1.2v-5h5.8v6.2c0,3.3-2.6,5.9-5.8,5.9ZM6.1,22.1H0v5.9h4.9c.7,0,1.2.5,1.2,1.2v5h5.8v-6.2c0-3.3-2.6-5.9-5.8-5.9ZM25.8,21.8c-.7,0-1.2-.5-1.2-1.2v-5h-5.8v6.2c0,3.3,2.6,5.9,5.8,5.9h6.1v-5.9h-4.9ZM12.6,34.3v6.2h5.8v-5c0-.7.5-1.2,1.2-1.2h4.9v-5.9h-6.1c-3.2,0-5.8,2.7-5.8,5.9Z"/>
                 <path fill="#EF529B" d="M390.7,17.1h4.6v5.6c1.6-4,4.4-6,8.3-6h.7v4.5h-1.2c-3,0-5,.9-6.1,2.6-1.1,1.7-1.6,4.2-1.6,7.7v8.9h-4.7v-23.3Z"/>
@@ -75,39 +72,26 @@ export const Home = () => {
                 <path fill="#EF529B" d="M62.9,40.5l-2.8-7.4h-15l-2.8,7.4h-4.9l11.5-31h7.2l11.5,31h-4.9ZM46.6,29.2h12.1l-6.1-16.4-6.1,16.4Z"/>
               </svg>
             </Box>
-
-            {/* <Box sx={{display: 'flex', gap: '8px'}}>
-              <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 58.2 42">
-                <path fill="#FAF2E9" d="M58.2,12.8c-2.1,1.3-3.5,2-5.2,3C43,21.9,33.3,28.7,25.7,37.6L22.1,42L11,24.4c2.5,2,8.7,7.5,11.2,8.7 l8.1-6.1C36,23,52,14.3,58.2,12.8z"/>
-                <path fill="#FAF2E9" d="M16.2,26l0.8,0.6C14.6,20,10.6,14,5.5,9.2H0C6.4,13.7,11.9,19.4,16.2,26L16.2,26z"/>
-                <path fill="#FAF2E9" d="M18,27.6l0.7,0.5c-0.3-8.3-3.4-16.7-9.3-24H4.2C11.7,11.1,16.3,19.4,18,27.6z"/>
-                <path fill="#FAF2E9" d="M19.5,28.8c0.8,0.7,1.7,1.3,2.4,1.8c1.8-9.2,0.2-18.7-4.6-26.8l24.5-0.3c1.8,4,2.9,8.4,3.2,12.9 c0.7-0.4,1.4-0.7,2.1-1.1c-0.3-4.5-1.6-9.4-4-15.2H9.6C16.9,8.6,20.2,19,19.5,28.8z"/>
-              </svg>
-
-              <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 62.46 42">
-                <path fill="#FAF2E9" d="M45.84,0v7.58h5.32l-5.94,22.12S37.95.41,37.84,0h-7.69c-.11.4-7.98,29.7-7.98,29.7l-5.47-22.12h5.54V0H0v7.58h4.93s8.5,34.01,8.61,34.42h11.94c.11-.4,5.7-21.66,5.7-21.66,0,0,5.31,21.25,5.42,21.66h11.94c.11-.41,9.05-34.42,9.05-34.42h4.89V0h-16.62Z"/>
-              </svg>
-            </Box> */}
+            <Typography variant="body2">Synthesizing millions of open sourced computer science papers. <br /> A joint project between <Link href="https://www.semanticscholar.org" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>Semantic Scholar</Link> and the <Link href="https://www.washington.edu" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>University of Washington</Link></Typography>
           </Box>
-
-          <Typography variant="body2">Synthesizing millions of open sourced computer science papers. A joint project between <Link href="https://www.semanticscholar.org" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>Semantic Scholar</Link> and the <Link href="https://www.washington.edu" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>University of Washington</Link></Typography>
-
-          <MessageBar onSend={handleSubmit} />
-
-          <Grid
-            container
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={1}
-            sx={{ mt: '16px', alignItems: 'center' }}
-          >
-            {SUGGESTIONS.map((suggestion) => (
-              <Grid item key={suggestion.link}>
-                <SuggestedPrompt href={suggestion.link}>
-                  {suggestion.shortName}
-                </SuggestedPrompt>
-              </Grid>
-            ))}
-          </Grid>
+          
+          <Box sx={{display: 'flex', flexDirection: 'column', gap:'8px'}}>
+            <MessageBar onSend={handleSubmit} />
+            <Grid
+              container
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1}
+              sx={{ alignItems: 'center' }}
+            >
+              {SUGGESTIONS.map((suggestion) => (
+                <Grid item key={suggestion.link}>
+                  <SuggestedPrompt href={suggestion.link}>
+                    {suggestion.shortName}
+                  </SuggestedPrompt>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
 
           <div>
             {isLoading && <CircularProgress />}
