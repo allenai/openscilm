@@ -40,16 +40,7 @@ if not os.path.exists(ASYNC_STATE_DIR):
 task_state_manager = StateManager(AsyncTaskState, ASYNC_STATE_DIR)
 async_context = multiprocessing.get_context("fork")
 open_scholar = OpenScholar(task_state_manager, llm_model="os_8b")
-wildguard_engine = ModalEngine(
-    model_id="wildguard", api_name="wildguard_api", gen_options=dict()
-)
 
-
-def _starts_with_who_is(question: str):
-    # Regular expression to match "Who is" at the beginning of the question
-    pattern = r"^who is\b"
-    # Perform case-insensitive match
-    return bool(re.match(pattern, question.lower(), re.IGNORECASE))
 
 
 def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
@@ -66,20 +57,7 @@ def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
     use `task_state_manager.read_state(task_id)` to retrieve, and `.write_state()`
     to write back.
     """
-    open_scholar.update_task_state(task_id, "Validating the query")
-    logger.info(f"{task_id}: Checking query for malicious content with wildguard...")
-    wildguard_out = wildguard_engine.generate(
-        (tool_request.query,), streaming=True
-    ).pop()
-    if wildguard_out and "request_harmful" in wildguard_out:
-        if wildguard_out["request_harmful"] == "yes":
-            raise Exception(
-                "The input query contains harmful content. Please try again with a different query"
-            )
-    if _starts_with_who_is(tool_request.query):
-        raise Exception(
-            "We cannot answer questions about people. Please try again with a different query"
-        )
+
     return open_scholar.answer_query(
         tool_request, task_id
     )
