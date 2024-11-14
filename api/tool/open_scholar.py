@@ -301,7 +301,7 @@ class OpenScholar:
     ):
 
         if task_id:
-            logger.info(status)
+            logger.info(f"{task_id}: {status}")
             status = f"{time()}:{status}"
             task_state = self.task_mgr.read_state(task_id)
             task_state.task_status = status
@@ -344,7 +344,7 @@ class OpenScholar:
         rerank_scores = self.reranker_engine.generate(
             (query, passages), streaming=False
         )
-        print(rerank_scores)
+        logger.info(f"Reranker scores: {rerank_scores}")
         passages_above_threshold = [
             score for score in rerank_scores if score > self.context_threshold
         ]
@@ -426,7 +426,7 @@ class OpenScholar:
             )
 
         query, feedback_toggle = req.query, req.feedback_toggle
-        logger.info(f"Received query: {query} with feedback toggle: {feedback_toggle}")
+        logger.info(f"For {task_id}, received query: {query} with feedback toggle: {feedback_toggle}")
         event_trace = EventTrace(
             task_id,
             self.llm_model,
@@ -437,7 +437,7 @@ class OpenScholar:
         )
         responses = []
         citation_lists = []
-        logger.info("Waking the modal deployment for a warm start")
+        logger.info(f"{task_id}: Waking the modal deployment for a warm start")
         t = threading.Thread(target=self.llm_inference, args=("Just waking you up",))
         t.start()
 
@@ -454,13 +454,13 @@ class OpenScholar:
         self.update_task_state(task_id, f"Total {len(retrieved_candidates)} passages")
 
         retrieved_candidates = self.check_paper_duplication(retrieved_candidates)
-        logger.info(f"{len(retrieved_candidates)} remain after de-duplication")
+        logger.info(f"{task_id}: {len(retrieved_candidates)} remain after de-duplication")
 
         event_trace.trace_retrieval_event(retrieved_candidates, 0)
 
         if not retrieved_candidates:
             logger.warning(
-                f"There is no relevant information in the retrieved snippets for query: {query}"
+                f"{task_id}: There is no relevant information in the retrieved snippets for query: {query}"
             )
             raise Exception(
                 "There is no relevant information in the retrieved snippets. Please try a different query."
@@ -477,6 +477,7 @@ class OpenScholar:
         # generate response
         self.update_task_state(task_id, "Generating the initial draft")
         initial_response = self.generate_response(query, retrieved_candidates)
+        logger.info(f"Initial response: {initial_response[:100]}")
         # filter out unused citations
         used_ctxs_ids = list(set(extract_citations(initial_response)))
         for cand_idx, cand in enumerate(retrieved_candidates):
@@ -517,7 +518,7 @@ class OpenScholar:
                 self.update_task_state(
                     task_id,
                     "Incorporating feedback {}.".format((feedback_idx + 1)),
-                    f"{(self.n_feedback - feedback_idx + 1)} minutes",
+                    f"{(self.n_feedback - feedback_idx)} minutes",
                 )
                 if len(feedback[1]) == 0:
                     edited_answer = self.edit_with_feedback(

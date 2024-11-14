@@ -55,7 +55,7 @@ class VespaIndex:
         """
         payload = self.get_yql_query(query, topk)
         headers = {"Content-Type": "application/json", "Authorization": f"{VESPA_INDEX_TOKEN}"}
-        print("Vespa query:", payload)
+        logger.info(f"Vespa query:{payload}")
         response = requests.post(self.index_url, json=payload, headers=headers)
         if response.status_code != 200:
             logger.info(response.status_code)

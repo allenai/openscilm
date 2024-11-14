@@ -67,7 +67,7 @@ def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
     to write back.
     """
     open_scholar.update_task_state(task_id, "Validating the query")
-    logger.info("Checking query for malicious content with wildguard...")
+    logger.info(f"{task_id}: Checking query for malicious content with wildguard...")
     wildguard_out = wildguard_engine.generate(
         (tool_request.query,), streaming=True
     ).pop()
@@ -134,7 +134,7 @@ def create_app() -> FastAPI:
         # New task
         task_id = str(uuid.uuid4())
 
-        logger.info(f"New task: {task_id}")
+        logger.info(f"{task_id}: New task")
         estimated_time = _start_async_task(task_id, tool_request)
 
         return AsyncToolResponse(
