@@ -39,9 +39,9 @@ class OpenScholar:
     def __init__(
         self,
         task_mgr: StateManager,
-        n_retrieval: int = 50,
+        n_retrieval: int = 150,
         n_rerank: int = 8,
-        n_feedback: int = 1,
+        n_feedback: int = 0,
         context_threshold: float = 0.5,
         llm_model: str = "akariasai/os_8b",
     ):
@@ -355,6 +355,7 @@ class OpenScholar:
             snippet for snippet in snippets_list if len(snippet["text"].split(" ")) > 20
         ]
 
+        print("retrieved context: {}".format(len(snippets_list)))
         return snippets_list
 
     def rerank(
@@ -378,7 +379,7 @@ class OpenScholar:
         passages_above_threshold = [
             score for score in rerank_scores if score > self.context_threshold
         ]
-        if filtering is True and len(passages_above_threshold) < 3:
+        if filtering is True and len(passages_above_threshold) < 1:
             logger.warning("No relevant information found for the query.")
             raise Exception(
                 "No relevant information found for your query. Please try a different one."
