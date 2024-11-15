@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import csv
 import logging
 from tool.utils import query_s2_api
+from time import time
 
 logger = logging.getLogger(__name__)
 
@@ -85,10 +86,11 @@ class VespaIndex:
 
             if self.check_showable:
                 logger.info("Checking s2howable flag for the papers")
+                start = time()
                 s2howable_papers = fetch_s2howable_papers([snippet["corpus_id"] for snippet in unsorted_snippets])
                 unsorted_snippets = [snippet for snippet in unsorted_snippets if
                                      snippet["corpus_id"] in s2howable_papers]
-                logger.info(f"{len(unsorted_snippets)} retained after filtering for s2howable")
+                logger.info(f"{len(unsorted_snippets)} retained after filtering for s2howable in {time()-start} secs")
 
             sorted_snippets = sorted(
                 unsorted_snippets, key=lambda s: s["score"], reverse=True
@@ -173,7 +175,7 @@ def fetch_showable_flag(corpus_id: str):
         return False, corpus_id
 
 
-def fetch_s2howable_papers(corpus_ids: List[str], num_works=10) -> Set[str]:
+def fetch_s2howable_papers(corpus_ids: List[str], num_works=12) -> Set[str]:
     s2howable_papers = set()
     with ThreadPoolExecutor(max_workers=num_works) as executor:
         futures = {
