@@ -16,7 +16,7 @@ import { PaperMetadataString } from '../PaperMetadataString';
 function clean(text: string) {
   const rawSplits = split(text)
   return rawSplits.map((sentence) => sentence.raw.trim()).join('\n').trim()
-  .replaceAll(/ \d\d\d\d[a-z]?"/g, ' year"')
+  .replaceAll(/ \d\d\d\d(\^\^\^\d+)?"/g, ' year"')
   .replaceAll(/\[\d+\]/g, "[id]")
 }
 

@@ -92,9 +92,10 @@ export const convertIterationToSection = async (iteration: IterationType): Promi
       counter[authorText] = (counter[authorText] ?? 0) + 1
       if (counter[authorText] > 1) {
         if (counter[authorText] == 2) {
-          id2RefText[firstKeyByValue[authorText]] += 'a'
+          id2RefText[firstKeyByValue[authorText]] += '^^^1'
         }
-        authorText += String.fromCharCode('a'.charCodeAt(0) + counter[authorText] - 1)
+        // authorText += String.fromCharCode('a'.charCodeAt(0) + counter[authorText] - 1)
+        authorText += `^^^${(1+ counter[authorText] - 1)}`
       } else {
         firstKeyByValue[authorText] = citation.id
       }
