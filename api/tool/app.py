@@ -76,7 +76,7 @@ def _estimate_task_length(tool_request: ToolRequest) -> str:
     """
     return (
         "1 minute"
-        if not tool_request.feedback_toggle
+        if not (tool_request.feedback_toggle and open_scholar.n_feedback)
         else f"{1 + open_scholar.n_feedback} minutes"
     )
 

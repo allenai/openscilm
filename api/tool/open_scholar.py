@@ -581,7 +581,7 @@ class OpenScholar:
         )
 
         # iteratiive feedback loop
-        if feedback_toggle:
+        if feedback_toggle and self.n_feedback > 0:
             self.update_task_state(
                 task_id,
                 "Generating feedback(s) on the initial draft.",
