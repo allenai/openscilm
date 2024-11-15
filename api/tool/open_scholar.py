@@ -39,7 +39,7 @@ class OpenScholar:
     def __init__(
         self,
         task_mgr: StateManager,
-        n_retrieval: int = 150,
+        n_retrieval: int = 300,
         n_rerank: int = 8,
         n_feedback: int = 0,
         context_threshold: float = 0.5,
@@ -60,7 +60,7 @@ class OpenScholar:
         )
         self.min_citation = None
         self.norm_cite = False
-        self.ss_retriever = False
+        self.ss_retriever = True
         self.use_contexts = True
         self.retrieval_fn = (
             get_vespa_index("v1").retrieve_s2_index
