@@ -211,6 +211,7 @@ def vespa_snippet_from_dict(
     res_map["corpus_id"] = fields["paper_corpus_id"]
     res_map["text"] = fields["text"]
     res_map["score"] = child_dict["relevance"]
+    res_map["type"] = fields["snippet_kind"]
     return res_map
 
 

@@ -122,7 +122,7 @@ class OpenScholar:
         if len(ctxs_text.split()) > 4500:
             ctxs_text = ctxs_text.split()
             ctxs_text = " ".join(ctxs_text[:4000])
-        logger.info(f"Context length: {len(ctxs_text)}")
+        logger.info(f"Context length (words): {len(ctxs_text.split())}")
         input_query = (
             tool.instructions.generation_instance_prompts_w_references.format_map(
                 {"context": ctxs_text, "input": query}
@@ -473,7 +473,7 @@ class OpenScholar:
                     Citation(
                         id=f"[{idx}]",
                         corpus_id=cite["corpus_id"],
-                        snippet=(cite["text"]),
+                        snippet=cite["text"] if "type" not in cite or cite["type"] != "abstract" else "",
                         score=cite["score"] if "score" in cite else 0.0,
                     )
                     for idx, cite in enumerate(iteration["citations"])

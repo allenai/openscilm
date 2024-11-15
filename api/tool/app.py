@@ -209,13 +209,13 @@ def _handle_async_task_check_in(
         msg = f"Referenced task failed."
         if task_state.extra_state and "error" in task_state.extra_state:
             msg += f" Error: {task_state.extra_state['error']}"
-            logger.exception(msg)
+            logger.exception(f"{task_id}: {msg}")
         raise HTTPException(status_code=500, detail=f"{msg}")
 
     if task_state.task_status == TASK_STATUSES["COMPLETED"]:
         if not task_state.task_result:
             msg = f"Task marked completed but has no result."
-            logger.error(msg)
+            logger.error(f"{task_id}: {msg}")
             raise HTTPException(
                 status_code=500,
                 detail=msg,
