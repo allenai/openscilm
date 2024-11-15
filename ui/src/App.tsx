@@ -6,7 +6,7 @@ import {
     IconButton,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { About } from './pages/About';
 import { Home } from './pages/Home';
 import { AppRoute } from './AppRoute';
@@ -46,6 +46,7 @@ const DarkBackground = styled('div')`
     flex-direction: column;
 `;
 export const App = () => {
+    const location = useLocation();
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const [isClosing, setIsClosing] = React.useState(false);
 
@@ -113,6 +114,7 @@ export const App = () => {
                                 })}
                             </Routes>
                             <Box sx={{ display: 'flex', gap: '16px' }}>
+                                <Link target='_blank' href={`https://docs.google.com/forms/d/e/1FAIpQLSfqPUKxxXlV16Bs8ZGcasXMP35WKQU6eeQhYViPQ9_Cmeq5Kw/viewform?usp=pp_url&entry.268806865=${location.pathname}`} variant="body2" sx={{ lineHeight: '24px' }}>Report Issue</Link>
                                 <Link href="/about" variant="body2" sx={{ lineHeight: '24px' }}>
                                     About
                                 </Link>
