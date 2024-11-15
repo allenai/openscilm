@@ -126,7 +126,7 @@ export const Sidebar: React.FC<PropType> = (props) => {
           </Link>
         </Box>
 
-        <Link href="https://allenai.org/privacy-policy" target="_blank" variant="body2">Privacy Policy</Link>&nbsp;&nbsp;•&nbsp;&nbsp;<Link href="https://allenai.org/terms" target="_blank" variant="body2">Terms of Use</Link>
+        <Link href="https://allenai.org/privacy-policy" target="_blank" variant="body2">Privacy Policy</Link>&nbsp;&nbsp;•&nbsp;&nbsp;<Link href="https://allenai.org/terms" target="_blank" variant="body2">Terms of Use</Link>&nbsp;&nbsp;•&nbsp;&nbsp;<Link href="https://allenai.org/responsible-use" target="_blank" variant="body2">Responsible Use</Link>
         {/* <Link href="https://allenai.org" target="_blank">Ai2</Link> */}
       </Box>
     </Box>

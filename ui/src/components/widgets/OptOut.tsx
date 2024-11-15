@@ -1,10 +1,5 @@
 import * as React from 'react';
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from '@mui/material';
-
-const DISCLAIMER_TEXT = [
-  `By using this feature, you agree to Ai2's terms and conditions and that you will not submit any sensitive or confidential info.`,
-  `Ai2 may include your prompts and inputs in a public dataset for future AI research and development. You can still use the system if you decided to opt-out.`
-]
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Link, Typography } from '@mui/material';
 
 interface Props {
   open: boolean;
@@ -22,14 +17,6 @@ export const OptOut: React.FC<Props> = (props) => {
     onClose('yes');
   };
 
-  const disclaimerElement = (
-    <>
-        {DISCLAIMER_TEXT.map((text) => (
-          <Typography sx={{ p: 2, width: 300 }} key={text}>{text}</Typography>
-        ))}
-    </>
-  )
-
   const consentPopover = (
       <Dialog
       sx={{ '& .MuiDialog-paper': { maxHeight: 435 } }}
@@ -40,7 +27,13 @@ export const OptOut: React.FC<Props> = (props) => {
       <DialogTitle>Consent to data collection</DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
-          {disclaimerElement}
+          <Typography sx={{ p: 2, width: 300 }}>
+            By using Ai2 OpenScholar, you agree to the <Link href="https://allenai.org/privacy-policy" target="_blank">Privacy Policy</Link>, <Link href="https://allenai.org/terms" target="_blank" >Terms of Use</Link>, <Link href="https://allenai.org/responsible-use" target="_blank" >Responsible Use</Link>, and that you will not submit any sensitive or confidential info.
+          </Typography>
+
+          <Typography sx={{ p: 2, width: 300 }}>
+            Ai2 may use your prompts and inputs in a public dataset for future AI research and development. You can still use this tool if you opt-out.
+          </Typography>
         </DialogContentText>
       </DialogContent>
       <DialogActions>
