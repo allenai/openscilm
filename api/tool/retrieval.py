@@ -137,7 +137,7 @@ def get_vespa_index(version="v1"):
                 "input.query(qse)": "embed(sparseembed, @query)"
             },
             corpus_id_filter_file=f'{os.getenv("OPEN_ACCESS_FILE", "./open_access/oa_corpus_ids.csv")}',
-            hit_mult_factor=2.0
+            hit_mult_factor=1.0
         )
     else:
         return VespaIndex(
