@@ -114,7 +114,7 @@ export const App = () => {
                                 })}
                             </Routes>
                             <Box sx={{ display: 'flex', gap: '16px' }}>
-                                <Link target='_blank' href={`https://docs.google.com/forms/d/e/1FAIpQLSfqPUKxxXlV16Bs8ZGcasXMP35WKQU6eeQhYViPQ9_Cmeq5Kw/viewform?usp=pp_url&entry.268806865=${location.pathname}`} variant="body2" sx={{ lineHeight: '24px' }}>Report Issue</Link>
+                                <Link target='_blank' href={`https://docs.google.com/forms/d/e/1FAIpQLSfqPUKxxXlV16Bs8ZGcasXMP35WKQU6eeQhYViPQ9_Cmeq5Kw/viewform?usp=pp_url&entry.268806865=${location.pathname}`} variant="body2" sx={{ lineHeight: '24px' }}>Feedback</Link>
                                 <Link href="/about" variant="body2" sx={{ lineHeight: '24px' }}>
                                     About
                                 </Link>
