@@ -5,6 +5,8 @@ import styled from 'styled-components';
 import { EvidenceCardProps } from './EvidenceCard';
 import { Evidence } from './utils';
 
+const NO_ABSTRACT = 'Due to licensing constraints, we cannot display the abstract here. Please click on the title above to see the abstract.'
+
 export const EvidenceCardContent = (
   props: EvidenceCardProps,
 ): React.ReactNode => {
@@ -28,7 +30,7 @@ export const EvidenceCardContent = (
       {evidences.map((evidence, index) => (
         <EvidenceContainer key={index}>
           <Typography sx={{ mt: 1.5, mb: 1.5 }} variant="body2">
-            {`"${evidence.text}"`}
+            {evidence.text.length > 0 ? `"${evidence.text}"` : NO_ABSTRACT}
           </Typography>
         </EvidenceContainer>
       ))}

@@ -116,7 +116,7 @@ ${Object.values(section.corpusId2Details ?? {}).map((details) => {
           sx={{ display: { xs: 'none', sm: 'block' } }}
         >
           <ToggleButton size='small' value={'show'} aria-label="left aligned" >
-            Compare with draft
+            {showDiff ? 'Exit Comparison View' : 'Compare with draft'}
           </ToggleButton>
         </ToggleButtonGroup>
       )}
