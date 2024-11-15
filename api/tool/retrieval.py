@@ -79,18 +79,16 @@ class VespaIndex:
                     )
 
             if filter_open_access and self.corpus_id_filter:
-                logger.info(f"{len(unsorted_snippets)} retrieved from the index initially")
+                logger.info(f"{len(unsorted_snippets)} passages retrieved from the index initially")
                 unsorted_snippets = [snippet for snippet in unsorted_snippets if
                                      snippet["corpus_id"] in self.corpus_id_filter]
-                logger.info(f"{len(unsorted_snippets)} retained after filtering for open access")
+                logger.info(f"{len(unsorted_snippets)} passages retained after filtering for open access")
 
             if self.check_showable:
-                logger.info("Checking s2howable flag for the papers")
-                start = time()
-                s2howable_papers = fetch_s2howable_papers([snippet["corpus_id"] for snippet in unsorted_snippets])
+                s2howable_papers = fetch_s2howable_papers(set([snippet["corpus_id"] for snippet in unsorted_snippets]))
                 unsorted_snippets = [snippet for snippet in unsorted_snippets if
                                      snippet["corpus_id"] in s2howable_papers]
-                logger.info(f"{len(unsorted_snippets)} retained after filtering for s2howable in {time()-start} secs")
+                logger.info(f"{len(unsorted_snippets)} passages retained after filtering for s2howable")
 
             sorted_snippets = sorted(
                 unsorted_snippets, key=lambda s: s["score"], reverse=True
@@ -175,7 +173,9 @@ def fetch_showable_flag(corpus_id: str):
         return False, corpus_id
 
 
-def fetch_s2howable_papers(corpus_ids: List[str], num_works=12) -> Set[str]:
+def fetch_s2howable_papers(corpus_ids: Set[str], num_works=12) -> Set[str]:
+    logger.info(f"Checking s2howable flag for {len(corpus_ids)} papers")
+    start = time()
     s2howable_papers = set()
     with ThreadPoolExecutor(max_workers=num_works) as executor:
         futures = {
@@ -186,6 +186,7 @@ def fetch_s2howable_papers(corpus_ids: List[str], num_works=12) -> Set[str]:
             iss2howable, corpus_id = future.result()
             if iss2howable:
                 s2howable_papers.add(corpus_id)
+    logger.info(f"{len(s2howable_papers)} papers retained after filtering for s2howable in {time() - start} secs")
     return s2howable_papers
 
 
