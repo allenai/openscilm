@@ -339,9 +339,13 @@ class OpenScholar:
 
         snippets_list = self.retrieval_fn(query, self.n_retrieval)
         if queue:
-            val_res = queue.get(timeout=20)
-            if val_res is not True:
-                raise val_res
+            try:
+                val_res = queue.get(timeout=30)
+                if val_res is not True:
+                    raise val_res
+            except Exception as e:
+                logger.error(f"{task_id}: Query validation timed out{e}")
+                raise Exception("Query validation timed out, please try again.")
 
         status_str = (
             f"{prefix}Retrieved {len(snippets_list)} relevant passages successfully"
@@ -381,8 +385,7 @@ class OpenScholar:
         ]
         if filtering is True and len(passages_above_threshold) < 1:
             logger.warning("No relevant information found for the query.")
-            raise Exception(
-                'Unfortunately, we failed to retrieve any relevant information for your query; '
+            raise Exception('Unfortunately, we failed to retrieve any relevant information for your query; '
                 'please try a different or more specific query.'
                 ' Also please note that - '
                 'The system only support Computer Science currently and it may not answer general questions e.g., '
