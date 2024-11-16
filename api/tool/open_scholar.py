@@ -9,7 +9,7 @@ from typing import Any, Dict, List
 
 import tool.instructions
 
-from nora_lib.tasks.state import StateManager
+from tool.locked_state import LockedStateManager
 from openai import OpenAI
 from tool.event_tracing import EventTrace
 from tool.modal_engine import ModalEngine
@@ -38,7 +38,7 @@ filter_demo_pattern = r"\s*[^.!?]*\[20\]\."
 class OpenScholar:
     def __init__(
             self,
-            task_mgr: StateManager,
+            task_mgr: LockedStateManager,
             n_retrieval: int = 300,
             n_rerank: int = 8,
             n_feedback: int = 0,
@@ -383,9 +383,9 @@ class OpenScholar:
             logger.warning("No relevant information found for the query.")
             raise Exception(
                 'Unfortunately, we failed to retrieve any relevant information for your query; '
-                'Please try a different or more specific query.'
-                '\nAlso please note that - '
-                '\n1. The system only support Computer Science currently \n2. It may not answer general questions e.g., '
+                'please try a different or more specific query.'
+                ' Also please note that - '
+                'The system only support Computer Science currently and it may not answer general questions e.g., '
                 'Where we should visit in Seattle"'
             )
         for doc, rerank_score in zip(retrieved_ctxs, rerank_scores):

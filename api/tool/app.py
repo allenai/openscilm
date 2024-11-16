@@ -1,29 +1,28 @@
 import logging
 import multiprocessing
 import os
-import re
 import uuid
 from json import JSONDecodeError
+from time import time
 from typing import Union
 
 from fastapi import FastAPI, HTTPException
 from nora_lib.tasks.models import TASK_STATUSES
-from nora_lib.tasks.state import NoSuchTaskException, StateManager
+from nora_lib.tasks.state import NoSuchTaskException
 
 from tool import glog
-from tool.modal_engine import ModalEngine
+from tool.locked_state import LockedStateManager
 from tool.models import (
     AsyncTaskState,
     AsyncToolResponse,
     Papers,
     TaskResult,
     ToolRequest,
-    ToolResponse,
+    ToolResponse
 )
 from tool.open_scholar import OpenScholar
 from tool.retrieval import get_vespa_index
 from tool.utils import query_s2_api
-from time import time
 
 # If LOG_FORMAT is "google:json" emit log message as JSON in a format Google Cloud can parse.
 fmt = os.getenv("LOG_FORMAT")
@@ -41,10 +40,9 @@ TIMEOUT = 240
 if not os.path.exists(ASYNC_STATE_DIR):
     os.makedirs(ASYNC_STATE_DIR)
 
-task_state_manager = StateManager(AsyncTaskState, ASYNC_STATE_DIR)
+task_state_manager = LockedStateManager(AsyncTaskState, ASYNC_STATE_DIR)
 async_context = multiprocessing.get_context("fork")
 open_scholar = OpenScholar(task_state_manager, llm_model="os_8b")
-
 
 
 def _do_task(tool_request: ToolRequest, task_id: str) -> TaskResult:
@@ -203,6 +201,13 @@ def _handle_async_task_check_in(
         )
     except JSONDecodeError as e:
         logger.warning(f"{task_id} state file is corrupted, should be updated on next poll: {e}")
+        return AsyncToolResponse(
+            task_id=task_id,
+            query="",
+            estimated_time="1 minute",
+            task_status=f"{time()}: Processing user query",
+            task_result=None,
+        )
 
     # Retrieve data, which is just on local disk for now
     if task_state.task_status == TASK_STATUSES["FAILED"]:
@@ -221,14 +226,16 @@ def _handle_async_task_check_in(
                 detail=msg,
             )
         if "start" in task_state.extra_state and "end" in task_state.extra_state:
-            logger.info(f"{task_id}: completed in {task_state.extra_state['end'] - task_state.extra_state['start']} seconds.")
+            logger.info(
+                f"{task_id}: completed in {task_state.extra_state['end'] - task_state.extra_state['start']} seconds.")
         return ToolResponse(
             task_id=task_state.task_id,
             query=task_state.query,
             task_result=task_state.task_result,
         )
 
-    if task_state.task_status not in {TASK_STATUSES["COMPLETED"], TASK_STATUSES["FAILED"]} and "start" in task_state.extra_state:
+    if task_state.task_status not in {TASK_STATUSES["COMPLETED"],
+                                      TASK_STATUSES["FAILED"]} and "start" in task_state.extra_state:
         elapsed = time() - task_state.extra_state["start"]
         if elapsed > TIMEOUT:
             task_state.task_status = TASK_STATUSES["FAILED"]

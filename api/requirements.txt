@@ -21,3 +21,4 @@ googlesearch-python
 openai
 tqdm
 google-cloud-storage==2.18.2
+filelock==3.16.1
