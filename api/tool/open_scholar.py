@@ -386,11 +386,11 @@ class OpenScholar:
         if filtering is True and len(passages_above_threshold) < 1:
             logger.warning("No relevant information found for the query.")
             raise Exception('Unfortunately, we failed to retrieve any relevant information for your query; '
-                'please try a different or more specific query.'
-                ' Also please note that - '
-                'The system only support Computer Science currently and it may not answer general questions e.g., '
-                'Where we should visit in Seattle"'
-            )
+                            'please try a different or more specific query.'
+                            ' Also please note that - '
+                            'The system only support Computer Science currently and it may not answer general questions e.g., '
+                            'Where we should visit in Seattle"'
+                            )
         for doc, rerank_score in zip(retrieved_ctxs, rerank_scores):
             doc["rerank_score"] = rerank_score
         sorted_ctxs = sorted(
@@ -501,7 +501,7 @@ class OpenScholar:
 
         query, feedback_toggle = req.query, req.feedback_toggle
         logger.info(
-            f"For {task_id}, received query: {query} with feedback toggle: {feedback_toggle}"
+            f"For {task_id}, received query: {query} from user_id: {req.user_id} with feedback toggle: {feedback_toggle}, and opt_in: {req.opt_in}"
         )
         event_trace = EventTrace(
             task_id,
