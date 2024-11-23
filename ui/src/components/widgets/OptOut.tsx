@@ -19,26 +19,24 @@ export const OptOut: React.FC<Props> = (props) => {
 
   const consentPopover = (
       <Dialog
-      sx={{ '& .MuiDialog-paper': { maxHeight: 435 } }}
       maxWidth="xs"
       open={open}
       {...other}
     >
-      <DialogTitle>Consent to data collection</DialogTitle>
-      <DialogContent>
+      <DialogTitle sx={{ padding:'24px 24px 8px 24px', fontSize:'18px' }}>Consent to data collection</DialogTitle>
+      <DialogContent sx={{ borderBottom: '1px solid rgba(10,50,55,0.2)', padding: '24px' }}>
         <DialogContentText id="alert-dialog-description">
-          <Typography sx={{ p: 2, width: 300 }}>
+          <Typography sx={{ marginBottom:'8px' }}>
             By using Ai2 OpenScholar, you agree to the <Link href="https://allenai.org/privacy-policy" target="_blank">Privacy Policy</Link>, <Link href="https://allenai.org/terms" target="_blank" >Terms of Use</Link>, <Link href="https://allenai.org/responsible-use" target="_blank" >Responsible Use</Link>, and that you will not submit any sensitive or confidential info.
           </Typography>
-
-          <Typography sx={{ p: 2, width: 300 }}>
+          <Typography>
             Ai2 may use your prompts and inputs in a public dataset for future AI research and development. You can still use this tool if you opt-out.
           </Typography>
         </DialogContentText>
       </DialogContent>
-      <DialogActions>
-        <Button autoFocus color='secondary' onClick={handleOk}>Ok to use my queries</Button>
-        <Button onClick={handleCancel}>Opt-out</Button>
+      <DialogActions sx={{ padding:'16px' } }>
+        <Button onClick={handleCancel} sx={{ color:'rgba(10,50,55,0.8)' }}>Opt-out</Button>
+        <Button onClick={handleOk} variant="contained" color="secondary">Ok to use my queries</Button>
       </DialogActions>
     </Dialog>
   )
