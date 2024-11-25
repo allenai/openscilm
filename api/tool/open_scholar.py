@@ -39,7 +39,7 @@ class OpenScholar:
     def __init__(
             self,
             task_mgr: LockedStateManager,
-            n_retrieval: int = 300,
+            n_retrieval: int = 200,
             n_rerank: int = 8,
             n_feedback: int = 0,
             context_threshold: float = 0.5,
@@ -63,7 +63,7 @@ class OpenScholar:
         self.ss_retriever = True
         self.use_contexts = True
         self.retrieval_fn = (
-            get_vespa_index("v1").retrieve_s2_index
+            get_vespa_index("v2").retrieve_s2_index
             if os.getenv("RETRIEVAL_SERVICE", "contriever").lower() == "vespa"
             else retrieve_contriever
         )
