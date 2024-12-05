@@ -1,7 +1,7 @@
 import { TabContext, TabList, TabPanel } from '@mui/lab';
-import { Tab, Button, Modal } from '@mui/material';
+import { Tab, Button, Modal, Snackbar } from '@mui/material';
 import { Box } from '@mui/system';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { ReportSection } from 'src/models/Report';
 import { Report } from './report/Report';
 
@@ -23,8 +23,15 @@ export const Sections: React.FC<PropType> = (props) => {
   };
 
   const [open, setOpen] = React.useState(false);
-  const handleModalOpen = () => setOpen(true);
-  const handleModalClose = () => setOpen(false);
+  const [openShare, setOpenShare] = React.useState(false);
+
+  const handleModalOpen = useCallback(() => setOpen(true), [setOpen]);
+  const handleModalClose = useCallback(() => setOpen(false), [setOpen]);
+  const handleShare = useCallback(() => {
+    navigator.clipboard.writeText(window.location.href);
+    setOpenShare(true);
+  }, []);
+  const handleCloseShare = useCallback(() => setOpenShare(false), [setOpenShare]);
 
   return (
     <Box sx={{ width: '100%', typography: 'body1' }}>
@@ -48,7 +55,10 @@ export const Sections: React.FC<PropType> = (props) => {
               )
             })}
           </TabList>
+          <Box sx={{ display: 'flex' }}>
+          <Button onClick={handleShare}>Share</Button>
           <Button onClick={handleModalOpen}>Disclaimer</Button>
+        </Box>
         </Box>
             {sections.map((section, index) => (
               <TabPanel key={`Iteration${index}`} value={`${index}`} sx={{ padding:`0` }}>
@@ -68,6 +78,13 @@ export const Sections: React.FC<PropType> = (props) => {
           </p>
         </Box>
       </Modal>
+
+      <Snackbar
+        open={openShare}
+        autoHideDuration={1000}
+        onClose={handleCloseShare}
+        message="Link copied to clipboard"
+      />
 
     </Box>
   );
