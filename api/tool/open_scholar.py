@@ -385,12 +385,9 @@ class OpenScholar:
         ]
         if filtering is True and len(passages_above_threshold) < 1:
             logger.warning("No relevant information found for the query.")
-            raise Exception('Unfortunately, we failed to retrieve any relevant information for your query; '
-                            'please try a different or more specific query.'
-                            ' Also please note that - '
-                            'The system only support Computer Science currently and it may not answer general questions e.g., '
-                            'Where we should visit in Seattle"'
-                            )
+            raise Exception(
+                "We were unable to retrieve any relevant papers for your query. Please try a different query. "
+                "OpenScholar is not designed to answer non-scientific questions or questions that require sources outside the scientific literature.")
         for doc, rerank_score in zip(retrieved_ctxs, rerank_scores):
             doc["rerank_score"] = rerank_score
         sorted_ctxs = sorted(
