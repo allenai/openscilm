@@ -39,7 +39,7 @@ class OpenScholar:
     def __init__(
             self,
             task_mgr: LockedStateManager,
-            n_retrieval: int = 200,
+            n_retrieval: int = 300,
             n_rerank: int = 8,
             n_feedback: int = 0,
             context_threshold: float = 0.5,
