@@ -65,18 +65,20 @@ class VespaIndex:
             logger.info(response.status_code)
             msg = f"Failed to retrieve papers from the S2 index. Received {response.status_code} from retrieval api."
             logger.exception(msg)
-            raise Exception(msg)
+            raise Exception("Failed to retrieve relevant papers for the query")
         else:
             results = response.json()
             unsorted_snippets = []
             if "children" in results["root"]:
                 children = results["root"]["children"]
                 for child in children:
-                    unsorted_snippets.append(
-                        vespa_snippet_from_dict(
+                    res = vespa_snippet_from_dict(
                             child_dict=child
                         )
-                    )
+                    if res:
+                        unsorted_snippets.append(
+                            res
+                        )
 
             if filter_open_access and self.corpus_id_filter:
                 logger.info(f"{len(unsorted_snippets)} passages retrieved from the index initially")
@@ -119,7 +121,7 @@ class VespaIndex:
             results = response.json()
             paper_titles = {
                 hit["fields"]["paper_corpus_id"]: hit["fields"]["text"]
-                for hit in results["root"]["children"]
+                for hit in results["root"]["children"] if "paper_corpus_id" in hit["fields"]
             }
             return paper_titles
 
@@ -210,11 +212,12 @@ def vespa_snippet_from_dict(
 ) -> Dict[str, Any]:
     fields = child_dict["fields"]
     res_map = dict()
-    res_map["vespa_doc_id"] = child_dict["id"]
-    res_map["corpus_id"] = fields["paper_corpus_id"]
-    res_map["text"] = fields["text"]
-    res_map["score"] = child_dict["relevance"]
-    res_map["type"] = fields["snippet_kind"]
+    if "paper_corpus_id" in fields:
+        res_map["vespa_doc_id"] = child_dict["id"]
+        res_map["corpus_id"] = fields["paper_corpus_id"]
+        res_map["text"] = fields["text"]
+        res_map["score"] = child_dict["relevance"]
+        res_map["type"] = fields["snippet_kind"]
     return res_map
 
 
