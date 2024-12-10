@@ -75,7 +75,7 @@ export const Home = () => {
                 <path fill="#EF529B" d="M254.62,163.78l-11.14-29.84h-60.81l-11.14,29.84h-19.64l46.65-125.59h29.27l46.65,125.59h-19.83ZM237.63,118.26l-24.55-66.29-24.55,66.29h49.1Z"/>
               </svg>
             </Box>
-            <Typography variant="body2">Synthesizing 1M+ open access computer science papers. A joint project between <Link href="https://www.semanticscholar.org" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>Semantic Scholar</Link> and the <Link href="https://www.washington.edu" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>University of Washington</Link>. OpenScholar (8B) can make mistakes. Check source documents by following citations. <Link href='https://allenai.org/blog/openscholar' target="_blank">Learn more</Link>.</Typography>
+            <Typography variant="body2">Synthesizing 8M+ open access research papers. A joint project between <Link href="https://www.semanticscholar.org" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>Semantic Scholar</Link> and the <Link href="https://www.washington.edu" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>University of Washington</Link>. OpenScholar (8B) can make mistakes. Check source documents by following citations. <Link href='https://allenai.org/blog/openscholar' target="_blank">Learn more</Link>.</Typography>
           </Box>
           
           <Box sx={{display: 'flex', flexDirection: 'column', gap:'8px'}}>
