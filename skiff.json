@@ -1,6 +1,7 @@
 {
-    "appName": "skiff-template",
-    "contact": "reviz",
-    "team": "reviz",
-    "replicas": { "prod": 2 }
+    "appName": "open-scholar",
+    "contact": "amanpreets",
+    "team": "s2",
+    "replicas": { "prod": 1 },
+    "customDomains": [ "openscholar.allen.ai", "openscholar.apps.allenai.org" ]
 }
