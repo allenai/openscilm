@@ -106,9 +106,9 @@ export const App = () => {
                                     return (<Route key={path} path={path} element={
                                         <Box sx={{ display: 'flex', gap: '16px' }}>
                                             {sidebarToggle}
-                                            <Link href="/" sx={{ height: {xs:'20px', sm:'24px'} }}>
+                                            {/* <Link href="/" sx={{ height: {xs:'20px', sm:'24px'} }}>
                                                 {Logo}
-                                            </Link>
+                                            </Link> */}
                                         </Box>
                                     } />)
                                 })}
