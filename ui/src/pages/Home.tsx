@@ -1,27 +1,27 @@
-import React, { useCallback } from 'react';
-import {  
+import {
+  alpha,
   Box,
-  Typography,
+  Grid,
   Link,
   styled,
-  alpha,
-  Grid
+  Typography
 } from '@mui/material';
-import MessageBar from '../components/widgets/MessageBar';
+import React, { useCallback } from 'react';
 import { useNavigate } from "react-router-dom";
+import MessageBar from '../components/widgets/MessageBar';
 
 import { createTask } from '../api/utils';
 import { useQueryHistory } from '../components/shared';
 
 const SUGGESTIONS: { link: string, shortName: string }[] = [
-  // {link: 'https://openscholar.allen.ai/query/303bed4a-3988-42a4-a60f-d321a698b66e', shortName: 'Compare two papers'},
-  // {link: 'https://openscholar.allen.ai/query/9cc9b2f9-52d4-4660-9845-4e1272d178a4', shortName: 'SWE-bench leaderboard'},
-  // {link: 'https://openscholar.allen.ai/query/28cd2f86-22fa-4168-9220-340daf0c8ec6', shortName: 'Scaling retrieval-augmented LMs'}
-  { link: 'https://openscholar.allen.ai/query/96c8419a-d0df-4354-ae5b-63c2e4e454b0', shortName: 'Find papers on a topic' },
-  { link: 'https://openscholar.allen.ai/query/e5e6d46f-fe65-4674-bbab-4c9ee8bcef58', shortName: 'Learn about a concept' },
-  { link: 'https://openscholar.allen.ai/query/803b9e79-9266-4ca0-ae20-9f629379c6ae', shortName: 'Summarize a paper' },
-  { link: 'https://openscholar.allen.ai/query/211ea55e-a086-431c-ac1c-2c6047a5bca2', shortName: 'Study an algorithm' },
-  { link: 'https://openscholar.allen.ai/query/28cd2f86-22fa-4168-9220-340daf0c8ec6', shortName: 'Check for prior work' }
+  // {link: 'https://openscilm.allen.ai/query/303bed4a-3988-42a4-a60f-d321a698b66e', shortName: 'Compare two papers'},
+  // {link: 'https://openscilm.allen.ai/query/9cc9b2f9-52d4-4660-9845-4e1272d178a4', shortName: 'SWE-bench leaderboard'},
+  // {link: 'https://openscilm.allen.ai/query/28cd2f86-22fa-4168-9220-340daf0c8ec6', shortName: 'Scaling retrieval-augmented LMs'}
+  { link: 'https://openscilm.allen.ai/query/96c8419a-d0df-4354-ae5b-63c2e4e454b0', shortName: 'Find papers on a topic' },
+  { link: 'https://openscilm.allen.ai/query/e5e6d46f-fe65-4674-bbab-4c9ee8bcef58', shortName: 'Learn about a concept' },
+  { link: 'https://openscilm.allen.ai/query/803b9e79-9266-4ca0-ae20-9f629379c6ae', shortName: 'Summarize a paper' },
+  { link: 'https://openscilm.allen.ai/query/211ea55e-a086-431c-ac1c-2c6047a5bca2', shortName: 'Study an algorithm' },
+  { link: 'https://openscilm.allen.ai/query/28cd2f86-22fa-4168-9220-340daf0c8ec6', shortName: 'Check for prior work' }
 ]
 
 export const Home = () => {
@@ -50,10 +50,11 @@ export const Home = () => {
 
   return (
     <>
-      <Box sx={{ alignItems:'center', display: 'flex', flexGrow: '1', flexDirection: 'column', justifyContent: 'center', padding: {xs: '120px 16px 16px 16px', sm: '240px 32px 32px 32px'}, width: '100%'}}>
+      <Box sx={{ alignItems:'center', display: 'flex', flexGrow: '1', flexDirection: 'column', justifyContent: 'center', padding: {xs: '60px 16px 16px 16px', sm: '160px 32px 32px 32px'}, width: '100%'}}>
         <Box sx={{maxWidth: '800px', width: '100%', display: 'flex', flexDirection: 'column', gap: '24px'}}>
           <Box sx={{display: 'flex', flexDirection: 'column', gap:'4px'}}>
-            <Box sx={{height: {xs:'37px', sm:'52px'}, width:{xs:'360px', sm:'505px'} }}>
+            {
+            /* <Box sx={{height: {xs:'37px', sm:'52px'}, width:{xs:'360px', sm:'505px'} }}>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1959.3 201.55">
                 <path fill="#EF529B" d="M49.7,87.05h-24.85v-24.03h20c2.67,0,4.84-2.21,4.84-4.92v-20.33h23.64v25.26c0,13.27-10.58,24.03-23.64,24.03ZM24.85,89.51H0v24.03h20c2.67,0,4.84,2.21,4.84,4.92v20.33h23.64v-25.26c0-13.27-10.58-24.03-23.64-24.03ZM104.24,88.28c-2.67,0-4.85-2.21-4.85-4.92v-20.33h-23.64v25.26c0,13.27,10.58,24.03,23.64,24.03h24.85v-24.03h-20ZM50.91,138.8v25.26h23.64v-20.33c0-2.71,2.17-4.92,4.84-4.92h20v-24.03h-24.85c-13.06,0-23.64,10.75-23.64,24.03Z"/>
                 <path fill="#EF529B" d="M1857.13,38.19h64.02c12.46,0,21.66,2.83,27.57,8.5,5.92,5.67,8.88,13.09,8.88,22.28,0,8.56-2.39,15.42-7.18,20.58-4.78,5.04-10.64,8.12-17.56,9.25,7.8,1.13,14.16,4.34,19.07,9.63,4.91,5.16,7.37,12.28,7.37,21.34,0,10.45-3.4,18.76-10.2,24.93-6.67,6.04-16.43,9.07-29.27,9.07h-62.7V38.19ZM1917.56,148.1c7.3,0,12.66-1.89,16.05-5.67,3.53-3.9,5.29-8.88,5.29-14.92,0-14.35-8.24-21.53-24.74-21.53h-37.58v42.11h40.98ZM1914.16,91.64c7.93,0,13.73-1.57,17.38-4.72,3.77-3.15,5.66-7.99,5.66-14.54s-1.51-11.08-4.53-13.97c-3.02-3.02-8.37-4.53-16.05-4.53h-40.04v37.77h37.58Z"/>
@@ -74,8 +75,37 @@ export const Home = () => {
                 <path fill="#EF529B" d="M314.1,163.78h-18.89v-73.65c0-1.38-.32-2.33-.94-2.83-.5-.63-1.45-.94-2.83-.94h-12.46v-17h14.35c6.17,0,11.14,1.89,14.92,5.67,3.78,3.65,5.73,8.5,5.85,14.54v74.22ZM288.04,38.19h23.8v17h-23.8v-17Z"/>
                 <path fill="#EF529B" d="M254.62,163.78l-11.14-29.84h-60.81l-11.14,29.84h-19.64l46.65-125.59h29.27l46.65,125.59h-19.83ZM237.63,118.26l-24.55-66.29-24.55,66.29h49.1Z"/>
               </svg>
-            </Box>
-            <Typography variant="body2">Synthesizing 8M+ open access research papers. A joint project between <Link href="https://www.semanticscholar.org" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>Semantic Scholar</Link> and the <Link href="https://www.washington.edu" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>University of Washington</Link>. OpenScholar (8B) can make mistakes. Check source documents by following citations. <Link href='https://allenai.org/blog/openscholar' target="_blank">Learn more</Link>.</Typography>
+            </Box> */
+            }
+            <Typography 
+              variant="h2" 
+              sx={{
+                fontFamily: 'Manrope, sans-serif',  // Add this line
+                color: '#EF529B',  // Same pink color as the SVG
+                fontSize: {
+                  xs: '26px',
+                  sm: '36px'
+                },
+                fontWeight: 'bold',
+                mb: 2  // margin bottom
+              }}
+            >
+              Can language models synthesize scientific literature?
+            </Typography>
+            <Typography variant="body1">
+              In a joint project between <Link href="https://www.semanticscholar.org" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>Semantic Scholar</Link> and the <Link href="https://www.washington.edu" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>University of Washington</Link>,
+              we train and release a fully open, retrieval-augmented language model that can synthesize 8M+ open access research papers to answer scientific questions.
+            </Typography>
+            <Typography variant="body1" component="div">
+            <ul className="list-disc pl-4">
+              <li>
+                Download the <Link href="https://huggingface.co/OpenSciLM" target="_blank">full collection</Link>---including model weights, training data and retrieval index.
+              </li>
+              <li>
+                To learn more about the project, check out <Link href="https://arxiv.org/abs/2411.14199" target="_blank">our paper</Link>.
+              </li>
+            </ul>
+          </Typography>
           </Box>
           
           <Box sx={{display: 'flex', flexDirection: 'column', gap:'8px'}}>

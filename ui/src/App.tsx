@@ -1,19 +1,18 @@
-import React from 'react';
-import {
-    styled,
-    Box,
-    Link,
-    IconButton,
-} from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import {
+    Box,
+    IconButton,
+    Link,
+    styled,
+} from '@mui/material';
+import React from 'react';
+import { CookiesProvider } from 'react-cookie';
 import { Route, Routes, useLocation } from 'react-router-dom';
-import { About } from './pages/About';
-import { Home } from './pages/Home';
 import { AppRoute } from './AppRoute';
 import Sidebar from './components/Sidebar';
-import { CookiesProvider } from 'react-cookie';
+import { About } from './pages/About';
+import { Home } from './pages/Home';
 import { Section } from './pages/Section';
-import Logo from './components/assets/logo';
 
 
 /**
@@ -106,14 +105,15 @@ export const App = () => {
                                     return (<Route key={path} path={path} element={
                                         <Box sx={{ display: 'flex', gap: '16px' }}>
                                             {sidebarToggle}
-                                            <Link href="/" sx={{ height: {xs:'20px', sm:'24px'} }}>
+                                            {/* <Link href="/" sx={{ height: {xs:'20px', sm:'24px'} }}>
                                                 {Logo}
-                                            </Link>
+                                            </Link> */}
                                         </Box>
                                     } />)
                                 })}
                             </Routes>
                             <Box sx={{ display: 'flex', gap: '16px' }}>
+                                <Link href="/" variant="body2" sx={{ lineHeight: '24px' }}>Home</Link>
                                 <Link target='_blank' href={`https://docs.google.com/forms/d/e/1FAIpQLSfqPUKxxXlV16Bs8ZGcasXMP35WKQU6eeQhYViPQ9_Cmeq5Kw/viewform?usp=pp_url&entry.268806865=${location.pathname}`} variant="body2" sx={{ lineHeight: '24px' }}>Feedback</Link>
                                 <Link href="https://allenai.org/blog/openscholar" target="_blank" variant="body2" sx={{ lineHeight: '24px' }}>
                                     About
