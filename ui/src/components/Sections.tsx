@@ -71,7 +71,7 @@ export const Sections: React.FC<PropType> = (props) => {
         <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: {xs: '90vw', sm: '60vw'}, bgcolor: 'background.paper', boxShadow: 24, padding: {xs: '4px 16px', sm: '16px 32px'} }}>
           <h3>Disclaimer</h3>
           <p>
-            <span style={{ fontFamily: 'monospace', fontWeight: 'bold', letterSpacing: '0.01em' }}>scholarqa-open-8b</span> answers questions by retrieving open-access papers from the scientific literature. It is not designed to answer non-scientific questions or questions that require sources outside the scientific literature.
+            Our demo answers questions by retrieving open-access papers from the scientific literature. It is not designed to answer non-scientific questions or questions that require sources outside the scientific literature.
           </p>
           <p>
             Its output may have errors, and these errors might be difficult to detect. For example, there might be serious factual inaccuracies or omissions. Please verify the accuracy of the generated text whenever possible.
