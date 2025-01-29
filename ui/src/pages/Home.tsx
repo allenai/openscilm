@@ -14,14 +14,14 @@ import { createTask } from '../api/utils';
 import { useQueryHistory } from '../components/shared';
 
 const SUGGESTIONS: { link: string, shortName: string }[] = [
-  // {link: 'https://openscholar.allen.ai/query/303bed4a-3988-42a4-a60f-d321a698b66e', shortName: 'Compare two papers'},
-  // {link: 'https://openscholar.allen.ai/query/9cc9b2f9-52d4-4660-9845-4e1272d178a4', shortName: 'SWE-bench leaderboard'},
-  // {link: 'https://openscholar.allen.ai/query/28cd2f86-22fa-4168-9220-340daf0c8ec6', shortName: 'Scaling retrieval-augmented LMs'}
-  { link: 'https://openscholar.allen.ai/query/96c8419a-d0df-4354-ae5b-63c2e4e454b0', shortName: 'Find papers on a topic' },
-  { link: 'https://openscholar.allen.ai/query/e5e6d46f-fe65-4674-bbab-4c9ee8bcef58', shortName: 'Learn about a concept' },
-  { link: 'https://openscholar.allen.ai/query/803b9e79-9266-4ca0-ae20-9f629379c6ae', shortName: 'Summarize a paper' },
-  { link: 'https://openscholar.allen.ai/query/211ea55e-a086-431c-ac1c-2c6047a5bca2', shortName: 'Study an algorithm' },
-  { link: 'https://openscholar.allen.ai/query/28cd2f86-22fa-4168-9220-340daf0c8ec6', shortName: 'Check for prior work' }
+  // {link: 'https://openscilm.allen.ai/query/303bed4a-3988-42a4-a60f-d321a698b66e', shortName: 'Compare two papers'},
+  // {link: 'https://openscilm.allen.ai/query/9cc9b2f9-52d4-4660-9845-4e1272d178a4', shortName: 'SWE-bench leaderboard'},
+  // {link: 'https://openscilm.allen.ai/query/28cd2f86-22fa-4168-9220-340daf0c8ec6', shortName: 'Scaling retrieval-augmented LMs'}
+  { link: 'https://openscilm.allen.ai/query/96c8419a-d0df-4354-ae5b-63c2e4e454b0', shortName: 'Find papers on a topic' },
+  { link: 'https://openscilm.allen.ai/query/e5e6d46f-fe65-4674-bbab-4c9ee8bcef58', shortName: 'Learn about a concept' },
+  { link: 'https://openscilm.allen.ai/query/803b9e79-9266-4ca0-ae20-9f629379c6ae', shortName: 'Summarize a paper' },
+  { link: 'https://openscilm.allen.ai/query/211ea55e-a086-431c-ac1c-2c6047a5bca2', shortName: 'Study an algorithm' },
+  { link: 'https://openscilm.allen.ai/query/28cd2f86-22fa-4168-9220-340daf0c8ec6', shortName: 'Check for prior work' }
 ]
 
 export const Home = () => {
