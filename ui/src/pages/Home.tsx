@@ -50,7 +50,7 @@ export const Home = () => {
 
   return (
     <>
-      <Box sx={{ alignItems:'center', display: 'flex', flexGrow: '1', flexDirection: 'column', justifyContent: 'center', padding: {xs: '120px 16px 16px 16px', sm: '240px 32px 32px 32px'}, width: '100%'}}>
+      <Box sx={{ alignItems:'center', display: 'flex', flexGrow: '1', flexDirection: 'column', justifyContent: 'center', padding: {xs: '60px 16px 16px 16px', sm: '160px 32px 32px 32px'}, width: '100%'}}>
         <Box sx={{maxWidth: '800px', width: '100%', display: 'flex', flexDirection: 'column', gap: '24px'}}>
           <Box sx={{display: 'flex', flexDirection: 'column', gap:'4px'}}>
             {
@@ -78,13 +78,13 @@ export const Home = () => {
             </Box> */
             }
             <Typography 
-              variant="h1" 
+              variant="h2" 
               sx={{
                 fontFamily: 'Manrope, sans-serif',  // Add this line
                 color: '#EF529B',  // Same pink color as the SVG
                 fontSize: {
-                  xs: '32px',
-                  sm: '48px'
+                  xs: '26px',
+                  sm: '36px'
                 },
                 fontWeight: 'bold',
                 mb: 2  // margin bottom
