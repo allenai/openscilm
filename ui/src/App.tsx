@@ -115,7 +115,7 @@ export const App = () => {
                             <Box sx={{ display: 'flex', gap: '16px' }}>
                                 <Link href="/" variant="body2" sx={{ lineHeight: '24px' }}>Home</Link>
                                 <Link target='_blank' href={`https://docs.google.com/forms/d/e/1FAIpQLSfqPUKxxXlV16Bs8ZGcasXMP35WKQU6eeQhYViPQ9_Cmeq5Kw/viewform?usp=pp_url&entry.268806865=${location.pathname}`} variant="body2" sx={{ lineHeight: '24px' }}>Feedback</Link>
-                                <Link href="https://allenai.org/blog/openscholar" target="_blank" variant="body2" sx={{ lineHeight: '24px' }}>
+                                <Link href="https://allenai.org/blog/openscilm" target="_blank" variant="body2" sx={{ lineHeight: '24px' }}>
                                     About
                                 </Link>
                                 {/* <Link href="#">Blog Post</Link> */}

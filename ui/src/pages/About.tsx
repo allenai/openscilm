@@ -1,5 +1,5 @@
-import React from 'react';
 import { Link, styled } from '@mui/material';
+import React from 'react';
 
 const AboutPage = styled('div')`
     width: 100%;
@@ -10,7 +10,7 @@ const AboutPage = styled('div')`
 export const About = () => {
     return (
         <AboutPage>
-            <Link href="https://allenai.org/blog/openscholar" target="_blank">Read more about OpenScholar</Link>
+            <Link href="https://allenai.org/blog/openscilm" target="_blank">Read more about our project</Link>
         </AboutPage>
     );
 };
