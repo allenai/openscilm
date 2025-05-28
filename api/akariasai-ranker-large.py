@@ -2,21 +2,15 @@
 
 import os
 import time
-import typing as t
-from enum import Enum
-import json
-from threading import Thread
-from typing import Generator, Optional
-import os, dataclasses
 
 import modal
 from typing_extensions import List
 
 MODEL_NAME = "akariasai/ranker_large"
 MODEL_DIR = f"/root/models/{MODEL_NAME}"
-GPU_CONFIG = modal.gpu.T4(count=1)
+GPU_CONFIG = "T4:1"
 
-APP_NAME = "akariasai-ranker-large"
+APP_NAME = "akariasai-ranker-large-update"
 APP_LABEL = APP_NAME.lower()
 
 
@@ -64,8 +58,8 @@ reranker_image = (
         "sentencepiece==0.2.0",
         "hf-transfer==0.1.6",
         "huggingface_hub==0.23.4",
-        "FlagEmbedding",
-        "peft"
+        "FlagEmbedding==1.2.11",
+        "peft==0.13.2"
     )
     .env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})
     .run_function(
@@ -80,8 +74,7 @@ reranker_image = (
 )
 
 with reranker_image.imports():
-    import torch
-    from FlagEmbedding import FlagReranker
+    pass
 
 app = modal.App(APP_NAME)
 
@@ -95,16 +88,15 @@ app = modal.App(APP_NAME)
 @app.cls(
     gpu=GPU_CONFIG,
     timeout=60 * 10,
-    container_idle_timeout=60 * 10,
-    keep_warm=1,
-    allow_concurrent_inputs=10,
+    scaledown_window=60 * 10,
+    min_containers=1,
     image=reranker_image,
 )
+@modal.concurrent(max_inputs=20)
 class Model:
     @modal.enter()
     def start_engine(self):
         from FlagEmbedding import FlagReranker
-        from transformers import AutoModelForCausalLM, AutoTokenizer
         print("🥶 cold starting inference")
         start = time.monotonic_ns()
 
@@ -124,9 +116,6 @@ class Model:
 #
 # We can stream inference from a FastAPI backend, also deployed on Modal.
 
-
-from modal import Mount, asgi_app
-
 api_image = (
     modal.Image.debian_slim(python_version="3.11")
 )
@@ -134,10 +123,10 @@ api_image = (
 
 @app.function(
     image=api_image,
-    keep_warm=1,
-    allow_concurrent_inputs=20,
+    min_containers=1,
     timeout=60 * 10,
 )
+@modal.concurrent(max_inputs=20)
 async def inference_api(query: str, passages: List[str]):
     model = Model()
     return model.get_scores.remote(query, passages)

@@ -25,7 +25,7 @@ RUNPOD_ID = os.getenv("RUNPOD_ID")
 RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY")
 RUNPOD_API_URL = f"https://api.runpod.ai/v2/{RUNPOD_ID}/openai/v1"
 
-MODAL_OPENAI_BASE_URL = "https://ai2-reviz--akariasai-os-8b-openai-serve.modal.run/v1"
+MODAL_OPENAI_BASE_URL = "https://ai2-reviz--akariasai-os-8b-openai-update-serve.modal.run/v1"
 MODAL_WEB_AUTH_KEY = os.getenv("MODAL_WEB_AUTH")
 
 LLM_BASE_URL = MODAL_OPENAI_BASE_URL
@@ -53,7 +53,7 @@ class OpenScholar:
         self.top_n = n_rerank
         self.context_threshold = context_threshold
         # FIXME: replace this with reranker API
-        model_name = "akariasai-ranker-large"
+        model_name = "akariasai-ranker-large-update"
         logger.info(f"using model {model_name} for reranking")
         self.reranker_engine = ModalEngine(
             model_name, "inference_api", gen_options=dict()
