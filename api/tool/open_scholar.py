@@ -17,15 +17,17 @@ from tool.models import Citation, GeneratedIteration, TaskResult, ToolRequest
 from tool.retrieval import get_vespa_index, retrieve_contriever, fetch_s2howable_papers
 from tool.use_search_apis import search_paper_via_query
 from tool.utils import extract_citations, remove_citations
+from openai import moderations
 
 logger = logging.getLogger(__name__)
 
+MODERATION_MODEL = "omni-moderation-latest"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 RUNPOD_ID = os.getenv("RUNPOD_ID")
 RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY")
 RUNPOD_API_URL = f"https://api.runpod.ai/v2/{RUNPOD_ID}/openai/v1"
 
-MODAL_OPENAI_BASE_URL = "https://ai2-reviz--akariasai-os-8b-openai-serve.modal.run/v1"
+MODAL_OPENAI_BASE_URL = "https://ai2-reviz--akariasai-os-8b-openai-update-serve.modal.run/v1"
 MODAL_WEB_AUTH_KEY = os.getenv("MODAL_WEB_AUTH")
 
 LLM_BASE_URL = MODAL_OPENAI_BASE_URL
@@ -53,7 +55,7 @@ class OpenScholar:
         self.top_n = n_rerank
         self.context_threshold = context_threshold
         # FIXME: replace this with reranker API
-        model_name = "akariasai-ranker-large"
+        model_name = "akariasai-ranker-large-update"
         logger.info(f"using model {model_name} for reranking")
         self.reranker_engine = ModalEngine(
             model_name, "inference_api", gen_options=dict()
@@ -69,9 +71,9 @@ class OpenScholar:
         )
         self.llm_model = llm_model
         logger.info(f"using model {self.llm_model} for inference")
-        self.wildguard_engine = ModalEngine(
-            model_id="wildguard", api_name="wildguard_api", gen_options=dict()
-        )
+        # self.wildguard_engine = ModalEngine(
+        #     model_id="wildguard", api_name="wildguard_api", gen_options=dict()
+        # )
 
     ############################ OpenScholar Functions
 
@@ -325,27 +327,9 @@ class OpenScholar:
             self.task_mgr.write_state(task_state)
 
     def retrieve(
-            self, query: str, task_id: str, prefix: str = "", queue: Queue = None
+            self, query: str, task_id: str, prefix: str = ""
     ) -> List[Dict[str, Any]]:
-        if queue and not queue.empty():
-            val_res = queue.get()
-            if val_res is not True:
-                raise val_res
-        else:
-            self.update_task_state(
-                task_id,
-                f"{prefix}Retrieving top relevant paper passages from our corpus",
-            )
-
         snippets_list = self.retrieval_fn(query, self.n_retrieval)
-        if queue:
-            try:
-                val_res = queue.get(timeout=30)
-                if val_res is not True:
-                    raise val_res
-            except Exception as e:
-                logger.error(f"{task_id}: Query validation timed out{e}")
-                raise Exception("Query validation timed out, please try again.")
 
         status_str = (
             f"{prefix}Retrieved {len(snippets_list)} relevant passages successfully"
@@ -421,7 +405,11 @@ class OpenScholar:
             new_papers = [p for p in new_papers if p["corpus_id"] in s2howable_papers]
         return new_papers
 
-    def validate(self, query: str, task_id: str, queue: Queue = None) -> None:
+    def moderation_api(self, text: str) -> bool:
+        response = moderations.create(input=text, model=MODERATION_MODEL)
+        return response.results[0].flagged
+
+    def validate(self, query: str, task_id: str) -> None:
         def _starts_with_who_is(question: str):
             # Regular expression to match "Who is" at the beginning of the question
             pattern = r"^who is\b"
@@ -432,24 +420,14 @@ class OpenScholar:
         logger.info(
             f"{task_id}: Checking query for malicious content with wildguard..."
         )
-        try:
-            wildguard_out = self.wildguard_engine.generate(
-                (query,), streaming=True
-            ).pop()
-            if wildguard_out and "request_harmful" in wildguard_out:
-                if wildguard_out["request_harmful"] == "yes":
-                    raise Exception(
-                        "The input query contains harmful content. Please try again with a different query"
-                    )
-            if _starts_with_who_is(query):
-                raise Exception(
-                    "We cannot answer questions about people. Please try again with a different query"
+        if self.moderation_api(query):
+            raise Exception(
+                    "The input query contains harmful content. Please try again with a different query"
                 )
-        except Exception as e:
-            logger.info(f"{task_id}: Query validation failed, {e}")
-            if queue:
-                queue.put(e)
-        queue.put(True)
+        if _starts_with_who_is(query):
+            raise Exception(
+                "We cannot answer questions about people. Please try again with a different query"
+            )
         logger.info(f"{task_id}: {query} is valid")
 
     def answer_query(self, req: ToolRequest, task_id: str) -> TaskResult:
@@ -492,10 +470,6 @@ class OpenScholar:
             )
 
         self.update_task_state(task_id, "Processing user query")
-        queue = Queue()
-        process = Process(target=self.validate, args=(req.query, task_id, queue))
-        process.start()
-
         query, feedback_toggle = req.query, req.feedback_toggle
         logger.info(
             f"For {task_id}, received query: {query} from user_id: {req.user_id} with feedback toggle: {feedback_toggle}, and opt_in: {req.opt_in}"
@@ -508,13 +482,16 @@ class OpenScholar:
             self.n_feedback,
             req,
         )
+
+        self.validate(query, task_id)
+
         responses = []
         citation_lists = []
         logger.info(f"{task_id}: Waking the modal deployment for a warm start")
         t = threading.Thread(target=self.llm_inference, args=("Just waking you up",))
         t.start()
 
-        retrieved_candidates = self.retrieve(query, task_id, queue=queue)
+        retrieved_candidates = self.retrieve(query, task_id)
 
         self.update_task_state(
             task_id, "Augmenting retrieved results with Semantic Scholar"
