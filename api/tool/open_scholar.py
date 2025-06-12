@@ -43,7 +43,7 @@ class OpenScholar:
             task_mgr: LockedStateManager,
             n_retrieval: int = 300,
             n_rerank: int = 8,
-            n_feedback: int = 0,
+            n_feedback: int = 3,
             context_threshold: float = 0.5,
             llm_model: str = "akariasai/os_8b",
     ):
