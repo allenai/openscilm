@@ -3,30 +3,26 @@ import logging
 import os
 import re
 import threading
-from multiprocessing import Process, Queue
 from time import time
 from typing import Any, Dict, List
 
-import tool.instructions
-
-from tool.locked_state import LockedStateManager
 from openai import OpenAI
-from tool.event_tracing import EventTrace
-from tool.modal_engine import ModalEngine
-from tool.models import Citation, GeneratedIteration, TaskResult, ToolRequest
-from tool.retrieval import get_vespa_index, retrieve_contriever, fetch_s2howable_papers
-from tool.use_search_apis import search_paper_via_query
-from tool.utils import extract_citations, remove_citations
 from openai import moderations
+from scholarqa import FullTextRetriever
+
+import tool.instructions
+from tool.event_tracing import EventTrace
+from tool.locked_state import LockedStateManager
+from tool.models import Citation, GeneratedIteration, TaskResult, ToolRequest
+from tool.rag_subs import PaperFinderWithRerankerThreshold, ModalRerankerNoBatch
+from tool.utils import extract_citations, remove_citations
 
 logger = logging.getLogger(__name__)
 
 MODERATION_MODEL = "omni-moderation-latest"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-RUNPOD_ID = os.getenv("RUNPOD_ID")
-RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY")
-RUNPOD_API_URL = f"https://api.runpod.ai/v2/{RUNPOD_ID}/openai/v1"
 
+# env
 MODAL_OPENAI_BASE_URL = "https://ai2-reviz--akariasai-os-8b-openai-update-serve.modal.run/v1"
 MODAL_WEB_AUTH_KEY = os.getenv("MODAL_WEB_AUTH")
 
@@ -45,35 +41,28 @@ class OpenScholar:
             n_rerank: int = 8,
             n_feedback: int = 0,
             context_threshold: float = 0.5,
-            llm_model: str = "akariasai/os_8b",
+            llm_model: str = "akariasai/os_8b",  # env
+            reranker_model: str = "akariasai-ranker-large-update",  # env
     ):
         # TODO: Initialize retriever and re-ranker clients here
-        self.n_retrieval = n_retrieval
         self.n_rerank = n_rerank
         self.n_feedback = n_feedback
         self.task_mgr = task_mgr
-        self.top_n = n_rerank
-        self.context_threshold = context_threshold
         # FIXME: replace this with reranker API
         model_name = "akariasai-ranker-large-update"
+        retriever = FullTextRetriever(n_retrieval=n_retrieval, n_keyword_srch=10)
         logger.info(f"using model {model_name} for reranking")
-        self.reranker_engine = ModalEngine(
-            model_name, "inference_api", gen_options=dict()
+        reranker = ModalRerankerNoBatch(
+            reranker_model, "inference_api", gen_options=dict()
         )
+        self.paper_finder = PaperFinderWithRerankerThreshold(retriever, reranker, n_rerank, context_threshold)
+        self.paper_finder.snippet_srch_fields = self.paper_finder.snippet_srch_fields[:4]
         self.min_citation = None
         self.norm_cite = False
         self.ss_retriever = True
         self.use_contexts = True
-        self.retrieval_fn = (
-            get_vespa_index("v2").retrieve_s2_index
-            if os.getenv("RETRIEVAL_SERVICE", "contriever").lower() == "vespa"
-            else retrieve_contriever
-        )
         self.llm_model = llm_model
         logger.info(f"using model {self.llm_model} for inference")
-        # self.wildguard_engine = ModalEngine(
-        #     model_id="wildguard", api_name="wildguard_api", gen_options=dict()
-        # )
 
     ############################ OpenScholar Functions
 
@@ -104,7 +93,7 @@ class OpenScholar:
 
     def process_passage(self, retrieved_ctxs: List[Dict[str, Any]]):
         ctxs = ""
-        for doc_idx, doc in enumerate(retrieved_ctxs[: self.top_n]):
+        for doc_idx, doc in enumerate(retrieved_ctxs[: self.n_rerank]):
             if "title" in doc and len(doc["title"]) > 0:
                 ctxs += "[{0}] Title: {1} Text: {2}\n".format(
                     doc_idx, doc["title"], doc["text"]
@@ -134,14 +123,7 @@ class OpenScholar:
         outputs = self.llm_inference(
             input_query, temperature=0.7, max_tokens=max_tokens
         )
-        # else:
-        #     sampling_params = vllm.SamplingParams(
-        #         temperature=0.9,  # greedy decoding
-        #         max_tokens=max_tokens,
-        #         stop_token_ids=[128009],
-        #     )
-        #     outputs = self.model.generate([input_query], sampling_params)
-        #     outputs = [it.outputs[0].text for it in outputs][0]
+
         logger.info(f"Generated response: {outputs[:100]}...{len(outputs)}")
         raw_output = (
             [
@@ -251,7 +233,7 @@ class OpenScholar:
             max_tokens=2000,
     ):
         processed_passages = ""
-        for doc_idx, doc in enumerate(ctxs[: self.top_n]):
+        for doc_idx, doc in enumerate(ctxs[: self.n_rerank]):
             if "title" in doc and len(doc["title"]) > 0:
                 processed_passages += "[{0}] Title: {1} Text: {2}\n".format(
                     passage_start_index + doc_idx, doc["title"], doc["text"]
@@ -314,9 +296,8 @@ class OpenScholar:
             estimated_time: str = None,
             curr_response: List[GeneratedIteration] = None,
     ):
-
+        logger.info(f"{task_id}: {status}")
         if task_id:
-            logger.info(f"{task_id}: {status}")
             status = f"{time()}:{status}"
             task_state = self.task_mgr.read_state(task_id)
             task_state.task_status = status
@@ -329,7 +310,7 @@ class OpenScholar:
     def retrieve(
             self, query: str, task_id: str, prefix: str = ""
     ) -> List[Dict[str, Any]]:
-        snippets_list = self.retrieval_fn(query, self.n_retrieval)
+        snippets_list = self.paper_finder.retrieve_passages(query)
 
         status_str = (
             f"{prefix}Retrieved {len(snippets_list)} relevant passages successfully"
@@ -349,35 +330,12 @@ class OpenScholar:
     def rerank(
             self, query: str, retrieved_ctxs: List[Dict[str, Any]], filtering: bool = True
     ) -> List[Dict[str, Any]]:
-        passages = []
-
-        retrieved_ctxs = [ctx for ctx in retrieved_ctxs if ctx["text"] is not None]
-        for doc in retrieved_ctxs:
-            if doc["text"] is None:
-                continue
-            if "title" in doc:
-                passages.append(doc["title"] + " " + doc["text"])
-            else:
-                passages.append(doc["text"])
-        logger.info("Invoking the reranker deployed on Modal")
-        rerank_scores = self.reranker_engine.generate(
-            (query, passages), streaming=False
-        )
-        logger.info(f"Reranker scores: {rerank_scores}")
-        passages_above_threshold = [
-            score for score in rerank_scores if score > self.context_threshold
-        ]
-        if filtering is True and len(passages_above_threshold) < 1:
+        sorted_ctxs = self.paper_finder.rerank(query, retrieved_ctxs)
+        if filtering is True and len(sorted_ctxs) < 1:
             logger.warning("No relevant information found for the query.")
             raise Exception(
                 "We were unable to retrieve any relevant papers for your query. Please try a different query. "
                 "OpenScholar is not designed to answer non-scientific questions or questions that require sources outside the scientific literature.")
-        for doc, rerank_score in zip(retrieved_ctxs, rerank_scores):
-            doc["rerank_score"] = rerank_score
-        sorted_ctxs = sorted(
-            retrieved_ctxs, key=lambda x: x["rerank_score"], reverse=True
-        )[: self.n_rerank]
-        logging.info(f"Done reranking: {len(sorted_ctxs)} passages remain")
         return sorted_ctxs
 
     def retrieve_additional_passages_ss(self, query: str):
@@ -386,23 +344,16 @@ class OpenScholar:
         paper_list = {}
         if len(new_keywords) > 0:
             for keyword in new_keywords[:2]:
-                top_papers = search_paper_via_query(keyword)
+                top_papers = self.paper_finder.retrieve_additional_papers(keyword, minCitationCount=10,
+                                                                          sort="citationCount:desc", )
                 if top_papers is None:
                     print(keyword)
                 else:
                     for paper in top_papers:
-                        if paper["paperId"] not in paper_list:
-                            paper["text"] = paper["abstract"]
-                            paper["title"] = paper["title"]
+                        if paper["corpus_id"] not in paper_list:
                             paper["citation_counts"] = paper["citationCount"]
-                            paper["corpus_id"] = paper["externalIds"]["CorpusId"]
-                            paper["type"] = "abstract"
-                            paper_list[paper["paperId"]] = paper
+                            paper_list[paper["corpus_id"]] = paper
             new_papers += list(paper_list.values())
-        if new_papers:
-            corpus_ids_to_chk = set([paper["corpus_id"] for paper in new_papers])
-            s2howable_papers = fetch_s2howable_papers(corpus_ids_to_chk)
-            new_papers = [p for p in new_papers if p["corpus_id"] in s2howable_papers]
         return new_papers
 
     def moderation_api(self, text: str) -> bool:
@@ -416,12 +367,13 @@ class OpenScholar:
             # Perform case-insensitive match
             return bool(re.match(pattern, question.lower(), re.IGNORECASE))
 
-        # self.update_task_state(task_id, "Validating the query")
-        logger.info(
-            f"{task_id}: Checking query for malicious content with wildguard..."
-        )
-        if self.moderation_api(query):
-            raise Exception(
+        if OPENAI_API_KEY:
+            # self.update_task_state(task_id, "Validating the query")
+            logger.info(
+                f"{task_id}: Checking query for malicious content with wildguard..."
+            )
+            if self.moderation_api(query):
+                raise Exception(
                     "The input query contains harmful content. Please try again with a different query"
                 )
         if _starts_with_who_is(query):
@@ -461,7 +413,8 @@ class OpenScholar:
                     Citation(
                         id=f"[{idx}]",
                         corpus_id=cite["corpus_id"],
-                        snippet=cite["text"] if "type" not in cite or cite["type"] != "abstract" else "",
+                        snippet=cite["text"] if "section_title" not in cite or cite[
+                            "section_title"] != "abstract" else "",
                         score=cite["score"] if "score" in cite else 0.0,
                     )
                     for idx, cite in enumerate(iteration["citations"])
@@ -477,7 +430,7 @@ class OpenScholar:
         event_trace = EventTrace(
             task_id,
             self.llm_model,
-            self.n_retrieval,
+            self.paper_finder.retriever.n_retrieval,
             self.n_rerank,
             self.n_feedback,
             req,
@@ -666,7 +619,7 @@ class OpenScholar:
 
                         if (len(edited_answer) / len(previous_response)) > 0.9:
                             # and len(edited_answer.splitlines()) / len(previous_response.splitlines()) > 0.5:
-                            prev_citations += new_papers[: self.top_n]
+                            prev_citations += new_papers[: self.n_rerank]
                             # merge citations
                             logger.info("merging citations")
                             text_to_citations = {}

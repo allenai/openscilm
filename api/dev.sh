@@ -1,10 +1,8 @@
 #!/bin/bash
-exec \
-    gunicorn \
-    -k uvicorn.workers.UvicornWorker \
+exec uvicorn \
     --workers 1 \
-    --timeout 0 \
-    --bind 0.0.0.0:8000 \
-    --enable-stdio-inheritance \
+    --timeout-keep-alive 0 \
+    --host 0.0.0.0 \
+    --port 8000 \
     --reload \
-    'tool.app:create_app()'
+    'tool.app:create_app'

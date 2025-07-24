@@ -114,7 +114,7 @@ def search_paper_via_query(query, max_paper_num=10):
         "limit": max_paper_num,
         "minCitationCount": 10,
         "sort": "citationCount:desc",
-        "fields": "title,year,abstract,authors.name,citationCount,year,url,externalIds",
+        "fields": "title,year,abstract,authors.name,citationCount,url,externalIds",
     }
     # try:
     response_data = query_s2_api("paper/search", params=query_params)
