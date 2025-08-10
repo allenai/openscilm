@@ -21,7 +21,6 @@ from tool.models import (
     ToolResponse
 )
 from tool.open_scholar import OpenScholar
-from tool.retrieval import get_vespa_index
 from tool.utils import query_s2_api
 
 # If LOG_FORMAT is "google:json" emit log message as JSON in a format Google Cloud can parse.
@@ -97,10 +96,6 @@ def create_app() -> FastAPI:
     @app.get("/health", status_code=204)
     def health():
         return "OK"
-
-    @app.get("/retrieve")
-    def retrieve(query: str, topk: int, version="v2", filter_open_access: bool = True):
-        return get_vespa_index(version).retrieve_s2_index(query, topk, filter_open_access)
 
     @app.post("/query_open_scholar")
     def use_tool(
