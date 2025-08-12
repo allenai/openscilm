@@ -6,6 +6,7 @@
 
 import modal
 import os
+from vllm.entrypoints.chat_utils import ChatTemplateContentFormatOption
 
 # ## Download the model weights
 
@@ -41,7 +42,7 @@ vllm_image = (
     .pip_install(
         "transformers==4.46.2",
         "huggingface_hub==0.23.4",
-        "vllm==0.6.3post1",
+        "vllm==0.6.5",
         "fastapi[standard]==0.115.4",
         force_build=True,
     )
@@ -62,6 +63,7 @@ vllm_image = (
     scaledown_window=5 * MINUTES,
     timeout=24 * HOURS,
     min_containers=1,
+    max_containers=1,
     secrets=[modal.Secret.from_name("playground-web-auth-tokens")],
 )
 @modal.concurrent(max_inputs=1000)
@@ -146,6 +148,7 @@ def serve():
         lora_modules=[],
         prompt_adapters=[],
         request_logger=request_logger,
+        chat_template_content_format="auto"
     )
     api_server.completion = lambda s: OpenAIServingCompletion(
         engine,

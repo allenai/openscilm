@@ -90,6 +90,7 @@ app = modal.App(APP_NAME)
     timeout=60 * 10,
     scaledown_window=60 * 10,
     min_containers=1,
+    max_containers=1,
     image=reranker_image,
 )
 @modal.concurrent(max_inputs=20)
@@ -124,6 +125,7 @@ api_image = (
 @app.function(
     image=api_image,
     min_containers=1,
+    max_containers=1,
     timeout=60 * 10,
 )
 @modal.concurrent(max_inputs=20)

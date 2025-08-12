@@ -8,7 +8,7 @@ import requests
 from fastapi import HTTPException
 from google.cloud import storage
 
-S2_APIKEY = os.getenv("S2_PARTNER_API_KEY", "")
+S2_APIKEY = os.getenv("S2_API_KEY", "")
 S2_HEADERS = {"x-api-key": S2_APIKEY}
 S2_API_BASE_URL = "https://api.semanticscholar.org/graph/v1/"
 
