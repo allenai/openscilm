@@ -61,6 +61,7 @@ class TaskResult(BaseModel):
     iterations: List[GeneratedIteration] = Field(
         description="The generated iterations of the answer"
     )
+    usage: Dict[str, Any]
 
 
 class ToolResponse(BaseModel):

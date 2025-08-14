@@ -71,6 +71,7 @@ class OpenScholar:
         )
         self.llm_model = llm_model
         logger.info(f"using model {self.llm_model} for inference")
+        self.usage = dict()
         # self.wildguard_engine = ModalEngine(
         #     model_id="wildguard", api_name="wildguard_api", gen_options=dict()
         # )
@@ -95,6 +96,15 @@ class OpenScholar:
         output = client.chat.completions.create(
             model=self.llm_model, messages=messages, **opt_kwargs
         )
+        usage = output.usage.model_dump()
+        if not self.usage:
+            self.usage = usage
+        else:
+            for k,v in usage.items():
+                if k in self.usage and type(v) == int:
+                    self.usage[k] += v
+                else:
+                    self.usage[k] = v
 
         output = output.choices[0].message.content
         if "[Response_Start]" in output and "[Response_End]" not in output:
@@ -323,7 +333,7 @@ class OpenScholar:
             if estimated_time:
                 task_state.estimated_time = estimated_time
             if curr_response:
-                task_state.task_result = TaskResult(iterations=curr_response)
+                task_state.task_result = TaskResult(iterations=curr_response, usage=self.usage)
             self.task_mgr.write_state(task_state)
 
     def retrieve(
@@ -719,4 +729,4 @@ class OpenScholar:
                     curr_response=responses,
                 )
         event_trace.push_trace_to_gcs()
-        return TaskResult(iterations=responses)
+        return TaskResult(iterations=responses, usage=self.usage)
