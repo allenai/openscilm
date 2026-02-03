@@ -173,9 +173,7 @@ export const Home = () => {
             </Typography>
             <Grid
               container
-              direction={{ xs: 'column', sm: 'row' }}
               spacing={1}
-              sx={{ alignItems: 'center' }}
             >
               {SUGGESTIONS.map((suggestion) => (
                 <Grid item key={suggestion.link}>
