@@ -4,6 +4,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { lighten } from '@mui/material/styles';
 import { SemanticScholarLogo } from './logos/SemanticScholarLogo';
 import { UniversityOfWashingtonLogo } from './logos/UniversityOfWashingtonLogo';
+import { Ai2Logo } from './logos/Ai2Logo';
 
 interface AttributionModalProps {
   open: boolean;
@@ -76,6 +77,10 @@ export const AttributionModal: React.FC<AttributionModalProps> = ({ open, onClos
           Powered by
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'row', gap: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <Link href="https://allenai.org" target="_blank" sx={{ color: (theme: any) => theme.color['off-white'].hex, transition: 'color 250ms ease-out', '&:hover': { color: (theme: any) => lighten(theme.color['green-100'].hex, 0.4) } }}>
+            <Ai2Logo height="32px" />
+          </Link>
+
           <Link href="https://www.semanticscholar.org" target="_blank" sx={{ color: (theme: any) => theme.color['off-white'].hex, transition: 'color 250ms ease-out', '&:hover': { color: (theme: any) => lighten(theme.color['green-100'].hex, 0.4) } }}>
             <SemanticScholarLogo />
           </Link>
