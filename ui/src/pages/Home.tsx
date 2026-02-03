@@ -71,7 +71,7 @@ export const Home = () => {
             </Typography>
             <Typography variant="body1">
               In a joint project between <Link
-                href="https://www.semanticscholar.org"
+                href="https://allenai.org"
                 target="_blank"
                 sx={{
                   color: (theme) => theme.color['green-100'].hex,
@@ -81,7 +81,7 @@ export const Home = () => {
                   }
                 }}
               >
-                Semantic Scholar
+                Ai2
               </Link> and the <Link
                 href="https://www.washington.edu"
                 target="_blank"
