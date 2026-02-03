@@ -5,6 +5,7 @@ import React from 'react';
 import { v4 as uuidV4 } from 'uuid';
 import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
 import { Box, Divider, Link, Popover, Typography } from '@mui/material';
+import { lighten } from '@mui/material/styles';
 import styled from 'styled-components';
 
 import { EvidenceCardContent } from './EvidenceCardContent';
@@ -62,9 +63,22 @@ export const EvidenceCard = (props: EvidenceCardProps): React.ReactNode => {
           horizontal: 'left',
         }}
       >
-        <Box sx={{ maxWidth: '600px', maxHeight: '300px', overflow: 'auto', padding: {xs: '12px 16px 8px 16px', md: '16px 24px 8px 24px' }, backgroundColor: '#08232b', color:'#FAF2E9'}}>
+        <Box sx={{ maxWidth: '600px', maxHeight: '300px', overflow: 'auto', padding: {xs: '12px 16px 8px 16px', md: '16px 24px 8px 24px' }, backgroundColor: '#105257', color:'#FAF2E9'}}>
           <Typography sx={{ mb: 0, mt: 0.5, fontWeight: 'bold' }} variant="h6">
-            <Link href={`https://semanticscholar.org/p/${props.corpusId}`} target='_blank' rel="noreferrer">
+            <Link
+              href={`https://semanticscholar.org/p/${props.corpusId}`}
+              target='_blank'
+              rel="noreferrer"
+              sx={{
+                color: (theme: any) => theme.color['green-100'].hex,
+                fontFamily: '"PP Telegraf", "Manrope", sans-serif',
+                fontWeight: 'bold',
+                transition: 'color 250ms ease-out',
+                '&:hover': {
+                  color: (theme: any) => lighten(theme.color['green-100'].hex, 0.6)
+                }
+              }}
+            >
               {rest.fullTitle}
             </Link>
           </Typography>
@@ -73,7 +87,7 @@ export const EvidenceCard = (props: EvidenceCardProps): React.ReactNode => {
               {PaperMetadata(paperDetails)}
             </Typography>
           )}
-          <Divider />
+          <Divider sx={{ borderColor: (theme: any) => `${theme.color['off-white'].hex}33` }} />
           {open && <EvidenceCardContent {...rest} />}
         </Box>
       </Popover>

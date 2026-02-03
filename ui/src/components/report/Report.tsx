@@ -2,6 +2,7 @@ import reactToText from 'react-to-text';
 
 import React from 'react';
 import { Box, Link, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { lighten } from '@mui/material/styles';
 import styled from 'styled-components';
 import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
 import { InlinePaperChipWidgetWithEvidence } from '../widgets/InlinePaperChipWidgetWithEvidence';
@@ -46,11 +47,43 @@ export const Report: React.FC<{ section: ReportSection, previousSection?: Report
           component: (props) => <Typography {...props} />,
           props: { paragraph: true, variant: 'body1'},
         },
+        h3: {
+          component: (props) => <Typography {...props} />,
+          props: {
+            variant: 'h6',
+            sx: {
+              fontFamily: '"PP Telegraf", "Manrope", sans-serif',
+              fontWeight: 'bold',
+              fontSize: '18px',
+              marginTop: '24px',
+              marginBottom: '16px'
+            }
+          },
+        },
+        li: {
+          component: (props) => <Box component="li" {...props} />,
+          props: {
+            sx: {
+              marginBottom: '8px',
+              '&:last-child': {
+                marginBottom: 0
+              }
+            }
+          },
+        },
         a: {
           component: (props) => <Link {...props} />,
-          props: { paragraph: true, variant: 'body1', style: {
-            color: 'rgba(10, 142, 98, 1)'
-          } },
+          props: {
+            paragraph: true,
+            variant: 'body1',
+            sx: {
+              color: (theme: any) => theme.color['green-100'].hex,
+              transition: 'color 250ms ease-out',
+              '&:hover': {
+                color: (theme: any) => lighten(theme.color['green-100'].hex, 0.6)
+              }
+            }
+          },
         },
         Paper: {
           component: (props: Partial<InlinePaperChipWidgetProps>) => {
@@ -103,7 +136,11 @@ ${Object.values(section.corpusId2Details ?? {}).map((details) => {
   }
 
   return (
-    <Box sx={{ padding: {xs: '16px', sm: '32px'}, background: '#FAF2E9', borderRadius: '4px', color: '#0A3235' }}>
+    <Box sx={{
+      borderTop: (theme) => `1px solid ${theme.color['off-white'].hex}1A`,
+      color: (theme) => theme.color['off-white'].hex,
+      paddingTop: '18px'
+    }}>
       {previousSection && (
 
         <ToggleButtonGroup

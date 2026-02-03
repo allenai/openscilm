@@ -1,6 +1,7 @@
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { Button, Snackbar, Tab } from '@mui/material';
 import { Box } from '@mui/system';
+import { lighten } from '@mui/material/styles';
 import React, { useCallback, useEffect } from 'react';
 import { ReportSection } from 'src/models/Report';
 import { Report } from './report/Report';
@@ -33,8 +34,9 @@ export const Sections: React.FC<PropType> = (props) => {
   return (
     <Box sx={{ width: '100%', typography: 'body1' }}>
       <TabContext value={value}>
-        <Box sx={{ display:'flex', justifyContent:'space-between', paddingLeft: '8px' }}>
-          <TabList onChange={handleChange} aria-label="lab API tabs example" sx={{ justifyContent:'space-between' }}>
+        {/* Tabs commented out - feature turned off but kept for potential future use */}
+        {/* <Box sx={{ display:'flex', justifyContent:'space-between', paddingLeft: '8px' }}>
+          <TabList onChange={handleChange} aria-label="lab API tabs example">
             {sections.map((_section, index) => {
               let label = 'Draft';
               if (!isRunning && index === sections.length - 1) {
@@ -48,14 +50,18 @@ export const Sections: React.FC<PropType> = (props) => {
                 }
               }
               return (
-                <Tab label={label} key={`Iteration${index}`} value={`${index}`} style={{ color: value !== `${index}` ? "#FAF2E9" : '#0FCB8C' }} />
+                <Tab
+                  label={label}
+                  key={`Iteration${index}`}
+                  value={`${index}`}
+                />
               )
             })}
           </TabList>
           <Box sx={{ display: 'flex' }}>
-          <Button onClick={handleShare}>Share</Button>
+          <Button onClick={handleShare} color="secondary">Share</Button>
         </Box>
-        </Box>
+        </Box> */}
             {sections.map((section, index) => (
               <TabPanel key={`Iteration${index}`} value={`${index}`} sx={{ padding:`0` }}>
                 <Report section={section} previousSection={index > 0 ? sections[index - 1] : undefined} />
