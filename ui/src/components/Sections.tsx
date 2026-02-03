@@ -1,5 +1,5 @@
 import { TabContext, TabList, TabPanel } from '@mui/lab';
-import { Button, Modal, Snackbar, Tab } from '@mui/material';
+import { Button, Snackbar, Tab } from '@mui/material';
 import { Box } from '@mui/system';
 import React, { useCallback, useEffect } from 'react';
 import { ReportSection } from 'src/models/Report';
@@ -22,11 +22,8 @@ export const Sections: React.FC<PropType> = (props) => {
     setValue(newValue);
   };
 
-  const [open, setOpen] = React.useState(false);
   const [openShare, setOpenShare] = React.useState(false);
 
-  const handleModalOpen = useCallback(() => setOpen(true), [setOpen]);
-  const handleModalClose = useCallback(() => setOpen(false), [setOpen]);
   const handleShare = useCallback(() => {
     navigator.clipboard.writeText(window.location.href);
     setOpenShare(true);
@@ -57,7 +54,6 @@ export const Sections: React.FC<PropType> = (props) => {
           </TabList>
           <Box sx={{ display: 'flex' }}>
           <Button onClick={handleShare}>Share</Button>
-          <Button onClick={handleModalOpen}>Disclaimer</Button>
         </Box>
         </Box>
             {sections.map((section, index) => (
@@ -66,18 +62,6 @@ export const Sections: React.FC<PropType> = (props) => {
               </TabPanel>
             ))}
       </TabContext>
-
-      <Modal open={open} onClose={handleModalClose}>
-        <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: {xs: '90vw', sm: '60vw'}, bgcolor: 'background.paper', boxShadow: 24, padding: {xs: '4px 16px', sm: '16px 32px'} }}>
-          <h3>Disclaimer</h3>
-          <p>
-            Our demo answers questions by retrieving open-access papers from the scientific literature. It is not designed to answer non-scientific questions or questions that require sources outside the scientific literature.
-          </p>
-          <p>
-            Its output may have errors, and these errors might be difficult to detect. For example, there might be serious factual inaccuracies or omissions. Please verify the accuracy of the generated text whenever possible.
-          </p>
-        </Box>
-      </Modal>
 
       <Snackbar
         open={openShare}

@@ -4,11 +4,13 @@ import Button from '@mui/material/Button';
 import AddIcon from '@mui/icons-material/Add';
 import Drawer from '@mui/material/Drawer';
 import DeleteIcon from '@mui/icons-material/Delete';
+import CloseIcon from '@mui/icons-material/Close';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
+import Modal from '@mui/material/Modal';
 import { alpha, lighten } from '@mui/material/styles';
 import { useQueryHistory } from './shared';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -29,6 +31,9 @@ export const Sidebar: React.FC<PropType> = (props) => {
   const navigate = useNavigate();
   console.log('sidebar history', history)
 
+  const [disclaimerOpen, setDisclaimerOpen] = React.useState(false);
+  const handleDisclaimerOpen = useCallback(() => setDisclaimerOpen(true), []);
+  const handleDisclaimerClose = useCallback(() => setDisclaimerOpen(false), []);
 
   const sortedHistory = Object.values(history).sort((a, b) => b.timestamp - a.timestamp)
 
@@ -60,7 +65,7 @@ export const Sidebar: React.FC<PropType> = (props) => {
       </Box>
 
       {location.pathname !== '/' && (
-        <Box sx={{ padding: `8px` }}>
+        <Box sx={{ padding: `8px`, marginTop: '12px' }}>
           <Button href="/" variant="contained" sx={{ display: 'flex', justifyContent: 'flex-start' }} startIcon={<AddIcon />} color="secondary" size="medium">
             New Question
           </Button>
@@ -82,7 +87,19 @@ export const Sidebar: React.FC<PropType> = (props) => {
             <ListItem key={item.taskId} disablePadding>
               <ListItemButton
                 selected={selected}
-                sx={{ padding: '2px 8px', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', gap: '4px' }}
+                sx={{
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  gap: '4px',
+                  '&.Mui-selected': {
+                    backgroundColor: (theme) => alpha(theme.color['off-white'].hex, 0.04)
+                  },
+                  '&.Mui-selected:hover': {
+                    backgroundColor: (theme) => alpha(theme.color['off-white'].hex, 0.1)
+                  }
+                }}
                 onClick={() => {
                   navigate(`/query/${item.taskId}`, { replace: true });
                 }}
@@ -93,9 +110,28 @@ export const Sidebar: React.FC<PropType> = (props) => {
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   lineHeight: `36px`,
-                  fontWeight: selected ? 'bold' : 'unset' }}>{item.query}</Typography>
+                  fontWeight: selected ? 'bold' : 'unset',
+                  transition: 'color 250ms ease-out',
+                  '.MuiListItemButton-root:hover &': {
+                    color: (theme) => lighten(theme.color['green-100'].hex, 0.6)
+                  }
+                }}>{item.query}</Typography>
                 {selected && (
-                  <IconButton aria-label='delete' size='small' onClick={(event) => handleDeleteTask(event, item.taskId)} sx={{ padding: '4px' }}>
+                  <IconButton
+                    aria-label='delete'
+                    size='small'
+                    onClick={(event) => handleDeleteTask(event, item.taskId)}
+                    sx={{
+                      padding: '4px',
+                      color: (theme) => theme.color['off-white'].hex,
+                      opacity: 0.5,
+                      transition: 'color 250ms ease-out, opacity 250ms ease-out',
+                      '&:hover': {
+                        color: (theme) => lighten(theme.color['green-100'].hex, 0.6),
+                        opacity: 1
+                      }
+                    }}
+                  >
                     <DeleteIcon fontSize='small' />
                   </IconButton>
                 )}
@@ -139,6 +175,19 @@ export const Sidebar: React.FC<PropType> = (props) => {
         </Box>
 
         <Link
+          onClick={handleDisclaimerOpen}
+          variant="body2"
+          sx={{
+            color: (theme) => alpha(theme.color['off-white'].hex, 0.8),
+            transition: 'color 250ms ease-out',
+            cursor: 'pointer',
+            '&:hover': {
+              color: (theme) => lighten(theme.color['green-100'].hex, 0.4)
+            }
+          }}
+        >
+          Disclaimer
+        </Link>&nbsp;&nbsp;•&nbsp;&nbsp;<Link
           href="https://allenai.org/privacy-policy"
           target="_blank"
           variant="body2"
@@ -180,6 +229,68 @@ export const Sidebar: React.FC<PropType> = (props) => {
         </Link>
         {/* <Link href="https://allenai.org" target="_blank">Ai2</Link> */}
       </Box>
+
+      <Modal
+        open={disclaimerOpen}
+        onClose={handleDisclaimerClose}
+        slotProps={{
+          backdrop: {
+            sx: {
+              backgroundColor: 'rgba(0, 0, 0, 0.5)'
+            }
+          }
+        }}
+      >
+        <Box sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '90vw',
+          maxWidth: '800px',
+          backgroundColor: '#105257',
+          color: (theme) => theme.color['off-white'].hex,
+          boxShadow: 24,
+          padding: {xs: '16px', sm: '24px'},
+          borderRadius: '4px'
+        }}>
+          <IconButton
+            onClick={handleDisclaimerClose}
+            sx={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              color: (theme) => theme.color['off-white'].hex,
+              '&:hover': {
+                color: (theme) => lighten(theme.color['green-100'].hex, 0.4)
+              }
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+          <Typography variant="h6" sx={{
+            marginBottom: '16px',
+            fontSize: '24px',
+            fontFamily: '"PP Telegraf", "Manrope", sans-serif',
+            fontWeight: 'bold',
+            color: (theme) => theme.color['off-white'].hex,
+            paddingRight: '40px'
+          }}>
+            Disclaimer
+          </Typography>
+          <Typography sx={{
+            marginBottom: '12px',
+            color: (theme) => theme.color['off-white'].hex
+          }}>
+            Our demo answers questions by retrieving open-access papers from the scientific literature. It is not designed to answer non-scientific questions or questions that require sources outside the scientific literature.
+          </Typography>
+          <Typography sx={{
+            color: (theme) => theme.color['off-white'].hex
+          }}>
+            Its output may have errors, and these errors might be difficult to detect. For example, there might be serious factual inaccuracies or omissions. Please verify the accuracy of the generated text whenever possible.
+          </Typography>
+        </Box>
+      </Modal>
     </Box>
 
   )
@@ -201,7 +312,8 @@ export const Sidebar: React.FC<PropType> = (props) => {
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: {xs: '80vw', sm: '240px'},
-            backgroundColor: (theme) => alpha(theme.color['off-white'].hex, 0.04)
+            backgroundColor: (theme) => alpha(theme.color['off-white'].hex, 0.04),
+            border: 'none'
           },
         }}
       >
@@ -215,7 +327,8 @@ export const Sidebar: React.FC<PropType> = (props) => {
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: {xs: '80vw', sm: '240px'},
-            backgroundColor: (theme) => alpha(theme.color['off-white'].hex, 0.04)
+            backgroundColor: (theme) => alpha(theme.color['off-white'].hex, 0.04),
+            border: 'none'
           },
         }}
         open
