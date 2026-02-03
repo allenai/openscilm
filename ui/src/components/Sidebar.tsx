@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import AddIcon from '@mui/icons-material/Add';
+import AddBoxOutlined from '@mui/icons-material/AddBoxOutlined';
 import Drawer from '@mui/material/Drawer';
 import DeleteIcon from '@mui/icons-material/Delete';
 import List from '@mui/material/List';
@@ -16,6 +16,7 @@ import { useCallback } from 'react';
 import { IconButton } from '@mui/material';
 import { DisclaimerModal } from './DisclaimerModal';
 import { AttributionModal } from './AttributionModal';
+import { Ai2Logo } from './logos/Ai2Logo';
 
 interface PropType {
   mobileOpen: boolean;
@@ -62,15 +63,14 @@ export const Sidebar: React.FC<PropType> = (props) => {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: {xs:'90vh', sm:'100%'}, padding: '8px', color: (theme) => theme.color['off-white'].hex }}>
 
       <Box sx={{ padding: '8px', display: 'flex', justifyContent: 'flex-start' }}>
-        <svg width="113px" height="36px" viewBox="0 0 756 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M93.1725 97.3271H46.5863V52.9552H84.0892C89.0964 52.9552 93.1725 48.8739 93.1725 43.8603V6.30957H137.488V52.9552C137.488 77.4661 117.652 97.3271 93.1725 97.3271ZM46.5863 101.875H0V146.247H37.5029C42.5101 146.247 46.5863 150.328 46.5863 155.341V192.892H90.9017V146.247C90.9017 121.736 71.0659 101.875 46.5863 101.875ZM195.428 99.6009C190.421 99.6009 186.345 95.5195 186.345 90.5059V52.9552H142.03V99.6009C142.03 124.112 161.865 143.973 186.345 143.973H232.931V99.6009H195.428ZM95.4434 192.892V239.538H139.759V201.987C139.759 196.974 143.835 192.892 148.842 192.892H186.345V148.52H139.759C115.279 148.52 95.4434 168.381 95.4434 192.892Z" fill="#F0529C"/>
-          <path d="M533.079 37.8804H488.946V6.30961H533.079V37.869V37.8804ZM498.744 64.1761H472.119V97.3272H495.247C499.108 97.3272 502.253 100.465 502.253 104.33V239.526H537.28V101.863C537.28 77.432 521.521 64.1648 498.756 64.1648L498.744 64.1761ZM391.901 6.30961L478.42 239.538H441.644L418.663 177.635H310.503L287.522 239.538H251.098L337.617 6.30961H391.913H391.901ZM407.865 148.52L364.583 31.9119L321.301 148.52H407.854H407.865ZM619.871 210.434L690.971 154.318C732.3 121.702 750.512 98.9074 750.512 67.6891C750.512 34.6744 729.848 0 667.502 0C592.087 0 567.324 50.6815 567.324 97.3272H605.156C605.156 55.229 623.754 29.8087 667.502 29.8087C699.725 29.8087 712.691 48.5556 712.691 68.0415C712.691 85.572 707.434 97.4977 687.122 113.982L568.028 210.434V239.538H754.725V210.434H619.871Z" fill="#F0529C"/>
-        </svg>
+        <Link href="/" sx={{ display: 'flex', textDecoration: 'none' }}>
+          <Ai2Logo fill="#F0529C" />
+        </Link>
       </Box>
 
       {location.pathname !== '/' && (
         <Box sx={{ padding: `8px`, marginTop: '12px' }}>
-          <Button href="/" variant="contained" sx={{ display: 'flex', justifyContent: 'flex-start' }} startIcon={<AddIcon />} color="secondary" size="medium">
+          <Button href="/" variant="contained" sx={{ display: 'flex', justifyContent: 'flex-start', backgroundColor: (theme: any) => alpha(theme.color['off-white'].hex, 0.04), border: (theme: any) => `1px solid ${alpha(theme.color['off-white'].hex, 0.1)}`, color: (theme: any) => theme.color['off-white'].hex, '&:hover': { color: (theme: any) => lighten(theme.color['green-100'].hex, 0.4), borderColor: (theme: any) => alpha(theme.color['off-white'].hex, 0.4), backgroundColor: (theme: any) => alpha(theme.color['off-white'].hex, 0.08) } }} startIcon={<AddBoxOutlined />} size="medium">
             New Question
           </Button>
         </Box>
