@@ -149,11 +149,17 @@ const Textarea = styled(TextareaAutosize)`
 // border-radius: ${({ theme }) => `${theme.spacing(1.5)}`}
 // padding: ${({ theme }) => `${theme.spacing(1.5)}`}
 const StyledBox = styled(Box)`
-  border-radius: 12px;
+  border-radius: 4px;
   padding: 12px;
   display: flex;
   background-color: #08232b;
   color: #ffffff;
+  border: 1px solid rgba(250, 242, 233, 0.4);
+  transition: border-color 250ms ease-out;
+
+  &:focus-within {
+    border-color: ${({ theme }) => theme.color['green-100'].hex};
+  }
 `;
 
 const Form = styled('form')`
@@ -167,7 +173,16 @@ const SendButton = styled(IconButton)`
   border-radius: 6px;
   cursor: pointer;
   padding: 5px;
-  &:hover svg {
+
+  svg {
+    fill: rgba(250, 242, 233, 0.6);
+  }
+
+  &:not(:disabled) svg {
+    fill: ${({ theme }) => theme.color['green-100'].hex};
+  }
+
+  &:not(:disabled):hover svg {
     fill: rgba(63, 213, 163, 1);
   }
 `;
@@ -175,5 +190,5 @@ const SendButton = styled(IconButton)`
 // Fix after theme test bug has been fixed
 // fill: ${({ theme }) => `${theme.palette.tertiary.main}`}
 const StyledSendIcon = styled(SendIcon)`
-  fill: rgba(15, 203, 140, 1);
+  // fill is controlled by SendButton parent
 `;
