@@ -6,6 +6,7 @@ import {
   styled,
   Typography
 } from '@mui/material';
+import { lighten } from '@mui/material/styles';
 import React, { useCallback } from 'react';
 import { useNavigate } from "react-router-dom";
 import MessageBar from '../components/widgets/MessageBar';
@@ -77,32 +78,80 @@ export const Home = () => {
               </svg>
             </Box> */
             }
-            <Typography 
-              variant="h2" 
+            <Typography
+              variant="h2"
               sx={{
-                fontFamily: 'Manrope, sans-serif',  // Add this line
-                color: '#EF529B',  // Same pink color as the SVG
+                fontFamily: '"PP Telegraf", "Manrope", sans-serif',
+                color: (theme) => theme.color['green-100'].hex,
                 fontSize: {
                   xs: '26px',
                   sm: '36px'
                 },
                 fontWeight: 'bold',
-                mb: 2  // margin bottom
+                mb: 1  // margin bottom
               }}
             >
               Can language models synthesize scientific literature?
             </Typography>
             <Typography variant="body1">
-              In a joint project between <Link href="https://www.semanticscholar.org" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>Semantic Scholar</Link> and the <Link href="https://www.washington.edu" target="_blank" sx={{ color: 'rgba(15, 203, 140, 1)' }}>University of Washington</Link>,
+              In a joint project between <Link
+                href="https://www.semanticscholar.org"
+                target="_blank"
+                sx={{
+                  color: (theme) => theme.color['green-100'].hex,
+                  transition: 'color 250ms ease-out',
+                  '&:hover': {
+                    color: (theme) => lighten(theme.color['green-100'].hex, 0.4)
+                  }
+                }}
+              >
+                Semantic Scholar
+              </Link> and the <Link
+                href="https://www.washington.edu"
+                target="_blank"
+                sx={{
+                  color: (theme) => theme.color['green-100'].hex,
+                  transition: 'color 250ms ease-out',
+                  '&:hover': {
+                    color: (theme) => lighten(theme.color['green-100'].hex, 0.4)
+                  }
+                }}
+              >
+                University of Washington
+              </Link>,
               we train and release a fully open, retrieval-augmented language model that can synthesize 8M+ open access research papers to answer scientific questions.
             </Typography>
             <Typography variant="body1" component="div">
             <ul className="list-disc pl-4">
               <li>
-                Download the <Link href="https://huggingface.co/OpenSciLM" target="_blank">full collection</Link>---including model weights, training data and retrieval index.
+                Download the <Link
+                  href="https://huggingface.co/OpenSciLM"
+                  target="_blank"
+                  sx={{
+                    color: (theme) => theme.color['green-100'].hex,
+                    transition: 'color 250ms ease-out',
+                    '&:hover': {
+                      color: (theme) => lighten(theme.color['green-100'].hex, 0.4)
+                    }
+                  }}
+                >
+                  full collection
+                </Link>---including model weights, training data and retrieval index.
               </li>
               <li>
-                To learn more about the project, check out <Link href="https://arxiv.org/abs/2411.14199" target="_blank">our paper</Link>.
+                To learn more about the project, check out <Link
+                  href="https://arxiv.org/abs/2411.14199"
+                  target="_blank"
+                  sx={{
+                    color: (theme) => theme.color['green-100'].hex,
+                    transition: 'color 250ms ease-out',
+                    '&:hover': {
+                      color: (theme) => lighten(theme.color['green-100'].hex, 0.4)
+                    }
+                  }}
+                >
+                  our paper
+                </Link>.
               </li>
             </ul>
           </Typography>
@@ -110,6 +159,18 @@ export const Home = () => {
           
           <Box sx={{display: 'flex', flexDirection: 'column', gap:'8px'}}>
             <MessageBar onSend={handleSubmit} />
+            <Typography
+              component="h3"
+              sx={{
+                fontFamily: '"PP Telegraf", "Manrope", sans-serif',
+                fontSize: '18px',
+                fontWeight: 700,
+                color: (theme) => theme.color['green-100'].hex,
+                mt: 2
+              }}
+            >
+              Try one of these suggestions
+            </Typography>
             <Grid
               container
               direction={{ xs: 'column', sm: 'row' }}
@@ -139,12 +200,13 @@ const SuggestedPrompt = styled('a')`
   font-size: ${({ theme }) => theme.font.size.md};
   gap: ${({ theme }) => theme.spacing(1)};
   line-height: ${({ theme }) => theme.spacing(3)};
-  margin-bottom: ${({ theme }) => theme.spacing(0.5)};
   padding: ${({ theme }) => theme.spacing(1, 1.5)};
   text-decoration: none !important;
+  transition: color 250ms ease-out, border-color 250ms ease-out;
 
   :hover {
-    color: ${({ theme }) => theme.color.N5.hex};
+    color: ${({ theme }) => lighten(theme.color['green-100'].hex, 0.4)};
+    border-color: ${({ theme }) => alpha(theme.color['off-white'].hex, 0.4)};
   }
 
   & .MuiSvgIcon-root {
