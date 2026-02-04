@@ -23,7 +23,7 @@ export const AstaBanner: React.FC = () => {
 
   return (
     <Box
-      onClick={() => window.open('https://asta.allen.ai', '_blank')}
+      onClick={() => window.open('https://asta.allen.ai?utm_source=OpenSciLM', '_blank')}
       sx={{
         position: 'fixed',
         bottom: showBanner ? '36px' : '-200px',
