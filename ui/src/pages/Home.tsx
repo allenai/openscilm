@@ -13,6 +13,7 @@ import MessageBar from '../components/widgets/MessageBar';
 
 import { createTask } from '../api/utils';
 import { useQueryHistory } from '../components/shared';
+import { AstaBanner } from '../components/AstaBanner';
 
 const SUGGESTIONS: { link: string, shortName: string }[] = [
   // {link: 'https://openscilm.allen.ai/query/303bed4a-3988-42a4-a60f-d321a698b66e', shortName: 'Compare two papers'},
@@ -162,6 +163,8 @@ export const Home = () => {
           </Box>
         </Box>
       </Box>
+
+      <AstaBanner />
     </>
   );
 };
