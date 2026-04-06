@@ -5,6 +5,7 @@ import {
     Link,
     styled,
 } from '@mui/material';
+import { alpha, lighten } from '@mui/material/styles';
 import React from 'react';
 import { CookiesProvider } from 'react-cookie';
 import { Route, Routes, useLocation } from 'react-router-dom';
@@ -113,9 +114,48 @@ export const App = () => {
                                 })}
                             </Routes>
                             <Box sx={{ display: 'flex', gap: '16px' }}>
-                                <Link href="/" variant="body2" sx={{ lineHeight: '24px' }}>Home</Link>
-                                <Link target='_blank' href={`https://docs.google.com/forms/d/e/1FAIpQLSfqPUKxxXlV16Bs8ZGcasXMP35WKQU6eeQhYViPQ9_Cmeq5Kw/viewform?usp=pp_url&entry.268806865=${location.pathname}`} variant="body2" sx={{ lineHeight: '24px' }}>Feedback</Link>
-                                <Link href="https://allenai.org/blog/openscilm" target="_blank" variant="body2" sx={{ lineHeight: '24px' }}>
+                                <Link
+                                    href="/"
+                                    variant="body2"
+                                    sx={{
+                                        lineHeight: '24px',
+                                        color: (theme) => theme.color['off-white'].hex,
+                                        transition: 'color 250ms ease-out',
+                                        '&:hover': {
+                                            color: (theme) => lighten(theme.color['green-100'].hex, 0.4)
+                                        }
+                                    }}
+                                >
+                                    Home
+                                </Link>
+                                <Link
+                                    target='_blank'
+                                    href={`https://docs.google.com/forms/d/e/1FAIpQLSfqPUKxxXlV16Bs8ZGcasXMP35WKQU6eeQhYViPQ9_Cmeq5Kw/viewform?usp=pp_url&entry.268806865=${location.pathname}`}
+                                    variant="body2"
+                                    sx={{
+                                        lineHeight: '24px',
+                                        color: (theme) => theme.color['off-white'].hex,
+                                        transition: 'color 250ms ease-out',
+                                        '&:hover': {
+                                            color: (theme) => lighten(theme.color['green-100'].hex, 0.4)
+                                        }
+                                    }}
+                                >
+                                    Feedback
+                                </Link>
+                                <Link
+                                    href="https://allenai.org/blog/openscilm"
+                                    target="_blank"
+                                    variant="body2"
+                                    sx={{
+                                        lineHeight: '24px',
+                                        color: (theme) => theme.color['off-white'].hex,
+                                        transition: 'color 250ms ease-out',
+                                        '&:hover': {
+                                            color: (theme) => lighten(theme.color['green-100'].hex, 0.4)
+                                        }
+                                    }}
+                                >
                                     About
                                 </Link>
                                 {/* <Link href="#">Blog Post</Link> */}

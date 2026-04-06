@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Button, Snackbar, Typography } from '@mui/material';
+import ShareIcon from '@mui/icons-material/Share';
 import { StatusType, updateStatus } from '../api/utils';
 import { Progress, ProgressPropType } from './Progress';
 import { Sections } from './Sections';
@@ -17,6 +18,13 @@ export const Results: React.FC<PropType> = (props) => {
 
   const [status, setStatus] = useState<StatusType | undefined>();
   const { history, setHistory } = useQueryHistory();
+  const [openShare, setOpenShare] = useState(false);
+
+  const handleShare = useCallback(() => {
+    navigator.clipboard.writeText(window.location.href);
+    setOpenShare(true);
+  }, []);
+  const handleCloseShare = useCallback(() => setOpenShare(false), []);
 
   const [progressProps, setProgressProps] = useState<Omit<ProgressPropType, 'isRunning'>>({
     estimatedTime: 'Loading...',
@@ -86,14 +94,26 @@ export const Results: React.FC<PropType> = (props) => {
 
   return (
     <>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <Typography variant="h3" sx={{ marginBottom: '16px' }}>{status?.query ?? ''}</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '24px' }}>
+        <Typography variant="h3" sx={{
+          marginBottom: '16px',
+          fontFamily: '"PP Telegraf", "Manrope", sans-serif',
+          fontWeight: 'bold'
+        }}>{status?.query ?? ''}</Typography>
+        <Button onClick={handleShare} color="secondary" startIcon={<ShareIcon sx={{ fontSize: '16px' }} />}>Share</Button>
       </Box>
       {(taskRunning || status?.httpStatus !== 200) && <Progress {...progressProps} isRunning={taskRunning} />}
 
       {sections.length > 0 && (
         <Sections sections={sections} isRunning={taskRunning} />
       )}
+
+      <Snackbar
+        open={openShare}
+        autoHideDuration={1000}
+        onClose={handleCloseShare}
+        message="Link copied to clipboard"
+      />
     </>
   );
 };

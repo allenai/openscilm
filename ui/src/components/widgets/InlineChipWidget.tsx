@@ -123,15 +123,19 @@ export const StyledChip = styled(Chip)`
 
   &.inline-chip--wrap {
     background: none;
-    border-bottom: 1px dashed rgba(10, 142, 98, 1);
+    border-bottom: ${({ theme }) => `1px dashed ${theme.color['green-100'].hex}`};
     border-radius: 0;
     display: inline;
     margin-top: -1px;
     transition: border-color 200ms ease-in-out;
 
     &:hover {
-      border-color: rgba(38, 239, 172, 1);
+      border-color: #c8f5e8;
       transition-duration: 75ms;
+
+      .MuiChip-label {
+        color: #c8f5e8;
+      }
     }
 
     .MuiChip-icon {
@@ -148,7 +152,8 @@ export const StyledChip = styled(Chip)`
       text-overflow: initial;
       text-wrap: initial;
       white-space: initial;
-      color: rgba(10, 142, 98, 1);
+      color: ${({ theme }) => theme.color['green-100'].hex};
+      transition: color 200ms ease-in-out;
     }
   }
 `;
