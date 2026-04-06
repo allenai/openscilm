@@ -38,7 +38,6 @@ def download_model_to_image(model_dir, model_name):
 
     snapshot_download(
         model_name,
-        token=os.environ["HF_TOKEN"],
         local_dir=model_dir,
     )
     move_cache()
@@ -65,7 +64,6 @@ reranker_image = (
     .run_function(
         download_model_to_image,
         timeout=60 * 20,
-        secrets=[modal.Secret.from_name("chrisn-wildguard-hf-gated-read")],
         kwargs={
             "model_dir": MODEL_DIR,
             "model_name": MODEL_NAME,

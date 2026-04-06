@@ -64,7 +64,7 @@ vllm_image = (
     timeout=24 * HOURS,
     min_containers=1,
     max_containers=1,
-    secrets=[modal.Secret.from_name("playground-web-auth-tokens")],
+    secrets=[modal.Secret.from_name("os-web-auth-tokens")],
 )
 @modal.concurrent(max_inputs=1000)
 @modal.asgi_app()

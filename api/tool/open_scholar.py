@@ -23,7 +23,7 @@ MODERATION_MODEL = "omni-moderation-latest"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # env
-MODAL_OPENAI_BASE_URL = "https://ai2-reviz--akariasai-os-8b-openai-update-serve.modal.run/v1"
+MODAL_OPENAI_BASE_URL = "https://ai2-reviz-asta-webapp--akariasai-os-8b-openai-update-serve.modal.run/v1"
 MODAL_WEB_AUTH_KEY = os.getenv("MODAL_WEB_AUTH")
 
 LLM_BASE_URL = MODAL_OPENAI_BASE_URL

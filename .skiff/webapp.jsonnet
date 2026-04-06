@@ -461,6 +461,10 @@ function(
                                     value: '/skiff_files/apps/open-scholar/open_access/oa_corpus_ids.csv'
                                 },
                                 {
+                                    name: 'MODAL_ENVIRONMENT',
+                                    value: 'asta-webapp'
+                                },
+                                {
                                     name: "OPENAI_API_KEY",
                                     valueFrom: {
                                         secretKeyRef: {
